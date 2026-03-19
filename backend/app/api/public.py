@@ -41,7 +41,13 @@ async def get_public_settings(db: AsyncSession = Depends(get_db)):
     """Return public-safe settings (no auth required)."""
     from app.config import settings as app_settings
 
-    keys = ["registration_enabled", "public_feed_enabled", "company_name", "telegram_bot_name", "vk_client_id"]
+    keys = [
+        "registration_enabled", "public_feed_enabled", "company_name",
+        "telegram_bot_name", "vk_client_id",
+        "contact_block_text", "contact_tg_url", "contact_tg_label",
+        "contact_vk_url", "contact_vk_label",
+        "help_block_text", "help_block_url", "help_block_label",
+    ]
     result = await db.execute(select(AppSettings).where(AppSettings.key.in_(keys)))
     rows = result.scalars().all()
     data = {row.key: row.value for row in rows}
@@ -200,6 +206,13 @@ async def get_public_builds(
         author_city = b.author.city if b.author and b.author.city else None
         ws_city = b.workshop.city if b.workshop and b.workshop.city else None
 
+        # Component summary (category + name for each filled item)
+        components = [
+            {"category": item.category, "name": item.name}
+            for item in sorted(b.items, key=lambda x: x.sort_order)
+            if item.name and item.name.strip()
+        ]
+
         items_out.append({
             "id": str(b.id),
             "short_code": b.short_code,
@@ -211,6 +224,7 @@ async def get_public_builds(
             "city": author_city or ws_city,
             "total_price": total_price,
             "items_count": len(b.items),
+            "components": components,
             "tags": b.tags or [],
             "created_at": b.created_at.isoformat(),
         })

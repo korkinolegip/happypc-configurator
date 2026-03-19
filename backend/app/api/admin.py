@@ -66,6 +66,7 @@ async def list_users(
     limit: int = Query(100, ge=1, le=500),
     workshop_id: uuid.UUID | None = Query(None),
     role: str | None = Query(None),
+    is_active: str | None = Query(None),
     search: str | None = Query(None),
     current_user: User = Depends(require_admin),
     db: AsyncSession = Depends(get_db),
@@ -80,6 +81,9 @@ async def list_users(
 
     if role:
         query = query.where(User.role == role)
+
+    if is_active is not None:
+        query = query.where(User.is_active == (is_active.lower() == "true"))
 
     if search:
         from sqlalchemy import or_

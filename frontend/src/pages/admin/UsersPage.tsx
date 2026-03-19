@@ -297,10 +297,16 @@ const UsersPage: React.FC = () => {
   const [resettingId, setResettingId] = useState<string | null>(null)
   const [togglingId, setTogglingId] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
+  const [roleFilter, setRoleFilter] = useState('')
+  const [activeFilter, setActiveFilter] = useState('')
 
   const { data: users, isLoading } = useQuery({
-    queryKey: ['admin-users', searchQuery],
-    queryFn: () => getUsers(searchQuery || undefined),
+    queryKey: ['admin-users', searchQuery, roleFilter, activeFilter],
+    queryFn: () => getUsers({
+      search: searchQuery || undefined,
+      role: roleFilter || undefined,
+      is_active: activeFilter || undefined,
+    }),
   })
 
   const { data: workshops } = useQuery({
@@ -367,16 +373,29 @@ const UsersPage: React.FC = () => {
         </button>
       </div>
 
-      {/* Search */}
-      <div className="relative">
-        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-th-muted" />
-        <input
-          type="text"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="input-field pl-9"
-          placeholder="Поиск по имени, email, телефону, городу..."
-        />
+      {/* Search + filters */}
+      <div className="flex flex-col sm:flex-row gap-2">
+        <div className="relative flex-1">
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-th-muted" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="input-field pl-9"
+            placeholder="Поиск по имени, email, телефону, городу..."
+          />
+        </div>
+        <select value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)}
+          className="select-field w-full sm:w-40">
+          <option value="">Все роли</option>
+          {ROLES.map((r) => <option key={r.value} value={r.value}>{r.label}</option>)}
+        </select>
+        <select value={activeFilter} onChange={(e) => setActiveFilter(e.target.value)}
+          className="select-field w-full sm:w-36">
+          <option value="">Все статусы</option>
+          <option value="true">Активные</option>
+          <option value="false">Деактивированные</option>
+        </select>
       </div>
 
       <div className="bg-th-surface border border-th-border rounded-lg overflow-hidden">

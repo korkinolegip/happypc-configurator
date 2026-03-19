@@ -10,29 +10,29 @@
   /* ── Theme variables ── */
   :root,
   [data-theme="light"] {
-    --bg: #F5F5F5;
-    --bg-page: #FFFFFF;
+    --bg: #EEEEF0;
+    --bg-page: #EEEEF0;
     --surface: #FFFFFF;
-    --surface-2: #F9F9F9;
-    --surface-3: #F0F0F0;
-    --border: #E0E0E0;
-    --border-2: #D0D0D0;
-    --text: #1A1A1A;
-    --text-2: #555555;
-    --text-3: #888888;
-    --text-muted: #AAAAAA;
+    --surface-2: #F5F5F7;
+    --surface-3: #EEEEF0;
+    --border: #D0D0D5;
+    --border-2: #B8B8C0;
+    --text: #111111;
+    --text-2: #444444;
+    --text-3: #666666;
+    --text-muted: #999999;
     --accent: #FF6B00;
     --accent-hover: #E05A00;
-    --accent-light: rgba(255, 107, 0, 0.08);
+    --accent-light: rgba(255, 107, 0, 0.1);
     --input-bg: #FFFFFF;
-    --input-border: #D0D0D0;
-    --input-placeholder: #AAAAAA;
-    --scrollbar-track: #F0F0F0;
-    --scrollbar-thumb: #CCCCCC;
-    --scrollbar-hover: #BBBBBB;
-    --shadow: 0 1px 3px rgba(0,0,0,0.08);
-    --shadow-lg: 0 4px 12px rgba(0,0,0,0.1);
-    --overlay: rgba(0,0,0,0.3);
+    --input-border: #C0C0C8;
+    --input-placeholder: #999999;
+    --scrollbar-track: #E8E8EC;
+    --scrollbar-thumb: #C0C0C8;
+    --scrollbar-hover: #A8A8B0;
+    --shadow: 0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06);
+    --shadow-lg: 0 4px 16px rgba(0,0,0,0.12);
+    --overlay: rgba(0,0,0,0.4);
   }
 
   [data-theme="dark"] {

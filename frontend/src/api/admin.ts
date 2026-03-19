@@ -2,8 +2,17 @@ import { client } from './client'
 import type { User, Workshop, AppSettings, DashboardStats } from '../types'
 
 // Users
-export const getUsers = async (search?: string): Promise<User[]> => {
-  const params = search ? { search } : {}
+export interface UserFilters {
+  search?: string
+  role?: string
+  is_active?: string  // 'true' | 'false'
+}
+
+export const getUsers = async (filters?: UserFilters): Promise<User[]> => {
+  const params: Record<string, string> = {}
+  if (filters?.search) params.search = filters.search
+  if (filters?.role) params.role = filters.role
+  if (filters?.is_active) params.is_active = filters.is_active
   const response = await client.get<User[]>('/api/admin/users', { params })
   return response.data
 }

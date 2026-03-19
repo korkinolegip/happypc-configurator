@@ -54,6 +54,7 @@ export interface BuildListItem {
   city: string | null
   total_price: number
   items_count: number
+  components?: { category: string; name: string }[]
   tags: string[]
   created_at: string
 }

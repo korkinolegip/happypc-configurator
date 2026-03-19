@@ -1,7 +1,7 @@
 import React, { useRef, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
-import { Save, Info, Upload, Download, FileText, Image } from 'lucide-react'
+import { Save, Info, Upload, Download, FileText, Image, MessageCircle } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { getSettings, updateSettings, uploadLogo } from '../../api/admin'
 import { client } from '../../api/client'
@@ -15,6 +15,16 @@ interface SettingsFormValues {
   telegram_bot_name: string
   vk_client_id: string
   pdf_footer_text: string
+  // Contact block
+  contact_block_text: string
+  contact_tg_url: string
+  contact_tg_label: string
+  contact_vk_url: string
+  contact_vk_label: string
+  // Help block
+  help_block_text: string
+  help_block_url: string
+  help_block_label: string
 }
 
 const SettingsPage: React.FC = () => {
@@ -43,7 +53,15 @@ const SettingsPage: React.FC = () => {
           company_name: settings.company_name || 'HappyPC',
           telegram_bot_name: settings.telegram_bot_name || '',
           vk_client_id: settings.vk_client_id || '',
-          pdf_footer_text: (settings as AppSettings).pdf_footer_text || '',
+          pdf_footer_text: settings.pdf_footer_text || '',
+          contact_block_text: settings.contact_block_text || '',
+          contact_tg_url: settings.contact_tg_url || '',
+          contact_tg_label: settings.contact_tg_label || '',
+          contact_vk_url: settings.contact_vk_url || '',
+          contact_vk_label: settings.contact_vk_label || '',
+          help_block_text: settings.help_block_text || '',
+          help_block_url: settings.help_block_url || '',
+          help_block_label: settings.help_block_label || '',
         }
       : undefined,
   })
@@ -57,10 +75,17 @@ const SettingsPage: React.FC = () => {
         company_name: data.company_name,
         telegram_bot_name: data.telegram_bot_name || undefined,
         vk_client_id: data.vk_client_id || undefined,
+        pdf_footer_text: data.pdf_footer_text,
+        contact_block_text: data.contact_block_text,
+        contact_tg_url: data.contact_tg_url,
+        contact_tg_label: data.contact_tg_label,
+        contact_vk_url: data.contact_vk_url,
+        contact_vk_label: data.contact_vk_label,
+        help_block_text: data.help_block_text,
+        help_block_url: data.help_block_url,
+        help_block_label: data.help_block_label,
       }
-      // Add pdf_footer_text
-      const fullPayload = { ...payload, pdf_footer_text: data.pdf_footer_text } as AppSettings
-      const updated = await updateSettings(fullPayload)
+      const updated = await updateSettings(payload)
       await queryClient.invalidateQueries({ queryKey: ['admin-settings'] })
       await queryClient.invalidateQueries({ queryKey: ['settings-public'] })
       reset({
@@ -70,7 +95,15 @@ const SettingsPage: React.FC = () => {
         company_name: updated.company_name || 'HappyPC',
         telegram_bot_name: updated.telegram_bot_name || '',
         vk_client_id: updated.vk_client_id || '',
-        pdf_footer_text: (updated as AppSettings).pdf_footer_text || '',
+        pdf_footer_text: updated.pdf_footer_text || '',
+        contact_block_text: updated.contact_block_text || '',
+        contact_tg_url: updated.contact_tg_url || '',
+        contact_tg_label: updated.contact_tg_label || '',
+        contact_vk_url: updated.contact_vk_url || '',
+        contact_vk_label: updated.contact_vk_label || '',
+        help_block_text: updated.help_block_text || '',
+        help_block_url: updated.help_block_url || '',
+        help_block_label: updated.help_block_label || '',
       })
       toast.success('Настройки сохранены')
     } catch {
@@ -277,6 +310,68 @@ const SettingsPage: React.FC = () => {
               <label className="block text-sm text-th-text-2 mb-1.5">VK App ID (Client ID)</label>
               <input {...register('vk_client_id')} className="input-field" placeholder="12345678" />
               <p className="text-th-muted text-xs mt-1">ID приложения ВКонтакте для OAuth.</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Homepage Blocks */}
+        <div className="bg-th-surface border border-th-border rounded-lg p-5">
+          <h2 className="text-th-text font-semibold mb-1 flex items-center gap-2">
+            <MessageCircle size={18} />
+            Блок контактов (главная)
+          </h2>
+          <p className="text-th-text-3 text-xs mb-4">Настройка блока с чатами на главной странице</p>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm text-th-text-2 mb-1.5">Текст блока</label>
+              <textarea {...register('contact_block_text')} className="input-field resize-none h-16 text-sm"
+                placeholder="В наших чатах обсуждайте вопросы о сборках ПК..." rows={2} />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm text-th-text-2 mb-1.5">Ссылка Telegram</label>
+                <input {...register('contact_tg_url')} className="input-field" placeholder="https://t.me/happypc_chat" />
+              </div>
+              <div>
+                <label className="block text-sm text-th-text-2 mb-1.5">Текст кнопки TG</label>
+                <input {...register('contact_tg_label')} className="input-field" placeholder="Чат в Telegram" />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm text-th-text-2 mb-1.5">Ссылка VK</label>
+                <input {...register('contact_vk_url')} className="input-field" placeholder="https://vk.com/happypc" />
+              </div>
+              <div>
+                <label className="block text-sm text-th-text-2 mb-1.5">Текст кнопки VK</label>
+                <input {...register('contact_vk_label')} className="input-field" placeholder="Чат в VK" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Help block */}
+        <div className="bg-th-surface border border-th-border rounded-lg p-5">
+          <h2 className="text-th-text font-semibold mb-1 flex items-center gap-2">
+            <Info size={18} />
+            Блок помощи (главная)
+          </h2>
+          <p className="text-th-text-3 text-xs mb-4">Дополнительный информационный блок в сайдбаре</p>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm text-th-text-2 mb-1.5">Текст блока</label>
+              <textarea {...register('help_block_text')} className="input-field resize-none h-16 text-sm"
+                placeholder="Затрудняетесь с выбором комплектующих?" rows={2} />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm text-th-text-2 mb-1.5">Ссылка кнопки</label>
+                <input {...register('help_block_url')} className="input-field" placeholder="/contact" />
+              </div>
+              <div>
+                <label className="block text-sm text-th-text-2 mb-1.5">Текст кнопки</label>
+                <input {...register('help_block_label')} className="input-field" placeholder="Задать вопрос" />
+              </div>
             </div>
           </div>
         </div>

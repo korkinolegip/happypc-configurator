@@ -128,17 +128,9 @@ const HomePage: React.FC = () => {
       {/* ── LEFT: builds list ── */}
       <div>
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-          <div>
-            <h1 className="text-xl font-bold text-th-text">Сборки ПК</h1>
-            {buildsData && <p className="text-th-muted text-sm mt-0.5">Найдено {buildsData.total}</p>}
-          </div>
-          {isAuthenticated && (
-            <Link to="/builds/create"
-              className="flex items-center gap-2 bg-[#FF6B00] hover:bg-[#E05A00] text-white font-medium px-4 py-2 rounded-lg transition-colors text-sm shrink-0 self-start">
-              <Plus size={16} />Создать сборку
-            </Link>
-          )}
+        <div className="mb-4">
+          <h1 className="text-xl font-bold text-th-text">Сборки ПК</h1>
+          {buildsData && <p className="text-th-muted text-sm mt-0.5">Найдено {buildsData.total}</p>}
         </div>
 
         {/* Filters */}
@@ -284,38 +276,48 @@ const HomePage: React.FC = () => {
       <div className="space-y-4 lg:sticky lg:top-4">
 
         {/* Create CTA */}
-        {isAuthenticated && (
-          <Link to="/builds/create"
-            className="flex items-center justify-center gap-2 w-full bg-[#FF6B00] hover:bg-[#E05A00] text-white font-semibold py-3 rounded-lg transition-colors">
-            <Plus size={18} />Создать сборку
-          </Link>
-        )}
-        {!isAuthenticated && (
-          <Link to="/login"
-            className="flex items-center justify-center gap-2 w-full bg-[#FF6B00] hover:bg-[#E05A00] text-white font-semibold py-3 rounded-lg transition-colors">
-            <Plus size={18} />Создать сборку
-          </Link>
-        )}
+        <Link to={isAuthenticated ? "/builds/create" : "/login"}
+          className="flex items-center justify-center gap-2 w-full bg-[#FF6B00] hover:bg-[#E05A00] text-white font-semibold py-3 rounded-lg transition-colors">
+          <Plus size={18} />Создать сборку
+        </Link>
 
-        {/* Support / contacts */}
+        {/* Contact block — reads from settings */}
         <div className="bg-th-surface border border-th-border rounded-lg p-4">
-          <h3 className="text-th-text font-semibold text-sm mb-3">Задать вопрос</h3>
-          <p className="text-th-muted text-xs mb-3">
-            В наших чатах обсуждайте любые вопросы о подборе комплектующих и программах
+          <p className="text-th-text-2 text-xs mb-3">
+            {settings?.contact_block_text || 'В наших чатах VK и Telegram обсуждайте любые вопросы о сборках ПК, комплектующих, разгоне и программах'}
           </p>
-          <div className="space-y-2">
-            <a href="#" onClick={e => e.preventDefault()}
-               className="flex items-center gap-2 w-full py-2 px-3 rounded-lg text-sm text-th-text font-medium transition-colors"
-               style={{ background: '#2ca5e0' }}>
-              <MessageCircle size={15} />Чат в Telegram
-            </a>
-            <a href="#" onClick={e => e.preventDefault()}
-               className="flex items-center gap-2 w-full py-2 px-3 rounded-lg text-sm text-th-text font-medium transition-colors"
-               style={{ background: '#0077ff' }}>
-              <MessageCircle size={15} />Чат в VK
-            </a>
+          <div className="flex gap-2">
+            {(settings?.contact_tg_url || settings?.telegram_bot_name) && (
+              <a href={settings?.contact_tg_url || `https://t.me/${settings?.telegram_bot_name}`}
+                 target="_blank" rel="noopener noreferrer"
+                 className="flex items-center gap-1.5 flex-1 py-2 px-3 rounded-lg text-sm text-white font-medium transition-opacity hover:opacity-90"
+                 style={{ background: '#2ca5e0' }}>
+                <MessageCircle size={14} />{settings?.contact_tg_label || 'Чат в Telegram'}
+              </a>
+            )}
+            {settings?.contact_vk_url && (
+              <a href={settings.contact_vk_url}
+                 target="_blank" rel="noopener noreferrer"
+                 className="flex items-center gap-1.5 flex-1 py-2 px-3 rounded-lg text-sm text-white font-medium transition-opacity hover:opacity-90"
+                 style={{ background: '#0077ff' }}>
+                <MessageCircle size={14} />{settings?.contact_vk_label || 'Чат в VK'}
+              </a>
+            )}
           </div>
         </div>
+
+        {/* Help block */}
+        {settings?.help_block_text && (
+          <div className="bg-th-surface border border-th-border rounded-lg p-4">
+            <p className="text-th-text-2 text-sm mb-2">{settings.help_block_text}</p>
+            {settings?.help_block_url && (
+              <Link to={settings.help_block_url}
+                className="text-[#FF6B00] hover:text-[#E05A00] text-sm font-medium transition-colors">
+                {settings?.help_block_label || 'Задать вопрос →'}
+              </Link>
+            )}
+          </div>
+        )}
 
         {/* Popular tags */}
         <div className="bg-th-surface border border-th-border rounded-lg p-4">
