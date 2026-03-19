@@ -29,6 +29,8 @@ export interface Build {
   has_password: boolean
   items: BuildItem[]
   total_price: number
+  hardware_total?: number
+  labor_cost?: number
   labor_percent: number
   labor_price_manual: number | null
   created_at: string

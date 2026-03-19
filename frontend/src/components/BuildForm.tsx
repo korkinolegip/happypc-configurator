@@ -122,7 +122,7 @@ function ItemRow({ fieldName, category, canDelete, canChangeCategory, onDelete, 
   const [filled, setFilled] = useState(false)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  const currentUrl = watch(`${fieldName}.url` as never) as string || ''
+  const currentUrl = (watch(`${fieldName}.url` as never) as unknown as string) || ''
   const detectedStore = detectStore(currentUrl)
 
   const handleUrlChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {

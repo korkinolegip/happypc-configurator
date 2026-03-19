@@ -331,9 +331,9 @@ const BuildPage: React.FC = () => {
 
           {/* Price block */}
           <PriceBlock
-            hardwareTotal={build.hardware_total}
+            hardwareTotal={build.hardware_total ?? build.total_price}
             totalPrice={build.total_price}
-            laborCost={build.labor_cost}
+            laborCost={build.labor_cost ?? 0}
             laborPercent={build.labor_percent}
             laborPriceManual={build.labor_price_manual}
           />
@@ -423,10 +423,10 @@ const BuildPage: React.FC = () => {
               <span className="text-[#AAAAAA]">Создано</span>
               <span className="text-white text-xs">{formatDate(build.created_at)}</span>
             </div>
-            {build.labor_cost > 0 && (
+            {(build.labor_cost ?? 0) > 0 && (
               <div className="flex justify-between text-sm">
                 <span className="text-[#AAAAAA]">Работа</span>
-                <span className="text-[#FF6B00]">{formatPrice(build.labor_cost)}</span>
+                <span className="text-[#FF6B00]">{formatPrice(build.labor_cost ?? 0)}</span>
               </div>
             )}
           </div>
