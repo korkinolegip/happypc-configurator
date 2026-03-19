@@ -166,6 +166,26 @@ def _camoufox_fetch_sync(url: str, wait_seconds: int) -> Optional[str]:
         return None
 
 
+# ─── iMac scraper (home IP) ──────────────────────────────────────────────────
+
+async def _imac_scrape(url: str) -> dict:
+    """Call iMac scraping microservice (Camoufox on home IP)."""
+    from app.config import settings
+    base = settings.IMAC_SCRAPER_URL
+    if not base:
+        return {}
+    try:
+        async with httpx.AsyncClient(timeout=60) as client:
+            resp = await client.get(f"{base}/scrape", params={"url": url})
+            if resp.status_code == 200:
+                data = resp.json()
+                if data.get("name") and not data.get("error"):
+                    return data
+    except Exception:
+        pass
+    return {}
+
+
 # ─── ZenRows fetch (paid fallback) ──────────────────────────────────────────
 
 async def _zenrows_fetch(url: str, wait: str = "10000") -> Optional[str]:
@@ -284,22 +304,26 @@ async def _fetch_ozon(url: str) -> dict:
 # ─── DNS-shop ────────────────────────────────────────────────────────────────
 
 async def _fetch_dns(url: str) -> dict:
-    # 1) Camoufox (free, bypasses Qrator on home IP)
+    # 1) iMac scraper (home IP, bypasses Qrator)
+    result = await _imac_scrape(url)
+    if result.get("name"):
+        name = re.sub(r"\s*[—–|-]\s*(?:DNS|купить).*$", "", result["name"], flags=re.IGNORECASE).strip()
+        return {"name": name, "price": result.get("price"), "store": "dns"}
+
+    # 2) Camoufox local (works on home IP server)
     html = await _camoufox_fetch(url, wait_seconds=10)
     if html:
         result = _extract_from_html(html)
         if result.get("name"):
-            name = result["name"]
-            name = re.sub(r"\s*[—–|-]\s*(?:DNS|купить).*$", "", name, flags=re.IGNORECASE).strip()
+            name = re.sub(r"\s*[—–|-]\s*(?:DNS|купить).*$", "", result["name"], flags=re.IGNORECASE).strip()
             return {"name": name, "price": result.get("price"), "store": "dns"}
 
-    # 2) ZenRows fallback (paid, for datacenter IPs)
+    # 3) ZenRows fallback (paid)
     html = await _zenrows_fetch(url, wait="12000")
     if html:
         result = _extract_from_html(html)
         if result.get("name"):
-            name = result["name"]
-            name = re.sub(r"\s*[—–|-]\s*(?:DNS|купить).*$", "", name, flags=re.IGNORECASE).strip()
+            name = re.sub(r"\s*[—–|-]\s*(?:DNS|купить).*$", "", result["name"], flags=re.IGNORECASE).strip()
             return {"name": name, "price": result.get("price"), "store": "dns"}
 
     return {"store": "dns"}
