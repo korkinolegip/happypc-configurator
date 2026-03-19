@@ -1,7 +1,18 @@
+import ssl
+
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase
 
 from app.config import settings
+
+# Use SSL for external (cloud) databases; local docker uses plain connection
+_is_external_db = not settings.DATABASE_URL.startswith("postgresql+asyncpg://postgres@") and \
+                  ("neon.tech" in settings.DATABASE_URL or
+                   "render.com" in settings.DATABASE_URL or
+                   "amazonaws.com" in settings.DATABASE_URL or
+                   "onrender.com" in settings.DATABASE_URL)
+
+_connect_args = {"ssl": ssl.create_default_context()} if _is_external_db else {}
 
 engine = create_async_engine(
     settings.DATABASE_URL,
@@ -9,6 +20,7 @@ engine = create_async_engine(
     pool_pre_ping=True,
     pool_size=5,
     max_overflow=10,
+    connect_args=_connect_args,
 )
 
 AsyncSessionLocal = async_sessionmaker(
