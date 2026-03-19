@@ -7,6 +7,7 @@ import { useAuth } from '../hooks/useAuth'
 import { login as apiLogin, register as apiRegister } from '../api/auth'
 import { useQuery } from '@tanstack/react-query'
 import { getPublicSettings } from '../api/builds'
+import CitySelect from '../components/CitySelect'
 
 interface LoginFormValues {
   email: string
@@ -313,11 +314,10 @@ const LoginPage: React.FC = () => {
               </div>
               <div>
                 <label className="block text-sm text-[#AAAAAA] mb-1">Город</label>
-                <input
-                  {...registerForm.register('city')}
-                  className="input-field"
-                  placeholder="Москва"
-                  autoComplete="address-level2"
+                <CitySelect
+                  value={registerForm.watch('city') || ''}
+                  onChange={(v) => registerForm.setValue('city', v, { shouldDirty: true })}
+                  placeholder="Выберите город"
                 />
               </div>
             </div>

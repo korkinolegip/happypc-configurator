@@ -11,6 +11,7 @@ from app import models
 from app.database import AsyncSessionLocal
 from app.models.settings import AppSettings
 from app.models.user import User, Workshop
+from app.models.city import City, RUSSIAN_CITIES
 
 app = FastAPI(
     title="HappyPC Configurator",
@@ -135,6 +136,22 @@ async def init_default_settings():
             print(f"Warning: Could not initialize default settings: {e}")
 
 
+async def init_cities():
+    """Seed cities table with Russian cities if empty."""
+    async with AsyncSessionLocal() as session:
+        try:
+            result = await session.execute(select(City).limit(1))
+            if result.scalar_one_or_none() is not None:
+                return  # already seeded
+            for name, code in RUSSIAN_CITIES:
+                session.add(City(name=name, code=code))
+            await session.commit()
+            print(f"INFO: Seeded {len(RUSSIAN_CITIES)} cities")
+        except Exception as e:
+            await session.rollback()
+            print(f"Warning: Could not seed cities: {e}")
+
+
 @app.on_event("startup")
 async def startup():
     """Initialize database tables and default settings on application startup."""
@@ -143,6 +160,7 @@ async def startup():
             await conn.run_sync(models.Base.metadata.create_all)
         await init_default_settings()
         await init_superadmin()
+        await init_cities()
     except Exception as e:
         print(f"WARNING: startup DB init failed: {e}")
         print("App will still start — DB may be unavailable temporarily.")

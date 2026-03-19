@@ -8,6 +8,7 @@ from sqlalchemy.orm import selectinload
 
 from app.database import get_db
 from app.models.build import Build
+from app.models.city import City
 from app.models.user import User
 from app.models.settings import AppSettings
 from app.schemas.build import AuthorInfo, BuildItemResponse, BuildPublicResponse, WorkshopInfo
@@ -295,6 +296,43 @@ async def get_user_public_profile(
         "page": page,
         "per_page": per_page,
     }
+
+
+@router.get("/cities")
+async def get_cities(
+    with_builds: bool = Query(False),
+    db: AsyncSession = Depends(get_db),
+):
+    """Return list of cities. If with_builds=true, only cities that have builds."""
+    if with_builds:
+        from sqlalchemy import distinct
+        from app.models.user import User as U
+
+        # Get cities where users have builds
+        result = await db.execute(
+            select(distinct(U.city)).join(Build, Build.author_id == U.id).where(
+                U.city.isnot(None), U.city != "", Build.is_public == True  # noqa
+            )
+        )
+        active_cities = [row[0] for row in result.all() if row[0]]
+
+        # Also check workshop cities
+        from app.models.user import Workshop as W
+
+        ws_result = await db.execute(
+            select(distinct(W.city)).join(Build, Build.workshop_id == W.id).where(
+                W.city.isnot(None), W.city != "", Build.is_public == True  # noqa
+            )
+        )
+        ws_cities = [row[0] for row in ws_result.all() if row[0]]
+
+        all_active = sorted(set(active_cities + ws_cities))
+        return [{"name": c} for c in all_active]
+
+    # All cities from the cities table
+    result = await db.execute(select(City).order_by(City.name))
+    cities = result.scalars().all()
+    return [{"name": c.name, "code": c.code} for c in cities]
 
 
 @router.get("/{short_code}", response_model=BuildPublicResponse)

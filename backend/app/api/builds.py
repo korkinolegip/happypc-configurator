@@ -126,7 +126,11 @@ async def create_build(
     current_user: User = Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db),
 ):
-    short_code = await generate_short_code(db)
+    # Determine city: user's city or workshop's city
+    city_name = current_user.city
+    if not city_name and current_user.workshop:
+        city_name = current_user.workshop.city if hasattr(current_user.workshop, 'city') else None
+    short_code = await generate_short_code(db, city_name)
 
     build = Build(
         short_code=short_code,
@@ -333,7 +337,11 @@ async def copy_build(
             detail="Сборка не найдена",
         )
 
-    short_code = await generate_short_code(db)
+    # Determine city for the copy
+    city_name = current_user.city
+    if not city_name and current_user.workshop:
+        city_name = current_user.workshop.city if hasattr(current_user.workshop, 'city') else None
+    short_code = await generate_short_code(db, city_name)
 
     new_build = Build(
         short_code=short_code,

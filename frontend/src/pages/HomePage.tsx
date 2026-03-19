@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { Plus, Search, Filter, Link2, Cpu, Zap, FileText, Users, MessageCircle, MapPin, SlidersHorizontal, X, ChevronDown } from 'lucide-react'
 import BuildCard from '../components/BuildCard'
+import CitySelect from '../components/CitySelect'
 import { getBuilds, getPublicSettings, getPublicBuilds } from '../api/builds'
 import { getWorkshops } from '../api/admin'
 import { useAuth } from '../hooks/useAuth'
@@ -177,12 +178,13 @@ const HomePage: React.FC = () => {
           {showAdvanced && (
             <div className="grid grid-cols-2 sm:grid-cols-[1fr_1fr_1fr_auto] gap-2 pt-2 border-t border-[#2A2A2A]">
               {/* City */}
-              <div className="relative col-span-1">
-                <MapPin size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#555]" />
-                <input type="text" value={filters.city || ''}
-                  onChange={e => setFilters(f => ({ ...f, city: e.target.value || undefined, page: 1 }))}
+              <div className="col-span-1">
+                <CitySelect
+                  value={filters.city || ''}
+                  onChange={(v) => setFilters(f => ({ ...f, city: v || undefined, page: 1 }))}
                   placeholder="Город"
-                  className="input-field text-sm pl-8 w-full" />
+                  withBuilds
+                />
               </div>
 
               {/* Price range */}

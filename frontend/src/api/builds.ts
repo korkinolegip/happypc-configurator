@@ -129,3 +129,14 @@ export const parseProductUrl = async (url: string): Promise<ParsedUrlResult> => 
   const response = await client.post<ParsedUrlResult>('/api/public/parse-url', { url })
   return response.data
 }
+
+export interface CityItem {
+  name: string
+  code?: string
+}
+
+export const getCities = async (withBuilds = false): Promise<CityItem[]> => {
+  const params = withBuilds ? { with_builds: 'true' } : {}
+  const response = await client.get<CityItem[]>('/api/public/cities', { params })
+  return response.data
+}

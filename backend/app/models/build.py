@@ -15,7 +15,7 @@ class Build(Base):
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
     )
-    short_code: Mapped[str] = mapped_column(String(6), unique=True, nullable=False, index=True)
+    short_code: Mapped[str] = mapped_column(String(16), unique=True, nullable=False, index=True)
     title: Mapped[str] = mapped_column(String(255), nullable=False)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
     author_id: Mapped[uuid.UUID] = mapped_column(

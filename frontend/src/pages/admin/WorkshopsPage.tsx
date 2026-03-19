@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
 import { Plus, Edit2, Trash2, X, Building2, MapPin, Users, HardDrive } from 'lucide-react'
 import toast from 'react-hot-toast'
+import CitySelect from '../../components/CitySelect'
 import {
   getWorkshops,
   createWorkshop,
@@ -25,6 +26,8 @@ const WorkshopModal: React.FC<WorkshopModalProps> = ({ workshop, onClose }) => {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
+    watch,
+    setValue,
   } = useForm<WorkshopData>({
     defaultValues: workshop
       ? { name: workshop.name, city: workshop.city }
@@ -80,11 +83,12 @@ const WorkshopModal: React.FC<WorkshopModalProps> = ({ workshop, onClose }) => {
             <label className="block text-sm text-[#AAAAAA] mb-1.5">
               Город *
             </label>
-            <input
-              {...register('city', { required: 'Введите город' })}
-              className="input-field"
-              placeholder="Москва"
+            <CitySelect
+              value={watch('city') || ''}
+              onChange={(v) => setValue('city', v, { shouldDirty: true, shouldValidate: true })}
+              placeholder="Выберите город"
             />
+            <input type="hidden" {...register('city', { required: 'Выберите город' })} />
             {errors.city && (
               <p className="text-red-400 text-xs mt-1">{errors.city.message}</p>
             )}

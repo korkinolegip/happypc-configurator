@@ -11,6 +11,7 @@ import { useAuth } from '../hooks/useAuth'
 import { updateProfile, changePassword } from '../api/auth'
 import { getMyBuilds, deleteBuild } from '../api/builds'
 import BuildCard from '../components/BuildCard'
+import CitySelect from '../components/CitySelect'
 
 interface ProfileFormValues {
   name: string
@@ -39,6 +40,8 @@ const ProfilePage: React.FC = () => {
     register,
     handleSubmit,
     formState: { errors, isSubmitting, isDirty },
+    watch,
+    setValue,
   } = useForm<ProfileFormValues>({
     defaultValues: {
       name: user?.name || '',
@@ -266,10 +269,10 @@ const ProfilePage: React.FC = () => {
               <label className="block text-sm text-[#AAAAAA] mb-1.5 flex items-center gap-1">
                 <MapPin size={12} /> Город
               </label>
-              <input
-                {...register('city')}
-                className="input-field"
-                placeholder="Москва"
+              <CitySelect
+                value={watch('city') || ''}
+                onChange={(v) => setValue('city', v, { shouldDirty: true })}
+                placeholder="Выберите город"
               />
             </div>
           </div>

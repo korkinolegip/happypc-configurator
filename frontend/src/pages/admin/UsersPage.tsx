@@ -16,6 +16,7 @@ import {
 } from '../../api/admin'
 import type { CreateUserData, UpdateUserData } from '../../api/admin'
 import type { User } from '../../types'
+import CitySelect from '../../components/CitySelect'
 
 const ROLES = [
   { value: 'user', label: 'Пользователь' },
@@ -42,7 +43,7 @@ interface CreateModalProps {
 
 const CreateUserModal: React.FC<CreateModalProps> = ({ onClose, workshops }) => {
   const queryClient = useQueryClient()
-  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<CreateUserData>()
+  const { register, handleSubmit, formState: { errors, isSubmitting }, watch, setValue } = useForm<CreateUserData>()
 
   const onSubmit = async (data: CreateUserData) => {
     try {
@@ -96,7 +97,11 @@ const CreateUserModal: React.FC<CreateModalProps> = ({ onClose, workshops }) => 
             </div>
             <div>
               <label className="block text-sm text-[#AAAAAA] mb-1.5">Город</label>
-              <input {...register('city')} className="input-field" placeholder="Москва" />
+              <CitySelect
+                value={watch('city') || ''}
+                onChange={(v) => setValue('city', v, { shouldDirty: true })}
+                placeholder="Выберите город"
+              />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
@@ -144,7 +149,7 @@ interface EditModalProps {
 
 const EditUserModal: React.FC<EditModalProps> = ({ user, onClose, workshops }) => {
   const queryClient = useQueryClient()
-  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<UpdateUserData>({
+  const { register, handleSubmit, formState: { errors, isSubmitting }, watch, setValue } = useForm<UpdateUserData>({
     defaultValues: {
       name: user.name,
       email: user.email || '',
@@ -197,7 +202,11 @@ const EditUserModal: React.FC<EditModalProps> = ({ user, onClose, workshops }) =
             </div>
             <div>
               <label className="block text-sm text-[#AAAAAA] mb-1.5">Город</label>
-              <input {...register('city')} className="input-field" />
+              <CitySelect
+                value={watch('city') as string || ''}
+                onChange={(v) => setValue('city', v, { shouldDirty: true })}
+                placeholder="Выберите город"
+              />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
