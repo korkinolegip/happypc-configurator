@@ -10,8 +10,7 @@ from app.database import engine
 from app import models
 from app.database import AsyncSessionLocal
 from app.models.settings import AppSettings
-from app.models.user import User
-from app.models.workshop import Workshop
+from app.models.user import User, Workshop
 
 app = FastAPI(
     title="HappyPC Configurator",
