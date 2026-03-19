@@ -1,4 +1,4 @@
-FROM python:3.11-slim
+FROM python:3.11-slim-bookworm
 
 # WeasyPrint dependencies (for PDF generation)
 RUN apt-get update && apt-get install -y \
@@ -12,6 +12,9 @@ WORKDIR /app
 
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
+
+# Install Playwright Chromium browser for anti-bot scraping (Avito, Ozon, etc.)
+RUN playwright install-deps chromium && playwright install chromium
 
 COPY . .
 
