@@ -142,14 +142,22 @@ const HomePage: React.FC = () => {
 
         {/* Filters */}
         <div className="bg-[#111111] border border-[#2A2A2A] rounded-lg p-3 mb-4 space-y-2">
-          {/* Row 1: Search + Sort */}
-          <div className="flex flex-col sm:flex-row gap-2">
-            <div className="relative flex-1">
+          {/* Row 1: Sort (left) + Search (center) + Filters button (right) */}
+          <div className="flex flex-col sm:flex-row gap-2 items-stretch">
+            <select value={filters.sort || 'newest'}
+              onChange={e => setFilters(f => ({ ...f, sort: e.target.value as BuildFilters['sort'], page: 1 }))}
+              className="select-field text-sm w-full sm:w-44 shrink-0">
+              <option value="newest">Сначала новые</option>
+              <option value="oldest">Сначала старые</option>
+              <option value="price_asc">Цена ↑</option>
+              <option value="price_desc">Цена ↓</option>
+            </select>
+            <div className="relative flex-1 min-w-0">
               <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#555]" />
               <input type="text" value={searchInput}
                 onChange={e => handleSearchChange(e.target.value)}
-                placeholder="Поиск: название, мастер, комплектующие, цена, дата..."
-                className="input-field pl-8 pr-8 text-sm" />
+                placeholder="Название, мастер, комплектующие, цена..."
+                className="input-field pl-8 pr-8 text-sm w-full" />
               {searchInput && (
                 <button onClick={() => handleSearchChange('')}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-[#555] hover:text-white">
@@ -157,68 +165,57 @@ const HomePage: React.FC = () => {
                 </button>
               )}
             </div>
-            <select value={filters.sort || 'newest'}
-              onChange={e => setFilters(f => ({ ...f, sort: e.target.value as BuildFilters['sort'], page: 1 }))}
-              className="select-field text-sm min-w-[160px]">
-              <option value="newest">Сначала новые</option>
-              <option value="oldest">Сначала старые</option>
-              <option value="price_asc">Цена ↑</option>
-              <option value="price_desc">Цена ↓</option>
-            </select>
             <button onClick={() => setShowAdvanced(!showAdvanced)}
-              className={`flex items-center gap-1.5 px-3 py-2 rounded text-sm transition-colors shrink-0 ${showAdvanced ? 'bg-[#FF6B00] text-white' : 'bg-[#2A2A2A] text-[#AAAAAA] hover:text-white'}`}>
-              <SlidersHorizontal size={14} />Фильтры
+              className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded text-sm transition-colors shrink-0 w-full sm:w-auto ${showAdvanced ? 'bg-[#FF6B00] text-white' : 'bg-[#2A2A2A] text-[#AAAAAA] hover:text-white'}`}>
+              <SlidersHorizontal size={14} />
+              <span>Фильтры</span>
               {hasActiveFilters && <span className="w-1.5 h-1.5 bg-[#FF6B00] rounded-full" />}
             </button>
           </div>
 
           {/* Row 2: Advanced filters (collapsible) */}
           {showAdvanced && (
-            <div className="flex flex-col sm:flex-row gap-2 pt-2 border-t border-[#2A2A2A]">
+            <div className="grid grid-cols-2 sm:grid-cols-[1fr_1fr_1fr_auto] gap-2 pt-2 border-t border-[#2A2A2A]">
               {/* City */}
-              <div className="flex items-center gap-1.5 flex-1">
-                <MapPin size={14} className="text-[#555] shrink-0" />
+              <div className="relative col-span-1">
+                <MapPin size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#555]" />
                 <input type="text" value={filters.city || ''}
                   onChange={e => setFilters(f => ({ ...f, city: e.target.value || undefined, page: 1 }))}
-                  placeholder="Город..."
-                  className="input-field text-sm" />
+                  placeholder="Город"
+                  className="input-field text-sm pl-8 w-full" />
               </div>
 
               {/* Price range */}
-              <div className="flex items-center gap-1.5">
-                <span className="text-[#555] text-xs shrink-0">₽</span>
+              <div className="flex items-center gap-1.5 col-span-1">
                 <input type="number" value={priceFrom}
                   onChange={e => setPriceFrom(e.target.value)}
                   onBlur={applyPriceFilter}
                   onKeyDown={e => e.key === 'Enter' && applyPriceFilter()}
-                  placeholder="от"
-                  className="input-field text-sm w-24" />
-                <span className="text-[#555] text-xs">—</span>
+                  placeholder="Цена от"
+                  className="input-field text-sm w-full" />
+                <span className="text-[#444] text-xs shrink-0">—</span>
                 <input type="number" value={priceTo}
                   onChange={e => setPriceTo(e.target.value)}
                   onBlur={applyPriceFilter}
                   onKeyDown={e => e.key === 'Enter' && applyPriceFilter()}
                   placeholder="до"
-                  className="input-field text-sm w-24" />
+                  className="input-field text-sm w-full" />
               </div>
 
               {/* Workshop */}
-              {workshops && workshops.length > 0 && (
-                <select value={filters.workshop_id || ''}
-                  onChange={e => setFilters(f => ({ ...f, workshop_id: e.target.value || undefined, page: 1 }))}
-                  className="select-field text-sm min-w-[150px]">
-                  <option value="">Все мастерские</option>
-                  {workshops.map(ws => <option key={ws.id} value={ws.id}>{ws.name} ({ws.city})</option>)}
-                </select>
-              )}
+              <select value={filters.workshop_id || ''}
+                onChange={e => setFilters(f => ({ ...f, workshop_id: e.target.value || undefined, page: 1 }))}
+                className="select-field text-sm w-full col-span-1">
+                <option value="">Все мастерские</option>
+                {workshops?.map(ws => <option key={ws.id} value={ws.id}>{ws.name}{ws.city ? ` · ${ws.city}` : ''}</option>)}
+              </select>
 
               {/* Clear */}
-              {hasActiveFilters && (
-                <button onClick={clearFilters}
-                  className="text-[#FF6B00] text-sm hover:underline shrink-0">
-                  Сбросить
-                </button>
-              )}
+              <button onClick={clearFilters}
+                className={`text-sm px-3 py-2 rounded transition-colors col-span-2 sm:col-span-1 ${hasActiveFilters ? 'text-[#FF6B00] hover:bg-[#FF6B00]/10' : 'text-[#444] cursor-default'}`}
+                disabled={!hasActiveFilters}>
+                Сбросить
+              </button>
             </div>
           )}
         </div>
