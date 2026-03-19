@@ -274,39 +274,96 @@ async def _fetch_dns(url: str) -> dict:
 # ─── Yandex Market ───────────────────────────────────────────────────────────
 
 async def _fetch_yandex_market(url: str) -> dict:
+    """YM: Apify scraper (primary) → ZenRows (fallback)."""
+    # 1) Try Apify YM scraper — reliable, bypasses SmartCaptcha
+    result = await _apify_yandex_market(url)
+    if result.get("name"):
+        return result
+
+    # 2) ZenRows fallback
     html = await _zenrows_fetch(url, wait="15000")
-    if not html:
-        return {"store": "yandex_market"}
-
-    ld = _extract_json_ld(html)
-    name = ld.get("name")
-    price = ld.get("price")
-
-    if not name:
-        name = _extract_h1(html)
-    if not name:
-        og = _extract_og_title(html)
-        if og:
-            name = re.sub(r"\s*[—–|]\s*(?:Яндекс|Yandex|купить).*$", "", og, flags=re.IGNORECASE).strip()
-
-    if not price:
-        # YM has price-current class
-        pm = re.search(r'price-current[^>]*>.*?(\d[\d\s]*\d)', html[:200000], re.DOTALL)
-        if pm:
-            price = _clean_price(pm.group(1))
+    if html:
+        ld = _extract_json_ld(html)
+        name = ld.get("name") or _extract_h1(html)
+        price = ld.get("price")
         if not price:
-            for pat in [r'"price":\{"value":(\d+)', r'"price":\s*(\d{3,7})']:
-                pm = re.search(pat, html)
-                if pm:
-                    price = _clean_price(pm.group(1))
-                    if price:
-                        break
+            pm = re.search(r'price-current[^>]*>.*?(\d[\d\s]*\d)', html[:200000], re.DOTALL)
+            if pm:
+                price = _clean_price(pm.group(1))
+        if name and not any(s in name.lower() for s in ["confirme", "captcha", "робот"]):
+            return {"name": name, "price": price, "store": "yandex_market"}
 
-    # Filter out clearly wrong titles (homepage redirects, captchas)
-    if name and any(s in name.lower() for s in ["confirme", "captcha", "робот", "bot"]):
-        name = None
+    return {"store": "yandex_market"}
 
-    return {"name": name, "price": price, "store": "yandex_market"} if name else {"store": "yandex_market"}
+
+async def _apify_yandex_market(url: str) -> dict:
+    """Fetch YM product via Apify zen-studio~yandex-market-scraper-parser."""
+    import asyncio
+    from app.config import settings
+    token = settings.APIFY_TOKEN
+    if not token:
+        return {}
+
+    # Extract search query from URL slug
+    m = re.search(r'/card/([^/]+)', url) or re.search(r'/product[/-]+([^/]+)', url)
+    if not m:
+        return {}
+    slug = m.group(1)
+    # Convert slug to human-readable query
+    query = slug.replace("-", " ").strip()
+    # Remove common suffixes
+    query = re.sub(r'\d{8,}$', '', query).strip()
+
+    try:
+        async with httpx.AsyncClient(timeout=30) as client:
+            # Start actor run
+            resp = await client.post(
+                "https://api.apify.com/v2/acts/zen-studio~yandex-market-scraper-parser/runs",
+                params={"token": token},
+                json={"query": query, "maxItems": 1},
+            )
+            if resp.status_code not in (200, 201):
+                return {}
+
+            run_data = resp.json().get("data", {})
+            run_id = run_data.get("id")
+            dataset_id = run_data.get("defaultDatasetId")
+            if not run_id:
+                return {}
+
+            # Poll for completion (max ~60s)
+            for _ in range(12):
+                await asyncio.sleep(5)
+                r = await client.get(
+                    f"https://api.apify.com/v2/actor-runs/{run_id}",
+                    params={"token": token},
+                )
+                status = r.json().get("data", {}).get("status")
+                if status in ("SUCCEEDED", "FAILED", "ABORTED", "TIMED-OUT"):
+                    break
+
+            if status != "SUCCEEDED" or not dataset_id:
+                return {}
+
+            # Get results
+            r = await client.get(
+                f"https://api.apify.com/v2/datasets/{dataset_id}/items",
+                params={"token": token},
+            )
+            items = r.json()
+            if not items:
+                return {}
+
+            item = items[0]
+            name = item.get("title") or item.get("modelName")
+            price = item.get("price") or item.get("currentPrice")
+            if price:
+                price = _clean_price(str(price))
+
+            return {"name": name, "price": price, "store": "yandex_market"} if name else {}
+
+    except Exception:
+        return {}
 
 
 # ─── Avito ───────────────────────────────────────────────────────────────────

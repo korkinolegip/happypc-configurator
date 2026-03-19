@@ -30,7 +30,8 @@ services:
       VK_CLIENT_SECRET: ""
       VK_REDIRECT_URI: http://localhost:3000/auth/vk/callback
       SCRAPER_PROXY: ""
-      ZENROWS_API_KEY: "8394de0fe03025032c02fa64a780d8a95b9c76e2"
+      ZENROWS_API_KEY: "${ZENROWS_API_KEY:-}"
+      APIFY_TOKEN: "${APIFY_TOKEN:-}"
     volumes:
       - ./backend:/app
       - uploads_data:/app/uploads

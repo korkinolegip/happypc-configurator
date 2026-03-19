@@ -36,3 +36,7 @@ Thumbs.db
 
 # Uploads (user data)
 backend/uploads/
+*.txt
+debug_*
+test_*
+test_pw.sh
