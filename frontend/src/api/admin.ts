@@ -116,7 +116,7 @@ export const createWorkshop = async (data: WorkshopData): Promise<Workshop> => {
 }
 
 export const updateWorkshop = async (id: string, data: WorkshopData): Promise<Workshop> => {
-  const response = await client.patch<Workshop>(`/api/admin/workshops/${id}`, data)
+  const response = await client.put<Workshop>(`/api/admin/workshops/${id}`, data)
   return response.data
 }
 
