@@ -1,0 +1,79 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    background-color: #000000;
+    color: #ffffff;
+    font-family: Inter, system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  input[type='number']::-webkit-inner-spin-button,
+  input[type='number']::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  input[type='number'] {
+    -moz-appearance: textfield;
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: #111111;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #2A2A2A;
+    border-radius: 3px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #3A3A3A;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-[#FF6B00] hover:bg-[#E05A00] text-white font-medium px-4 py-2 rounded transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-secondary {
+    @apply bg-[#2A2A2A] hover:bg-[#3A3A3A] text-white font-medium px-4 py-2 rounded transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-danger {
+    @apply bg-red-700 hover:bg-red-800 text-white font-medium px-4 py-2 rounded transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .card {
+    @apply bg-[#111111] border border-[#2A2A2A] rounded-lg p-4;
+  }
+
+  .input-field {
+    @apply bg-[#111111] border border-[#2A2A2A] text-white rounded px-3 py-2 focus:border-[#FF6B00] outline-none transition-colors duration-150 w-full placeholder-[#555555];
+  }
+
+  .select-field {
+    @apply bg-[#111111] border border-[#2A2A2A] text-white rounded px-3 py-2 focus:border-[#FF6B00] outline-none transition-colors duration-150 w-full;
+  }
+
+  .table-header {
+    @apply bg-[#1A1A1A] text-[#AAAAAA] text-xs uppercase tracking-wider px-4 py-3;
+  }
+
+  .table-cell {
+    @apply px-4 py-3 border-b border-[#2A2A2A] text-sm;
+  }
+}

@@ -1,0 +1,118 @@
+import os
+
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from sqlalchemy import select
+
+from app.api import auth, builds, public, profile, admin
+from app.database import engine
+from app import models
+from app.database import AsyncSessionLocal
+from app.models.settings import AppSettings
+
+app = FastAPI(
+    title="HappyPC Configurator",
+    description="API для конфигуратора компьютерных сборок HappyPC",
+    version="1.0.0",
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Mount static and upload directories (create them if missing)
+os.makedirs("/app/static", exist_ok=True)
+os.makedirs("/app/uploads/avatars", exist_ok=True)
+
+app.mount("/static", StaticFiles(directory="/app/static"), name="static")
+app.mount("/uploads", StaticFiles(directory="/app/uploads"), name="uploads")
+
+app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
+app.include_router(builds.router, prefix="/api/builds", tags=["builds"])
+app.include_router(public.router, prefix="/api/public", tags=["public"])
+app.include_router(profile.router, prefix="/api/profile", tags=["profile"])
+app.include_router(admin.router, prefix="/api/admin", tags=["admin"])
+
+
+DEFAULT_SETTINGS = [
+    {
+        "key": "registration_enabled",
+        "value": "false",
+        "description": "Разрешить публичную регистрацию новых пользователей",
+    },
+    {
+        "key": "public_feed_enabled",
+        "value": "true",
+        "description": "Показывать публичную ленту сборок",
+    },
+    {
+        "key": "default_labor_percent",
+        "value": "7",
+        "description": "Процент стоимости работы по умолчанию",
+    },
+    {
+        "key": "company_name",
+        "value": "HappyPC",
+        "description": "Название компании для отображения в интерфейсе",
+    },
+    {
+        "key": "company_city",
+        "value": "Москва",
+        "description": "Город компании",
+    },
+    {
+        "key": "company_phone",
+        "value": "",
+        "description": "Телефон компании",
+    },
+    {
+        "key": "company_email",
+        "value": "",
+        "description": "Email компании",
+    },
+    {
+        "key": "pdf_footer_text",
+        "value": "HappyPC — профессиональная сборка компьютеров",
+        "description": "Текст в подвале PDF-документа",
+    },
+]
+
+
+async def init_default_settings():
+    """Create default app_settings rows if they do not exist."""
+    async with AsyncSessionLocal() as session:
+        try:
+            for setting_data in DEFAULT_SETTINGS:
+                result = await session.execute(
+                    select(AppSettings).where(AppSettings.key == setting_data["key"])
+                )
+                existing = result.scalar_one_or_none()
+                if not existing:
+                    setting = AppSettings(
+                        key=setting_data["key"],
+                        value=setting_data["value"],
+                        description=setting_data["description"],
+                    )
+                    session.add(setting)
+            await session.commit()
+        except Exception as e:
+            await session.rollback()
+            print(f"Warning: Could not initialize default settings: {e}")
+
+
+@app.on_event("startup")
+async def startup():
+    """Initialize database tables and default settings on application startup."""
+    async with engine.begin() as conn:
+        await conn.run_sync(models.Base.metadata.create_all)
+    await init_default_settings()
+
+
+@app.get("/api/health")
+async def health_check():
+    return {"status": "ok", "service": "HappyPC Configurator API"}

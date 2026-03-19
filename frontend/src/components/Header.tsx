@@ -1,0 +1,182 @@
+import React, { useState, useRef, useEffect } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import { Menu, X, ChevronDown, User, LogOut, Shield, Plus, Cpu } from 'lucide-react'
+import { useAuth } from '../hooks/useAuth'
+import toast from 'react-hot-toast'
+
+const Header: React.FC = () => {
+  const { user, isAuthenticated, logout } = useAuth()
+  const navigate = useNavigate()
+  const [mobileOpen, setMobileOpen] = useState(false)
+  const [dropdownOpen, setDropdownOpen] = useState(false)
+  const dropdownRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setDropdownOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [])
+
+  const handleLogout = async () => {
+    await logout()
+    setDropdownOpen(false)
+    navigate('/login')
+    toast.success('Вы вышли из системы')
+  }
+
+  const isAdmin = user?.role === 'admin' || user?.role === 'superadmin'
+
+  return (
+    <header className="bg-[#111111] border-b border-[#2A2A2A] sticky top-0 z-40">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-16">
+          {/* Logo */}
+          <Link to="/" className="flex items-center gap-2 shrink-0">
+            <img
+              src="/static/logo-white.png"
+              alt="HappyPC"
+              className="h-8 w-auto"
+              onError={(e) => {
+                const target = e.currentTarget
+                target.style.display = 'none'
+                const next = target.nextElementSibling as HTMLElement
+                if (next) next.style.display = 'flex'
+              }}
+            />
+            <span className="hidden items-center gap-1.5 text-xl font-bold">
+              <Cpu className="text-[#FF6B00]" size={22} />
+              <span className="text-white">Happy</span>
+              <span className="text-[#FF6B00]">PC</span>
+            </span>
+          </Link>
+
+          {/* Nav */}
+          <nav className="flex items-center gap-2 sm:gap-6">
+            <Link
+              to="/"
+              className="hidden sm:block text-[#AAAAAA] hover:text-white transition-colors text-sm font-medium"
+            >
+              Сборки
+            </Link>
+            {isAuthenticated && (
+              <Link
+                to="/builds/create"
+                className="flex items-center gap-1.5 bg-[#FF6B00] hover:bg-[#E05A00] text-white px-3 py-1.5 rounded text-sm font-medium transition-colors"
+              >
+                <Plus size={15} />
+                Создать
+              </Link>
+            )}
+          </nav>
+
+          {/* Right side */}
+          <div className="flex items-center gap-3">
+            {isAuthenticated && user ? (
+              <div className="relative" ref={dropdownRef}>
+                <button
+                  onClick={() => setDropdownOpen((v) => !v)}
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-[#2A2A2A] transition-colors"
+                >
+                  {user.avatar_url ? (
+                    <img
+                      src={user.avatar_url}
+                      alt={user.name}
+                      className="w-7 h-7 rounded-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-7 h-7 rounded-full bg-[#FF6B00] flex items-center justify-center text-white text-xs font-bold">
+                      {user.name.charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                  <span className="text-sm text-white hidden sm:block max-w-[120px] truncate">
+                    {user.name}
+                  </span>
+                  <ChevronDown
+                    size={14}
+                    className={`text-[#AAAAAA] transition-transform ${dropdownOpen ? 'rotate-180' : ''}`}
+                  />
+                </button>
+
+                {dropdownOpen && (
+                  <div className="absolute right-0 mt-2 w-48 bg-[#111111] border border-[#2A2A2A] rounded-lg shadow-xl py-1 z-50">
+                    <Link
+                      to="/profile"
+                      onClick={() => setDropdownOpen(false)}
+                      className="flex items-center gap-2 px-4 py-2.5 text-sm text-white hover:bg-[#2A2A2A] transition-colors"
+                    >
+                      <User size={15} className="text-[#AAAAAA]" />
+                      Профиль
+                    </Link>
+                    {isAdmin && (
+                      <Link
+                        to="/admin"
+                        onClick={() => setDropdownOpen(false)}
+                        className="flex items-center gap-2 px-4 py-2.5 text-sm text-white hover:bg-[#2A2A2A] transition-colors"
+                      >
+                        <Shield size={15} className="text-[#FF6B00]" />
+                        Администрирование
+                      </Link>
+                    )}
+                    <div className="border-t border-[#2A2A2A] my-1" />
+                    <button
+                      onClick={handleLogout}
+                      className="flex items-center gap-2 px-4 py-2.5 text-sm text-red-400 hover:bg-[#2A2A2A] transition-colors w-full text-left"
+                    >
+                      <LogOut size={15} />
+                      Выйти
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <Link
+                to="/login"
+                className="bg-[#FF6B00] hover:bg-[#E05A00] text-white font-medium px-4 py-2 rounded text-sm transition-colors"
+              >
+                Войти
+              </Link>
+            )}
+
+            {/* Mobile menu button */}
+            <button
+              className="md:hidden p-2 text-[#AAAAAA] hover:text-white transition-colors"
+              onClick={() => setMobileOpen((v) => !v)}
+              aria-label="Меню"
+            >
+              {mobileOpen ? <X size={20} /> : <Menu size={20} />}
+            </button>
+          </div>
+        </div>
+
+        {/* Mobile Nav */}
+        {mobileOpen && (
+          <div className="md:hidden border-t border-[#2A2A2A] py-3 space-y-1">
+            <Link
+              to="/"
+              onClick={() => setMobileOpen(false)}
+              className="block px-3 py-2 text-sm text-[#AAAAAA] hover:text-white hover:bg-[#2A2A2A] rounded transition-colors"
+            >
+              Сборки
+            </Link>
+            {isAuthenticated && (
+              <Link
+                to="/builds/create"
+                onClick={() => setMobileOpen(false)}
+                className="flex items-center gap-1.5 px-3 py-2 text-sm text-[#AAAAAA] hover:text-white hover:bg-[#2A2A2A] rounded transition-colors"
+              >
+                <Plus size={15} />
+                Создать сборку
+              </Link>
+            )}
+          </div>
+        )}
+      </div>
+    </header>
+  )
+}
+
+export default Header

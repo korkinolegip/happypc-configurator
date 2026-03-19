@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }} — HappyPC</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;
+            font-size: 12px;
+            color: #111111;
+            background: #ffffff;
+            line-height: 1.5;
+        }
+
+        /* ---- HEADER ---- */
+        .header {
+            background: #111111;
+            color: #ffffff;
+            padding: 20px 30px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .header-logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .header-logo img {
+            height: 40px;
+            width: auto;
+        }
+
+        .header-logo-text {
+            font-size: 22px;
+            font-weight: 700;
+            color: #FF6B00;
+            letter-spacing: 1px;
+        }
+
+        .header-meta {
+            text-align: right;
+            font-size: 10px;
+            color: #aaaaaa;
+        }
+
+        .header-meta .build-code {
+            font-size: 13px;
+            font-weight: 700;
+            color: #FF6B00;
+            letter-spacing: 2px;
+        }
+
+        /* ---- CONTENT ---- */
+        .content {
+            padding: 24px 30px;
+        }
+
+        /* ---- BUILD INFO ---- */
+        .build-info {
+            margin-bottom: 20px;
+            border-bottom: 2px solid #FF6B00;
+            padding-bottom: 16px;
+        }
+
+        .build-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #111111;
+            margin-bottom: 6px;
+        }
+
+        .build-description {
+            font-size: 11px;
+            color: #555555;
+            margin-bottom: 10px;
+        }
+
+        .build-meta-row {
+            display: flex;
+            gap: 24px;
+            font-size: 11px;
+            color: #444444;
+        }
+
+        .build-meta-row span strong {
+            color: #111111;
+        }
+
+        /* ---- COMPONENTS TABLE ---- */
+        .section-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: #111111;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+            margin-top: 20px;
+        }
+
+        table.components {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 11px;
+        }
+
+        table.components thead tr {
+            background: #111111;
+            color: #ffffff;
+        }
+
+        table.components thead th {
+            padding: 8px 10px;
+            text-align: left;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        table.components thead th.price-col {
+            text-align: right;
+            width: 110px;
+        }
+
+        table.components tbody tr:nth-child(odd) {
+            background: #f7f7f7;
+        }
+
+        table.components tbody tr:nth-child(even) {
+            background: #ffffff;
+        }
+
+        table.components tbody tr:hover {
+            background: #f0f0f0;
+        }
+
+        table.components tbody td {
+            padding: 7px 10px;
+            vertical-align: top;
+            border-bottom: 1px solid #e8e8e8;
+        }
+
+        table.components tbody td.category-col {
+            width: 160px;
+            font-weight: 500;
+            color: #444444;
+            white-space: nowrap;
+        }
+
+        table.components tbody td.name-col {
+            color: #111111;
+        }
+
+        table.components tbody td.name-col .item-link {
+            display: block;
+            font-size: 9px;
+            color: #FF6B00;
+            text-decoration: none;
+            margin-top: 2px;
+            word-break: break-all;
+        }
+
+        table.components tbody td.price-col {
+            text-align: right;
+            font-weight: 600;
+            color: #111111;
+            white-space: nowrap;
+        }
+
+        table.components tfoot tr {
+            background: #f0f0f0;
+        }
+
+        table.components tfoot td {
+            padding: 8px 10px;
+            font-weight: 700;
+            font-size: 12px;
+        }
+
+        /* ---- PRICE BLOCK ---- */
+        .price-block {
+            margin-top: 24px;
+            page-break-inside: avoid;
+        }
+
+        .price-card {
+            background: #f7f7f7;
+            border: 1px solid #dddddd;
+            border-radius: 6px;
+            padding: 16px 20px;
+            max-width: 380px;
+            margin-left: auto;
+        }
+
+        .price-card-title {
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #555555;
+            margin-bottom: 12px;
+        }
+
+        .price-line {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 5px 0;
+            border-bottom: 1px dashed #dddddd;
+            font-size: 11px;
+        }
+
+        .price-line:last-child {
+            border-bottom: none;
+        }
+
+        .price-line .label {
+            color: #444444;
+        }
+
+        .price-line .value {
+            font-weight: 600;
+            color: #111111;
+        }
+
+        .price-line.total-line {
+            margin-top: 8px;
+            padding-top: 10px;
+            border-top: 2px solid #111111;
+            font-size: 13px;
+        }
+
+        .price-line.total-line .label {
+            font-weight: 700;
+            color: #111111;
+        }
+
+        .price-line.total-line .value {
+            font-size: 15px;
+            color: #FF6B00;
+            font-weight: 700;
+        }
+
+        .price-line.turnkey-line .value {
+            color: #16a085;
+            font-weight: 700;
+        }
+
+        /* ---- FOOTER ---- */
+        .footer {
+            margin-top: 30px;
+            padding: 14px 30px;
+            background: #111111;
+            color: #aaaaaa;
+            font-size: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .footer .company-name {
+            font-weight: 700;
+            color: #FF6B00;
+            font-size: 12px;
+        }
+
+        .footer .workshop-info {
+            text-align: right;
+        }
+
+        @page {
+            size: A4;
+            margin: 0;
+        }
+
+        @media print {
+            body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- HEADER -->
+    <div class="header">
+        <div class="header-logo">
+            {% if logo_path %}
+                <img src="file://{{ logo_path }}" alt="HappyPC">
+            {% else %}
+                <span class="header-logo-text">HappyPC</span>
+            {% endif %}
+        </div>
+        <div class="header-meta">
+            <div class="build-code">#{{ short_code }}</div>
+            <div>Сформировано: {{ generated_at.strftime('%d.%m.%Y %H:%M') }}</div>
+            {% if workshop_name %}
+            <div>{{ workshop_name }}</div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- CONTENT -->
+    <div class="content">
+
+        <!-- BUILD INFO -->
+        <div class="build-info">
+            <div class="build-title">{{ title }}</div>
+            {% if description %}
+            <div class="build-description">{{ description }}</div>
+            {% endif %}
+            <div class="build-meta-row">
+                <span><strong>Мастер:</strong> {{ author_name }}</span>
+                {% if workshop_name %}
+                <span><strong>Мастерская:</strong> {{ workshop_name }}</span>
+                {% endif %}
+                <span><strong>Дата сборки:</strong> {{ created_at.strftime('%d.%m.%Y') }}</span>
+            </div>
+        </div>
+
+        <!-- COMPONENTS TABLE -->
+        {% if items %}
+        <div class="section-title">Комплектующие</div>
+        <table class="components">
+            <thead>
+                <tr>
+                    <th>Категория</th>
+                    <th>Компонент</th>
+                    <th class="price-col">Цена</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in items %}
+                <tr>
+                    <td class="category-col">
+                        {{ category_icons.get(item.category, '📦') }} {{ item.category }}
+                    </td>
+                    <td class="name-col">
+                        {{ item.name }}
+                        {% if item.url %}
+                        <a class="item-link" href="{{ item.url }}">{{ item.url }}</a>
+                        {% endif %}
+                    </td>
+                    <td class="price-col">
+                        {% if item.price > 0 %}
+                            {{ item.price | format_price }}
+                        {% else %}
+                            —
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="2" style="color:#555555; font-size:11px;">Итого комплектующих</td>
+                    <td class="price-col" style="text-align:right;">{{ hardware_total | format_price }}</td>
+                </tr>
+            </tfoot>
+        </table>
+        {% endif %}
+
+        <!-- PRICE BLOCK -->
+        <div class="price-block">
+            <div class="price-card">
+                <div class="price-card-title">Итоговая стоимость</div>
+
+                <div class="price-line">
+                    <span class="label">Стоимость железа:</span>
+                    <span class="value">{{ hardware_total | format_price }}</span>
+                </div>
+
+                <div class="price-line">
+                    <span class="label">Стоимость работы ({{ labor_percent | int }}%):</span>
+                    <span class="value">{{ labor_cost | format_price }}</span>
+                </div>
+
+                <div class="price-line total-line">
+                    <span class="label">Итого (работа отдельно):</span>
+                    <span class="value">{{ total_with_labor | format_price }}</span>
+                </div>
+
+                {% if total_turnkey is not none %}
+                <div class="price-line turnkey-line" style="margin-top:6px; padding-top:6px; border-top: 1px dashed #dddddd;">
+                    <span class="label" style="color:#16a085; font-weight:600;">Цена «под ключ»:</span>
+                    <span class="value">{{ total_turnkey | format_price }}</span>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+    </div>
+
+    <!-- FOOTER -->
+    <div class="footer">
+        <div>
+            <div class="company-name">HappyPC</div>
+            <div>Конфигуратор компьютерных сборок</div>
+        </div>
+        <div class="workshop-info">
+            {% if workshop_name %}
+            <div>{{ workshop_name }}</div>
+            {% endif %}
+            <div>Мастер: {{ author_name }}</div>
+        </div>
+    </div>
+
+</body>
+</html>
