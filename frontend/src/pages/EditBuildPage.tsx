@@ -74,15 +74,15 @@ const EditBuildPage: React.FC = () => {
 
   if (error || !build) return (
     <div className="text-center py-20">
-      <p className="text-[#AAAAAA]">Сборка не найдена</p>
+      <p className="text-th-text-2">Сборка не найдена</p>
     </div>
   )
 
   return (
     <div className="max-w-6xl mx-auto">
       <div className="mb-5">
-        <h1 className="text-2xl font-bold text-white">Редактировать сборку</h1>
-        <p className="text-[#AAAAAA] text-sm mt-1">{build.title}</p>
+        <h1 className="text-2xl font-bold text-th-text">Редактировать сборку</h1>
+        <p className="text-th-text-2 text-sm mt-1">{build.title}</p>
       </div>
       <BuildForm initialData={build} onSubmit={handleSubmit} isSubmitting={isSubmitting} submitLabel="Сохранить изменения" />
     </div>

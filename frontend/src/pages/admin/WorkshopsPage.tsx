@@ -53,21 +53,21 @@ const WorkshopModal: React.FC<WorkshopModalProps> = ({ workshop, onClose }) => {
 
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-      <div className="bg-[#111111] border border-[#2A2A2A] rounded-lg w-full max-w-md">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-[#2A2A2A]">
-          <h2 className="text-white font-semibold">
+      <div className="bg-th-surface border border-th-border rounded-lg w-full max-w-md">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-th-border">
+          <h2 className="text-th-text font-semibold">
             {isEdit ? 'Редактировать мастерскую' : 'Создать мастерскую'}
           </h2>
           <button
             onClick={onClose}
-            className="text-[#AAAAAA] hover:text-white transition-colors"
+            className="text-th-text-2 hover:text-th-text transition-colors"
           >
             <X size={18} />
           </button>
         </div>
         <form onSubmit={handleSubmit(onSubmit)} className="p-5 space-y-4">
           <div>
-            <label className="block text-sm text-[#AAAAAA] mb-1.5">
+            <label className="block text-sm text-th-text-2 mb-1.5">
               Название *
             </label>
             <input
@@ -80,7 +80,7 @@ const WorkshopModal: React.FC<WorkshopModalProps> = ({ workshop, onClose }) => {
             )}
           </div>
           <div>
-            <label className="block text-sm text-[#AAAAAA] mb-1.5">
+            <label className="block text-sm text-th-text-2 mb-1.5">
               Город *
             </label>
             <CitySelect
@@ -154,8 +154,8 @@ const WorkshopsPage: React.FC = () => {
     <div className="space-y-5">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white">Мастерские</h1>
-          <p className="text-[#AAAAAA] text-sm mt-1">
+          <h1 className="text-2xl font-bold text-th-text">Мастерские</h1>
+          <p className="text-th-text-2 text-sm mt-1">
             {workshops ? `${workshops.length} мастерских` : 'Загрузка...'}
           </p>
         </div>
@@ -173,7 +173,7 @@ const WorkshopsPage: React.FC = () => {
           {Array.from({ length: 3 }).map((_, i) => (
             <div
               key={i}
-              className="bg-[#111111] border border-[#2A2A2A] rounded-lg p-5 animate-pulse h-36"
+              className="bg-th-surface border border-th-border rounded-lg p-5 animate-pulse h-36"
             />
           ))}
         </div>
@@ -182,17 +182,17 @@ const WorkshopsPage: React.FC = () => {
           {workshops.map((ws) => (
             <div
               key={ws.id}
-              className="bg-[#111111] border border-[#2A2A2A] rounded-lg p-5 hover:border-[#FF6B00]/50 transition-colors"
+              className="bg-th-surface border border-th-border rounded-lg p-5 hover:border-[#FF6B00]/50 transition-colors"
             >
               <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center gap-2">
                   <Building2 size={18} className="text-[#FF6B00] shrink-0" />
-                  <h3 className="text-white font-semibold text-sm">{ws.name}</h3>
+                  <h3 className="text-th-text font-semibold text-sm">{ws.name}</h3>
                 </div>
                 <div className="flex gap-1">
                   <button
                     onClick={() => setModalWorkshop(ws)}
-                    className="p-1.5 text-[#AAAAAA] hover:text-white hover:bg-[#2A2A2A] rounded transition-colors"
+                    className="p-1.5 text-th-text-2 hover:text-th-text hover:bg-th-surface-2 rounded transition-colors"
                     title="Редактировать"
                   >
                     <Edit2 size={13} />
@@ -200,7 +200,7 @@ const WorkshopsPage: React.FC = () => {
                   <button
                     onClick={() => handleDelete(ws)}
                     disabled={deletingId === ws.id}
-                    className="p-1.5 text-[#AAAAAA] hover:text-red-400 hover:bg-red-900/20 rounded transition-colors"
+                    className="p-1.5 text-th-text-2 hover:text-red-400 hover:bg-red-900/20 rounded transition-colors"
                     title="Удалить"
                   >
                     {deletingId === ws.id ? (
@@ -212,28 +212,28 @@ const WorkshopsPage: React.FC = () => {
                 </div>
               </div>
 
-              <div className="flex items-center gap-1.5 text-[#AAAAAA] text-xs mb-3">
+              <div className="flex items-center gap-1.5 text-th-text-2 text-xs mb-3">
                 <MapPin size={12} />
                 <span>{ws.city}</span>
               </div>
 
-              <div className="flex gap-4 pt-3 border-t border-[#2A2A2A]">
+              <div className="flex gap-4 pt-3 border-t border-th-border">
                 <div className="flex items-center gap-1.5">
-                  <Users size={12} className="text-[#AAAAAA]" />
-                  <span className="text-[#AAAAAA] text-xs">{ws.masters_count} мастеров</span>
+                  <Users size={12} className="text-th-text-2" />
+                  <span className="text-th-text-2 text-xs">{ws.masters_count} мастеров</span>
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <HardDrive size={12} className="text-[#AAAAAA]" />
-                  <span className="text-[#AAAAAA] text-xs">{ws.builds_count} сборок</span>
+                  <HardDrive size={12} className="text-th-text-2" />
+                  <span className="text-th-text-2 text-xs">{ws.builds_count} сборок</span>
                 </div>
               </div>
             </div>
           ))}
         </div>
       ) : (
-        <div className="bg-[#111111] border border-[#2A2A2A] rounded-lg p-10 text-center">
-          <Building2 size={40} className="text-[#2A2A2A] mx-auto mb-4" />
-          <p className="text-[#AAAAAA] mb-4">Мастерских пока нет</p>
+        <div className="bg-th-surface border border-th-border rounded-lg p-10 text-center">
+          <Building2 size={40} className="text-th-border mx-auto mb-4" />
+          <p className="text-th-text-2 mb-4">Мастерских пока нет</p>
           <button
             onClick={() => setModalWorkshop(null)}
             className="btn-primary"

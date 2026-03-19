@@ -59,8 +59,8 @@ const CreateBuildPage: React.FC = () => {
   return (
     <div className="max-w-6xl mx-auto">
       <div className="mb-5">
-        <h1 className="text-2xl font-bold text-white">Создать сборку</h1>
-        <p className="text-[#AAAAAA] text-sm mt-1">
+        <h1 className="text-2xl font-bold text-th-text">Создать сборку</h1>
+        <p className="text-th-text-2 text-sm mt-1">
           Вставьте ссылки из DNS, Ozon, Wildberries — название и цена заполнятся автоматически
         </p>
       </div>

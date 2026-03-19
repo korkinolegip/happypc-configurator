@@ -41,14 +41,14 @@ const BuildsPage: React.FC = () => {
   return (
     <div className="space-y-5">
       <div>
-        <h1 className="text-2xl font-bold text-white">Сборки</h1>
-        <p className="text-[#AAAAAA] text-sm mt-1">
+        <h1 className="text-2xl font-bold text-th-text">Сборки</h1>
+        <p className="text-th-text-2 text-sm mt-1">
           {data ? `${data.total} сборок` : 'Загрузка...'}
         </p>
       </div>
 
       <div className="relative">
-        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#555555]" />
+        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-th-muted" />
         <input
           type="text"
           value={search}
@@ -58,11 +58,11 @@ const BuildsPage: React.FC = () => {
         />
       </div>
 
-      <div className="bg-[#111111] border border-[#2A2A2A] rounded-lg overflow-hidden">
+      <div className="bg-th-surface border border-th-border rounded-lg overflow-hidden">
         {isLoading ? (
           <div className="p-6 space-y-3">
             {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="h-12 bg-[#2A2A2A] rounded animate-pulse" />
+              <div key={i} className="h-12 bg-th-surface-2 rounded animate-pulse" />
             ))}
           </div>
         ) : (
@@ -82,7 +82,7 @@ const BuildsPage: React.FC = () => {
               </thead>
               <tbody>
                 {data?.items.map((build) => (
-                  <tr key={build.id} className="border-b border-[#2A2A2A] last:border-0 hover:bg-[#1A1A1A] transition-colors">
+                  <tr key={build.id} className="border-b border-th-border last:border-0 hover:bg-th-surface-2 transition-colors">
                     <td className="table-cell">
                       <Link
                         to={`/b/${build.short_code}`}
@@ -91,8 +91,8 @@ const BuildsPage: React.FC = () => {
                         {build.short_code}
                       </Link>
                     </td>
-                    <td className="table-cell text-white text-sm max-w-[200px] truncate">{build.title}</td>
-                    <td className="table-cell text-[#AAAAAA] text-sm hidden sm:table-cell">
+                    <td className="table-cell text-th-text text-sm max-w-[200px] truncate">{build.title}</td>
+                    <td className="table-cell text-th-text-2 text-sm hidden sm:table-cell">
                       <div className="flex items-center gap-2">
                         {build.author_avatar ? (
                           <img src={build.author_avatar} alt="" className="w-5 h-5 rounded-full object-cover" />
@@ -100,8 +100,8 @@ const BuildsPage: React.FC = () => {
                         {build.author_name}
                       </div>
                     </td>
-                    <td className="table-cell text-[#AAAAAA] text-sm hidden md:table-cell">{build.workshop_name || '—'}</td>
-                    <td className="table-cell text-white text-sm text-right hidden sm:table-cell font-medium">
+                    <td className="table-cell text-th-text-2 text-sm hidden md:table-cell">{build.workshop_name || '—'}</td>
+                    <td className="table-cell text-th-text text-sm text-right hidden sm:table-cell font-medium">
                       {formatPrice(build.total_price)}
                     </td>
                     <td className="table-cell text-center">
@@ -109,19 +109,19 @@ const BuildsPage: React.FC = () => {
                         {build.is_public ? (
                           <Eye size={14} className="text-green-400" />
                         ) : (
-                          <EyeOff size={14} className="text-[#555555]" />
+                          <EyeOff size={14} className="text-th-muted" />
                         )}
                         {build.has_password && <Lock size={12} className="text-yellow-500" />}
                       </div>
                     </td>
-                    <td className="table-cell text-[#AAAAAA] text-xs hidden lg:table-cell">
+                    <td className="table-cell text-th-text-2 text-xs hidden lg:table-cell">
                       {new Date(build.created_at).toLocaleDateString('ru-RU')}
                     </td>
                     <td className="table-cell text-right">
                       <div className="flex items-center justify-end gap-1">
                         <Link
                           to={`/b/${build.short_code}`}
-                          className="p-1.5 text-[#AAAAAA] hover:text-white hover:bg-[#2A2A2A] rounded transition-colors"
+                          className="p-1.5 text-th-text-2 hover:text-th-text hover:bg-th-surface-2 rounded transition-colors"
                           title="Открыть"
                         >
                           <ExternalLink size={14} />
@@ -129,7 +129,7 @@ const BuildsPage: React.FC = () => {
                         <button
                           onClick={() => handleDelete(build.id, build.title)}
                           disabled={deletingId === build.id}
-                          className="p-1.5 text-[#AAAAAA] hover:text-red-400 hover:bg-red-900/20 rounded transition-colors"
+                          className="p-1.5 text-th-text-2 hover:text-red-400 hover:bg-red-900/20 rounded transition-colors"
                           title="Удалить"
                         >
                           {deletingId === build.id ? (
@@ -154,17 +154,17 @@ const BuildsPage: React.FC = () => {
           <button
             onClick={() => setPage((p) => Math.max(1, p - 1))}
             disabled={page === 1}
-            className="p-2 text-[#AAAAAA] hover:text-white disabled:opacity-30 transition-colors"
+            className="p-2 text-th-text-2 hover:text-th-text disabled:opacity-30 transition-colors"
           >
             <ChevronLeft size={18} />
           </button>
-          <span className="text-[#AAAAAA] text-sm">
+          <span className="text-th-text-2 text-sm">
             {page} / {totalPages}
           </span>
           <button
             onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
             disabled={page === totalPages}
-            className="p-2 text-[#AAAAAA] hover:text-white disabled:opacity-30 transition-colors"
+            className="p-2 text-th-text-2 hover:text-th-text disabled:opacity-30 transition-colors"
           >
             <ChevronRight size={18} />
           </button>

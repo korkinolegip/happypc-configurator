@@ -115,8 +115,8 @@ const SettingsPage: React.FC = () => {
   if (isLoading) {
     return (
       <div className="space-y-4">
-        <div className="h-8 bg-[#2A2A2A] rounded animate-pulse w-40" />
-        <div className="h-48 bg-[#111111] border border-[#2A2A2A] rounded-lg animate-pulse" />
+        <div className="h-8 bg-th-surface-2 rounded animate-pulse w-40" />
+        <div className="h-48 bg-th-surface border border-th-border rounded-lg animate-pulse" />
       </div>
     )
   }
@@ -127,26 +127,26 @@ const SettingsPage: React.FC = () => {
   return (
     <div className="space-y-6 max-w-2xl">
       <div>
-        <h1 className="text-2xl font-bold text-white">Настройки</h1>
-        <p className="text-[#AAAAAA] text-sm mt-1">Глобальные настройки платформы</p>
+        <h1 className="text-2xl font-bold text-th-text">Настройки</h1>
+        <p className="text-th-text-2 text-sm mt-1">Глобальные настройки платформы</p>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
         {/* General */}
-        <div className="bg-[#111111] border border-[#2A2A2A] rounded-lg p-5">
-          <h2 className="text-white font-semibold mb-4">Основные</h2>
+        <div className="bg-th-surface border border-th-border rounded-lg p-5">
+          <h2 className="text-th-text font-semibold mb-4">Основные</h2>
           <div className="space-y-4">
             <div>
-              <label className="block text-sm text-[#AAAAAA] mb-1.5">Название компании</label>
+              <label className="block text-sm text-th-text-2 mb-1.5">Название компании</label>
               <input {...register('company_name')} className="input-field" placeholder="HappyPC" />
             </div>
             <div>
-              <label className="block text-sm text-[#AAAAAA] mb-1.5">Процент работы по умолчанию (%)</label>
+              <label className="block text-sm text-th-text-2 mb-1.5">Процент работы по умолчанию (%)</label>
               <input
                 {...register('default_labor_percent', { min: { value: 0, message: 'Минимум 0' }, max: { value: 100, message: 'Максимум 100' } })}
                 type="number" min="0" max="100" step="0.5" className="input-field max-w-xs" placeholder="7"
               />
-              <p className="text-[#555555] text-xs mt-1 flex items-center gap-1">
+              <p className="text-th-muted text-xs mt-1 flex items-center gap-1">
                 <Info size={11} /> Используется при создании новых сборок
               </p>
             </div>
@@ -154,54 +154,54 @@ const SettingsPage: React.FC = () => {
         </div>
 
         {/* Access */}
-        <div className="bg-[#111111] border border-[#2A2A2A] rounded-lg p-5">
-          <h2 className="text-white font-semibold mb-4">Доступ</h2>
+        <div className="bg-th-surface border border-th-border rounded-lg p-5">
+          <h2 className="text-th-text font-semibold mb-4">Доступ</h2>
           <div className="space-y-4">
             <label className="flex items-start gap-4 cursor-pointer">
               <div className="relative mt-0.5">
                 <input type="checkbox" {...register('registration_enabled')} className="sr-only peer" />
-                <div className="w-11 h-6 bg-[#2A2A2A] peer-checked:bg-[#FF6B00] rounded-full transition-colors" />
+                <div className="w-11 h-6 bg-th-surface-2 peer-checked:bg-[#FF6B00] rounded-full transition-colors" />
                 <div className="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform peer-checked:translate-x-5 shadow" />
               </div>
               <div>
-                <div className="text-white text-sm font-medium">Регистрация открыта</div>
-                <div className="text-[#AAAAAA] text-xs mt-0.5">Позволяет новым пользователям регистрироваться</div>
+                <div className="text-th-text text-sm font-medium">Регистрация открыта</div>
+                <div className="text-th-text-2 text-xs mt-0.5">Позволяет новым пользователям регистрироваться</div>
               </div>
             </label>
             <label className="flex items-start gap-4 cursor-pointer">
               <div className="relative mt-0.5">
                 <input type="checkbox" {...register('public_feed_enabled')} className="sr-only peer" />
-                <div className="w-11 h-6 bg-[#2A2A2A] peer-checked:bg-[#FF6B00] rounded-full transition-colors" />
+                <div className="w-11 h-6 bg-th-surface-2 peer-checked:bg-[#FF6B00] rounded-full transition-colors" />
                 <div className="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform peer-checked:translate-x-5 shadow" />
               </div>
               <div>
-                <div className="text-white text-sm font-medium">Публичная лента включена</div>
-                <div className="text-[#AAAAAA] text-xs mt-0.5">Показывает публичные сборки без авторизации</div>
+                <div className="text-th-text text-sm font-medium">Публичная лента включена</div>
+                <div className="text-th-text-2 text-xs mt-0.5">Показывает публичные сборки без авторизации</div>
               </div>
             </label>
           </div>
         </div>
 
         {/* Logos */}
-        <div className="bg-[#111111] border border-[#2A2A2A] rounded-lg p-5">
-          <h2 className="text-white font-semibold mb-4 flex items-center gap-2">
+        <div className="bg-th-surface border border-th-border rounded-lg p-5">
+          <h2 className="text-th-text font-semibold mb-4 flex items-center gap-2">
             <Image size={18} />
             Логотипы
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {/* Header logo */}
             <div>
-              <label className="block text-sm text-[#AAAAAA] mb-2">Логотип шапки</label>
+              <label className="block text-sm text-th-text-2 mb-2">Логотип шапки</label>
               <div
-                className="border border-dashed border-[#2A2A2A] rounded-lg p-4 text-center cursor-pointer hover:border-[#FF6B00] transition-colors"
+                className="border border-dashed border-th-border rounded-lg p-4 text-center cursor-pointer hover:border-[#FF6B00] transition-colors"
                 onClick={() => headerLogoRef.current?.click()}
               >
                 {headerLogoUrl ? (
                   <img src={headerLogoUrl} alt="Header logo" className="h-10 mx-auto mb-2 object-contain" />
                 ) : (
-                  <Upload size={24} className="mx-auto text-[#555555] mb-2" />
+                  <Upload size={24} className="mx-auto text-th-muted mb-2" />
                 )}
-                <p className="text-[#AAAAAA] text-xs">
+                <p className="text-th-text-2 text-xs">
                   {uploadingHeader ? 'Загрузка...' : 'Нажмите для загрузки'}
                 </p>
               </div>
@@ -218,17 +218,17 @@ const SettingsPage: React.FC = () => {
             </div>
             {/* PDF logo */}
             <div>
-              <label className="block text-sm text-[#AAAAAA] mb-2">Логотип PDF</label>
+              <label className="block text-sm text-th-text-2 mb-2">Логотип PDF</label>
               <div
-                className="border border-dashed border-[#2A2A2A] rounded-lg p-4 text-center cursor-pointer hover:border-[#FF6B00] transition-colors"
+                className="border border-dashed border-th-border rounded-lg p-4 text-center cursor-pointer hover:border-[#FF6B00] transition-colors"
                 onClick={() => pdfLogoRef.current?.click()}
               >
                 {pdfLogoUrl ? (
                   <img src={pdfLogoUrl} alt="PDF logo" className="h-10 mx-auto mb-2 object-contain" />
                 ) : (
-                  <Upload size={24} className="mx-auto text-[#555555] mb-2" />
+                  <Upload size={24} className="mx-auto text-th-muted mb-2" />
                 )}
-                <p className="text-[#AAAAAA] text-xs">
+                <p className="text-th-text-2 text-xs">
                   {uploadingPdf ? 'Загрузка...' : 'Нажмите для загрузки'}
                 </p>
               </div>
@@ -247,13 +247,13 @@ const SettingsPage: React.FC = () => {
         </div>
 
         {/* PDF settings */}
-        <div className="bg-[#111111] border border-[#2A2A2A] rounded-lg p-5">
-          <h2 className="text-white font-semibold mb-4 flex items-center gap-2">
+        <div className="bg-th-surface border border-th-border rounded-lg p-5">
+          <h2 className="text-th-text font-semibold mb-4 flex items-center gap-2">
             <FileText size={18} />
             Настройки PDF
           </h2>
           <div>
-            <label className="block text-sm text-[#AAAAAA] mb-1.5">Текст подвала PDF</label>
+            <label className="block text-sm text-th-text-2 mb-1.5">Текст подвала PDF</label>
             <textarea
               {...register('pdf_footer_text')}
               className="input-field min-h-[80px] resize-y"
@@ -264,19 +264,19 @@ const SettingsPage: React.FC = () => {
         </div>
 
         {/* Integrations */}
-        <div className="bg-[#111111] border border-[#2A2A2A] rounded-lg p-5">
-          <h2 className="text-white font-semibold mb-1">Интеграции</h2>
-          <p className="text-[#AAAAAA] text-xs mb-4">Настройка входа через социальные сети</p>
+        <div className="bg-th-surface border border-th-border rounded-lg p-5">
+          <h2 className="text-th-text font-semibold mb-1">Интеграции</h2>
+          <p className="text-th-text-2 text-xs mb-4">Настройка входа через социальные сети</p>
           <div className="space-y-4">
             <div>
-              <label className="block text-sm text-[#AAAAAA] mb-1.5">Telegram Bot Name</label>
+              <label className="block text-sm text-th-text-2 mb-1.5">Telegram Bot Name</label>
               <input {...register('telegram_bot_name')} className="input-field" placeholder="my_happypc_bot" />
-              <p className="text-[#555555] text-xs mt-1">Имя бота без @. Для виджета входа через Telegram.</p>
+              <p className="text-th-muted text-xs mt-1">Имя бота без @. Для виджета входа через Telegram.</p>
             </div>
             <div>
-              <label className="block text-sm text-[#AAAAAA] mb-1.5">VK App ID (Client ID)</label>
+              <label className="block text-sm text-th-text-2 mb-1.5">VK App ID (Client ID)</label>
               <input {...register('vk_client_id')} className="input-field" placeholder="12345678" />
-              <p className="text-[#555555] text-xs mt-1">ID приложения ВКонтакте для OAuth.</p>
+              <p className="text-th-muted text-xs mt-1">ID приложения ВКонтакте для OAuth.</p>
             </div>
           </div>
         </div>
@@ -293,8 +293,8 @@ const SettingsPage: React.FC = () => {
       </form>
 
       {/* Export section */}
-      <div className="bg-[#111111] border border-[#2A2A2A] rounded-lg p-5">
-        <h2 className="text-white font-semibold mb-4 flex items-center gap-2">
+      <div className="bg-th-surface border border-th-border rounded-lg p-5">
+        <h2 className="text-th-text font-semibold mb-4 flex items-center gap-2">
           <Download size={18} />
           Экспорт данных
         </h2>

@@ -38,12 +38,12 @@ function ShareModal({ url, onClose }: { url: string; onClose: () => void }) {
   const encoded = encodeURIComponent(url)
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70" onClick={onClose}>
-      <div className="bg-[#1A1A1A] border border-[#2A2A2A] rounded-xl p-6 w-full max-w-sm mx-4 relative"
+      <div className="bg-th-surface-2 border border-th-border rounded-xl p-6 w-full max-w-sm mx-4 relative"
            onClick={e => e.stopPropagation()}>
-        <button onClick={onClose} className="absolute top-3 right-3 text-[#AAAAAA] hover:text-white transition-colors">
+        <button onClick={onClose} className="absolute top-3 right-3 text-th-text-2 hover:text-th-text transition-colors">
           <X size={18} />
         </button>
-        <h3 className="text-white font-semibold mb-4">Поделиться ссылкой на сборку</h3>
+        <h3 className="text-th-text font-semibold mb-4">Поделиться ссылкой на сборку</h3>
         {/* Social buttons */}
         <div className="flex gap-3 mb-4 justify-center">
           <a href={`https://vk.com/share.php?url=${encoded}`} target="_blank" rel="noopener noreferrer"
@@ -73,7 +73,7 @@ function ShareModal({ url, onClose }: { url: string; onClose: () => void }) {
         <div className="flex gap-2">
           <input
             value={url} readOnly
-            className="flex-1 bg-[#0A0A0A] border border-[#2A2A2A] rounded-lg px-3 py-2 text-white text-sm focus:outline-none"
+            className="flex-1 bg-th-surface-3 border border-th-border rounded-lg px-3 py-2 text-th-text text-sm focus:outline-none"
           />
           <button onClick={handleCopy}
             className="bg-[#FF6B00] hover:bg-[#E05A00] text-white px-3 py-2 rounded-lg text-sm transition-colors shrink-0">
@@ -91,18 +91,18 @@ function ComponentsSection({ items }: { items: { id: string; category: string; n
   const sorted = [...items].sort((a, b) => a.sort_order - b.sort_order)
   const total = items.reduce((s, i) => s + i.price, 0)
   return (
-    <div className="bg-[#111111] border border-[#2A2A2A] rounded-lg overflow-hidden mb-4">
+    <div className="bg-th-surface border border-th-border rounded-lg overflow-hidden mb-4">
       <button
         onClick={() => setOpen(v => !v)}
-        className="w-full flex items-center justify-between px-4 py-3 hover:bg-[#1A1A1A] transition-colors"
+        className="w-full flex items-center justify-between px-4 py-3 hover:bg-th-surface-2 transition-colors"
       >
-        <span className="text-white font-semibold flex items-center gap-2">
+        <span className="text-th-text font-semibold flex items-center gap-2">
           <span className="w-1.5 h-1.5 bg-[#FF6B00] rounded-full" />
           Персональный компьютер
         </span>
         <div className="flex items-center gap-3">
-          <span className="text-[#AAAAAA] text-sm">{items.length} позиций</span>
-          {open ? <ChevronUp size={16} className="text-[#AAAAAA]" /> : <ChevronDown size={16} className="text-[#AAAAAA]" />}
+          <span className="text-th-text-2 text-sm">{items.length} позиций</span>
+          {open ? <ChevronUp size={16} className="text-th-text-2" /> : <ChevronDown size={16} className="text-th-text-2" />}
         </div>
       </button>
       {open && (
@@ -110,27 +110,27 @@ function ComponentsSection({ items }: { items: { id: string; category: string; n
           <table className="w-full">
             <tbody>
               {sorted.map((item, idx) => (
-                <tr key={item.id} className={`${idx % 2 === 0 ? 'bg-[#0D0D0D]' : 'bg-[#111111]'} hover:bg-[#1A1A1A] transition-colors`}>
+                <tr key={item.id} className={`${idx % 2 === 0 ? 'bg-th-surface-3' : 'bg-th-surface'} hover:bg-th-surface-2 transition-colors`}>
                   <td className="px-3 py-2.5 w-9">
                     <CategoryIcon category={item.category} size={28} />
                   </td>
                   <td className="px-2 py-2.5 w-36">
-                    <span className="text-[#AAAAAA] text-xs">{item.category}</span>
+                    <span className="text-th-text-2 text-xs">{item.category}</span>
                   </td>
                   <td className="px-2 py-2.5">
                     {item.url ? (
                       <a href={item.url} target="_blank" rel="noopener noreferrer"
-                         className="text-white hover:text-[#FF6B00] transition-colors flex items-center gap-1.5 group text-sm">
+                         className="text-th-text hover:text-[#FF6B00] transition-colors flex items-center gap-1.5 group text-sm">
                         <StoreIcon url={item.url} />
                         {item.name}
-                        <ExternalLink size={11} className="text-[#444444] group-hover:text-[#FF6B00] shrink-0" />
+                        <ExternalLink size={11} className="text-th-muted group-hover:text-[#FF6B00] shrink-0" />
                       </a>
                     ) : (
-                      <span className="text-white text-sm">{item.name}</span>
+                      <span className="text-th-text text-sm">{item.name}</span>
                     )}
                   </td>
                   <td className="px-3 py-2.5 text-right whitespace-nowrap">
-                    <span className="text-white text-sm font-medium">{formatPrice(item.price)}</span>
+                    <span className="text-th-text text-sm font-medium">{formatPrice(item.price)}</span>
                   </td>
                 </tr>
               ))}
@@ -139,8 +139,8 @@ function ComponentsSection({ items }: { items: { id: string; category: string; n
         </div>
       )}
       {open && (
-        <div className="px-4 py-2.5 border-t border-[#2A2A2A] flex justify-end">
-          <span className="text-[#AAAAAA] text-sm">ИТОГО: <span className="text-white font-semibold">{formatPrice(total)}</span></span>
+        <div className="px-4 py-2.5 border-t border-th-border flex justify-end">
+          <span className="text-th-text-2 text-sm">ИТОГО: <span className="text-th-text font-semibold">{formatPrice(total)}</span></span>
         </div>
       )}
     </div>
@@ -211,10 +211,10 @@ const BuildPage: React.FC = () => {
     if (status === 401 || status === 403 || (!password && status === 422)) {
       return (
         <div className="max-w-sm mx-auto mt-16">
-          <div className="bg-[#111111] border border-[#2A2A2A] rounded-lg p-6 text-center">
+          <div className="bg-th-surface border border-th-border rounded-lg p-6 text-center">
             <Lock size={40} className="text-[#FF6B00] mx-auto mb-4" />
-            <h2 className="text-white font-semibold text-lg mb-2">Доступ закрыт</h2>
-            <p className="text-[#AAAAAA] text-sm mb-5">Сборка защищена паролем.</p>
+            <h2 className="text-th-text font-semibold text-lg mb-2">Доступ закрыт</h2>
+            <p className="text-th-text-2 text-sm mb-5">Сборка защищена паролем.</p>
             <form onSubmit={handleSubmit(handlePasswordSubmit)} className="space-y-3">
               <input {...register('password', { required: 'Введите пароль' })} type="password"
                 className="input-field text-center" placeholder="Введите пароль" autoFocus />
@@ -224,14 +224,14 @@ const BuildPage: React.FC = () => {
                 Открыть
               </button>
             </form>
-            <Link to="/" className="inline-block mt-4 text-[#AAAAAA] hover:text-white text-sm transition-colors">← На главную</Link>
+            <Link to="/" className="inline-block mt-4 text-th-text-2 hover:text-th-text text-sm transition-colors">← На главную</Link>
           </div>
         </div>
       )
     }
     return (
       <div className="flex flex-col items-center justify-center py-20 text-center">
-        <p className="text-[#AAAAAA] text-lg mb-4">Сборка не найдена</p>
+        <p className="text-th-text-2 text-lg mb-4">Сборка не найдена</p>
         <Link to="/" className="text-[#FF6B00] hover:underline text-sm">← На главную</Link>
       </div>
     )
@@ -246,42 +246,42 @@ const BuildPage: React.FC = () => {
       {showShare && <ShareModal url={buildUrl} onClose={() => setShowShare(false)} />}
 
       {/* Breadcrumb */}
-      <div className="text-xs text-[#555555] mb-3 flex items-center gap-1.5">
-        <Link to="/" className="hover:text-[#AAAAAA] transition-colors">Главная</Link>
+      <div className="text-xs text-th-muted mb-3 flex items-center gap-1.5">
+        <Link to="/" className="hover:text-th-text-2 transition-colors">Главная</Link>
         <span>›</span>
-        <Link to="/" className="hover:text-[#AAAAAA] transition-colors">Сборки</Link>
+        <Link to="/" className="hover:text-th-text-2 transition-colors">Сборки</Link>
         <span>›</span>
-        <span className="text-[#AAAAAA]">Сборка: {build.short_code}</span>
+        <span className="text-th-text-2">Сборка: {build.short_code}</span>
       </div>
 
       {/* Title + updated */}
       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 mb-4">
         <div>
-          <h1 className="text-2xl font-bold text-white">{build.title}</h1>
-          <p className="text-[#555555] text-xs mt-1">Обновлено: {formatDate(build.updated_at)}</p>
+          <h1 className="text-2xl font-bold text-th-text">{build.title}</h1>
+          <p className="text-th-muted text-xs mt-1">Обновлено: {formatDate(build.updated_at)}</p>
         </div>
         {/* Action buttons */}
         <div className="flex flex-wrap gap-2 shrink-0">
           {isOwner && (
             <Link to={`/builds/${build.id}/edit`}
-              className="flex items-center gap-1.5 bg-[#2A2A2A] hover:bg-[#3A3A3A] text-white px-3 py-2 rounded-lg text-sm transition-colors">
+              className="flex items-center gap-1.5 bg-th-surface-2 hover:bg-th-border text-th-text px-3 py-2 rounded-lg text-sm transition-colors">
               <Edit size={14} />Редактировать
             </Link>
           )}
           {isAuthenticated && !isOwner && (
             <button onClick={handleCopyBuild} disabled={copyingBuild}
-              className="flex items-center gap-1.5 bg-[#2A2A2A] hover:bg-[#3A3A3A] text-white px-3 py-2 rounded-lg text-sm transition-colors disabled:opacity-50">
-              {copyingBuild ? <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <Copy size={14} />}
+              className="flex items-center gap-1.5 bg-th-surface-2 hover:bg-th-border text-th-text px-3 py-2 rounded-lg text-sm transition-colors disabled:opacity-50">
+              {copyingBuild ? <span className="w-3.5 h-3.5 border-2 border-th-text border-t-transparent rounded-full animate-spin" /> : <Copy size={14} />}
               Собрать свой ПК
             </button>
           )}
           <button onClick={() => setShowShare(true)}
-            className="flex items-center gap-1.5 bg-[#2A2A2A] hover:bg-[#3A3A3A] text-white px-3 py-2 rounded-lg text-sm transition-colors">
+            className="flex items-center gap-1.5 bg-th-surface-2 hover:bg-th-border text-th-text px-3 py-2 rounded-lg text-sm transition-colors">
             <Share2 size={14} />Поделиться
           </button>
           <button onClick={handleDownloadPDF} disabled={pdfLoading}
             className="flex items-center gap-1.5 bg-[#FF6B00] hover:bg-[#E05A00] text-white px-3 py-2 rounded-lg text-sm transition-colors disabled:opacity-50">
-            {pdfLoading ? <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <Download size={14} />}
+            {pdfLoading ? <span className="w-3.5 h-3.5 border-2 border-th-text border-t-transparent rounded-full animate-spin" /> : <Download size={14} />}
             Скачать PDF
           </button>
         </div>
@@ -294,8 +294,8 @@ const BuildPage: React.FC = () => {
         <div>
           {/* Description */}
           {build.description && (
-            <div className="bg-[#111111] border border-[#2A2A2A] rounded-lg p-4 mb-4">
-              <p className="text-[#AAAAAA] text-sm leading-relaxed">{build.description}</p>
+            <div className="bg-th-surface border border-th-border rounded-lg p-4 mb-4">
+              <p className="text-th-text-2 text-sm leading-relaxed">{build.description}</p>
             </div>
           )}
 
@@ -313,20 +313,20 @@ const BuildPage: React.FC = () => {
 
           {/* Grand total big */}
           <div className="text-right my-4">
-            <p className="text-[#AAAAAA] text-sm">ИТОГО СБОРКИ:</p>
+            <p className="text-th-text-2 text-sm">ИТОГО СБОРКИ:</p>
             <p className="text-[#FF6B00] font-bold text-3xl">{formatPrice(build.total_price)}</p>
           </div>
 
           {/* Action buttons row */}
           <div className="flex flex-col sm:flex-row gap-3 mb-6">
             <Link to="/"
-              className="flex-1 text-center py-2.5 px-4 bg-[#1A1A1A] border border-[#2A2A2A] hover:border-[#FF6B00] text-[#AAAAAA] hover:text-white rounded-lg text-sm transition-colors">
+              className="flex-1 text-center py-2.5 px-4 bg-th-surface-2 border border-th-border hover:border-[#FF6B00] text-th-text-2 hover:text-th-text rounded-lg text-sm transition-colors">
               Посмотреть другие сборки ПК
             </Link>
             {isAuthenticated ? (
               <button onClick={handleCopyBuild} disabled={copyingBuild}
                 className="flex-1 py-2.5 px-4 bg-[#FF6B00] hover:bg-[#E05A00] text-white font-semibold rounded-lg text-sm transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
-                {copyingBuild ? <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <Copy size={16} />}
+                {copyingBuild ? <span className="w-4 h-4 border-2 border-th-text border-t-transparent rounded-full animate-spin" /> : <Copy size={16} />}
                 Собрать свой ПК
               </button>
             ) : (
@@ -338,9 +338,9 @@ const BuildPage: React.FC = () => {
           </div>
 
           {/* Comments section */}
-          <div className="bg-[#111111] border border-[#2A2A2A] rounded-lg p-5">
-            <h3 className="text-white font-semibold mb-4">Комментарии</h3>
-            <p className="text-[#555555] text-sm">Ещё никто не написал. Вы можете быть первым!</p>
+          <div className="bg-th-surface border border-th-border rounded-lg p-5">
+            <h3 className="text-th-text font-semibold mb-4">Комментарии</h3>
+            <p className="text-th-muted text-sm">Ещё никто не написал. Вы можете быть первым!</p>
             {isAuthenticated ? (
               <div className="mt-4">
                 <textarea
@@ -348,7 +348,7 @@ const BuildPage: React.FC = () => {
                   placeholder="Написать комментарий..."
                   disabled
                 />
-                <p className="text-[#444444] text-xs mt-1">Функция комментариев в разработке</p>
+                <p className="text-th-muted text-xs mt-1">Функция комментариев в разработке</p>
               </div>
             ) : (
               <Link to="/login" className="mt-3 inline-block text-[#FF6B00] text-sm hover:underline">
@@ -361,7 +361,7 @@ const BuildPage: React.FC = () => {
         {/* RIGHT: author sidebar */}
         <div className="space-y-4 lg:sticky lg:top-4">
           {/* Author card */}
-          <div className="bg-[#111111] border border-[#2A2A2A] rounded-lg p-4 text-center">
+          <div className="bg-th-surface border border-th-border rounded-lg p-4 text-center">
             <div className="mb-3">
               {build.author.avatar_url ? (
                 <img src={build.author.avatar_url} alt={build.author.name}
@@ -372,9 +372,9 @@ const BuildPage: React.FC = () => {
                 </div>
               )}
             </div>
-            <p className="text-white font-medium text-sm">{build.author.name}</p>
+            <p className="text-th-text font-medium text-sm">{build.author.name}</p>
             {build.workshop && (
-              <p className="text-[#AAAAAA] text-xs mt-1">{build.workshop.name}, {build.workshop.city}</p>
+              <p className="text-th-text-2 text-xs mt-1">{build.workshop.name}, {build.workshop.city}</p>
             )}
             <div className="mt-4">
               <button
@@ -387,18 +387,18 @@ const BuildPage: React.FC = () => {
           </div>
 
           {/* Build info */}
-          <div className="bg-[#111111] border border-[#2A2A2A] rounded-lg p-4 space-y-2">
+          <div className="bg-th-surface border border-th-border rounded-lg p-4 space-y-2">
             <div className="flex justify-between text-sm">
-              <span className="text-[#AAAAAA]">Компонентов</span>
-              <span className="text-white">{build.items.length}</span>
+              <span className="text-th-text-2">Компонентов</span>
+              <span className="text-th-text">{build.items.length}</span>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="text-[#AAAAAA]">Создано</span>
-              <span className="text-white text-xs">{formatDate(build.created_at)}</span>
+              <span className="text-th-text-2">Создано</span>
+              <span className="text-th-text text-xs">{formatDate(build.created_at)}</span>
             </div>
             {(build.labor_cost ?? 0) > 0 && (
               <div className="flex justify-between text-sm">
-                <span className="text-[#AAAAAA]">Работа</span>
+                <span className="text-th-text-2">Работа</span>
                 <span className="text-[#FF6B00]">{formatPrice(build.labor_cost ?? 0)}</span>
               </div>
             )}

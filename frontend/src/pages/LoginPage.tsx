@@ -107,7 +107,7 @@ const LoginPage: React.FC = () => {
   const vkClientId = settings?.vk_client_id
 
   return (
-    <div className="min-h-screen bg-black flex flex-col items-center justify-center px-4">
+    <div className="min-h-screen bg-th-bg flex flex-col items-center justify-center px-4">
       <div className="w-full max-w-sm">
         {/* Logo */}
         <div className="flex flex-col items-center mb-8">
@@ -124,22 +124,22 @@ const LoginPage: React.FC = () => {
           <div className="hidden items-center gap-2">
             <Cpu className="text-[#FF6B00]" size={28} />
             <span className="text-2xl font-bold">
-              <span className="text-white">Happy</span>
+              <span className="text-th-text">Happy</span>
               <span className="text-[#FF6B00]">PC</span>
             </span>
           </div>
-          <p className="text-[#AAAAAA] text-sm mt-2">Конфигуратор сборок ПК</p>
+          <p className="text-th-text-2 text-sm mt-2">Конфигуратор сборок ПК</p>
         </div>
 
         {/* Tabs */}
         {registrationEnabled && (
-          <div className="flex bg-[#111111] border border-[#2A2A2A] rounded-lg p-1 mb-5">
+          <div className="flex bg-th-surface border border-th-border rounded-lg p-1 mb-5">
             <button
               onClick={() => setMode('login')}
               className={`flex-1 py-2 text-sm font-medium rounded transition-colors ${
                 mode === 'login'
-                  ? 'bg-[#FF6B00] text-white'
-                  : 'text-[#AAAAAA] hover:text-white'
+                  ? 'bg-[#FF6B00] text-th-text'
+                  : 'text-th-text-2 hover:text-th-text'
               }`}
             >
               Войти
@@ -148,8 +148,8 @@ const LoginPage: React.FC = () => {
               onClick={() => setMode('register')}
               className={`flex-1 py-2 text-sm font-medium rounded transition-colors ${
                 mode === 'register'
-                  ? 'bg-[#FF6B00] text-white'
-                  : 'text-[#AAAAAA] hover:text-white'
+                  ? 'bg-[#FF6B00] text-th-text'
+                  : 'text-th-text-2 hover:text-th-text'
               }`}
             >
               Регистрация
@@ -161,10 +161,10 @@ const LoginPage: React.FC = () => {
         {mode === 'login' && (
           <form
             onSubmit={loginForm.handleSubmit(handleLogin)}
-            className="bg-[#111111] border border-[#2A2A2A] rounded-lg p-6 space-y-4"
+            className="bg-th-surface border border-th-border rounded-lg p-6 space-y-4"
           >
             <div>
-              <label className="block text-sm text-[#AAAAAA] mb-1.5">Email</label>
+              <label className="block text-sm text-th-text-2 mb-1.5">Email</label>
               <input
                 {...loginForm.register('email', {
                   required: 'Введите email',
@@ -183,7 +183,7 @@ const LoginPage: React.FC = () => {
             </div>
 
             <div>
-              <label className="block text-sm text-[#AAAAAA] mb-1.5">Пароль</label>
+              <label className="block text-sm text-th-text-2 mb-1.5">Пароль</label>
               <div className="relative">
                 <input
                   {...loginForm.register('password', { required: 'Введите пароль' })}
@@ -195,7 +195,7 @@ const LoginPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setShowPassword((v) => !v)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#AAAAAA] hover:text-white transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-th-text-2 hover:text-th-text transition-colors"
                 >
                   {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
@@ -228,11 +228,11 @@ const LoginPage: React.FC = () => {
         {mode === 'register' && registrationEnabled && (
           <form
             onSubmit={registerForm.handleSubmit(handleRegister)}
-            className="bg-[#111111] border border-[#2A2A2A] rounded-lg p-6 space-y-3"
+            className="bg-th-surface border border-th-border rounded-lg p-6 space-y-3"
           >
             {/* Имя Фамилия */}
             <div>
-              <label className="block text-sm text-[#AAAAAA] mb-1">Имя и фамилия *</label>
+              <label className="block text-sm text-th-text-2 mb-1">Имя и фамилия *</label>
               <input
                 {...registerForm.register('name', {
                   required: 'Введите имя и фамилию',
@@ -250,7 +250,7 @@ const LoginPage: React.FC = () => {
             {/* Телефон + Пол */}
             <div className="grid grid-cols-[1fr_auto] gap-2">
               <div>
-                <label className="block text-sm text-[#AAAAAA] mb-1">Телефон *</label>
+                <label className="block text-sm text-th-text-2 mb-1">Телефон *</label>
                 <input
                   {...registerForm.register('phone', {
                     required: 'Введите телефон',
@@ -269,12 +269,12 @@ const LoginPage: React.FC = () => {
                 )}
               </div>
               <div>
-                <label className="block text-sm text-[#AAAAAA] mb-1">Пол *</label>
+                <label className="block text-sm text-th-text-2 mb-1">Пол *</label>
                 <div className="flex gap-1 h-[42px]">
                   <label className={`flex items-center px-3 rounded cursor-pointer border transition-colors text-sm ${
                     registerForm.watch('gender') === 'male'
                       ? 'border-[#FF6B00] bg-[#FF6B00]/10 text-[#FF6B00]'
-                      : 'border-[#2A2A2A] text-[#888] hover:border-[#555]'
+                      : 'border-th-border text-th-text-3 hover:border-th-muted'
                   }`}>
                     <input type="radio" value="male" {...registerForm.register('gender', { required: 'Выберите пол' })} className="hidden" />
                     М
@@ -282,7 +282,7 @@ const LoginPage: React.FC = () => {
                   <label className={`flex items-center px-3 rounded cursor-pointer border transition-colors text-sm ${
                     registerForm.watch('gender') === 'female'
                       ? 'border-[#FF6B00] bg-[#FF6B00]/10 text-[#FF6B00]'
-                      : 'border-[#2A2A2A] text-[#888] hover:border-[#555]'
+                      : 'border-th-border text-th-text-3 hover:border-th-muted'
                   }`}>
                     <input type="radio" value="female" {...registerForm.register('gender', { required: 'Выберите пол' })} className="hidden" />
                     Ж
@@ -297,7 +297,7 @@ const LoginPage: React.FC = () => {
             {/* Email + Город */}
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <label className="block text-sm text-[#AAAAAA] mb-1">Email *</label>
+                <label className="block text-sm text-th-text-2 mb-1">Email *</label>
                 <input
                   {...registerForm.register('email', {
                     required: 'Введите email',
@@ -313,7 +313,7 @@ const LoginPage: React.FC = () => {
                 )}
               </div>
               <div>
-                <label className="block text-sm text-[#AAAAAA] mb-1">Город</label>
+                <label className="block text-sm text-th-text-2 mb-1">Город</label>
                 <CitySelect
                   value={registerForm.watch('city') || ''}
                   onChange={(v) => registerForm.setValue('city', v, { shouldDirty: true })}
@@ -324,7 +324,7 @@ const LoginPage: React.FC = () => {
 
             {/* Пароль */}
             <div>
-              <label className="block text-sm text-[#AAAAAA] mb-1">Пароль *</label>
+              <label className="block text-sm text-th-text-2 mb-1">Пароль *</label>
               <div className="relative">
                 <input
                   {...registerForm.register('password', {
@@ -337,7 +337,7 @@ const LoginPage: React.FC = () => {
                   autoComplete="new-password"
                 />
                 <button type="button" onClick={() => setShowPassword((v) => !v)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#AAAAAA] hover:text-white transition-colors">
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-th-text-2 hover:text-th-text transition-colors">
                   {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               </div>
@@ -348,7 +348,7 @@ const LoginPage: React.FC = () => {
 
             {/* Подтверждение пароля */}
             <div>
-              <label className="block text-sm text-[#AAAAAA] mb-1">Подтвердите пароль *</label>
+              <label className="block text-sm text-th-text-2 mb-1">Подтвердите пароль *</label>
               <input
                 {...registerForm.register('password_confirm', { required: 'Подтвердите пароль' })}
                 type={showPassword ? 'text' : 'password'}
@@ -396,7 +396,7 @@ const LoginPage: React.FC = () => {
 
         {/* Back link */}
         <div className="mt-6 text-center">
-          <Link to="/" className="text-[#AAAAAA] hover:text-[#FF6B00] text-sm transition-colors">
+          <Link to="/" className="text-th-text-2 hover:text-[#FF6B00] text-sm transition-colors">
             ← На главную
           </Link>
         </div>

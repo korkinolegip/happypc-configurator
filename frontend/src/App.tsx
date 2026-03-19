@@ -20,10 +20,10 @@ function App() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-black">
+      <div className="flex items-center justify-center min-h-screen bg-th-bg">
         <div className="flex flex-col items-center gap-4">
           <div className="w-10 h-10 border-2 border-[#FF6B00] border-t-transparent rounded-full animate-spin" />
-          <span className="text-[#AAAAAA] text-sm">Загрузка...</span>
+          <span className="text-th-text-2 text-sm">Загрузка...</span>
         </div>
       </div>
     )

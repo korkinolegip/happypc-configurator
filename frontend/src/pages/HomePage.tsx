@@ -17,8 +17,8 @@ const GuestLanding: React.FC = () => (
         <Cpu className="text-[#FF6B00]" size={36} />
       </div>
     </div>
-    <h1 className="text-3xl font-bold text-white mb-3">Конфигуратор ПК</h1>
-    <p className="text-[#AAAAAA] text-base mb-8 leading-relaxed">
+    <h1 className="text-3xl font-bold text-th-text mb-3">Конфигуратор ПК</h1>
+    <p className="text-th-text-2 text-base mb-8 leading-relaxed">
       Создавайте сборки компьютеров, добавляйте ссылки из DNS, Ozon, Wildberries —
       название и цена заполнятся автоматически. Считайте итоговую стоимость включая работу.
     </p>
@@ -29,9 +29,9 @@ const GuestLanding: React.FC = () => (
         { icon: <FileText size={20} />, text: 'Скачать PDF' },
         { icon: <Users size={20} />, text: 'Делитесь' },
       ].map(({ icon, text }) => (
-        <div key={text} className="bg-[#111111] border border-[#2A2A2A] rounded-lg p-4 flex flex-col items-center gap-2">
+        <div key={text} className="bg-th-surface border border-th-border rounded-lg p-4 flex flex-col items-center gap-2">
           <span className="text-[#FF6B00]">{icon}</span>
-          <span className="text-[#AAAAAA] text-xs">{text}</span>
+          <span className="text-th-text-2 text-xs">{text}</span>
         </div>
       ))}
     </div>
@@ -40,7 +40,7 @@ const GuestLanding: React.FC = () => (
         Войти
       </Link>
       <Link to="/login" state={{ mode: 'register' }}
-        className="bg-[#1A1A1A] hover:bg-[#2A2A2A] border border-[#2A2A2A] text-white font-semibold px-8 py-3 rounded-lg transition-colors">
+        className="bg-th-surface-2 hover:bg-th-surface-2 border border-th-border text-th-text font-semibold px-8 py-3 rounded-lg transition-colors">
         Зарегистрироваться
       </Link>
     </div>
@@ -130,8 +130,8 @@ const HomePage: React.FC = () => {
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
           <div>
-            <h1 className="text-xl font-bold text-white">Сборки ПК</h1>
-            {buildsData && <p className="text-[#555555] text-sm mt-0.5">Найдено {buildsData.total}</p>}
+            <h1 className="text-xl font-bold text-th-text">Сборки ПК</h1>
+            {buildsData && <p className="text-th-muted text-sm mt-0.5">Найдено {buildsData.total}</p>}
           </div>
           {isAuthenticated && (
             <Link to="/builds/create"
@@ -142,7 +142,7 @@ const HomePage: React.FC = () => {
         </div>
 
         {/* Filters */}
-        <div className="bg-[#111111] border border-[#2A2A2A] rounded-lg p-3 mb-4 space-y-2">
+        <div className="bg-th-surface border border-th-border rounded-lg p-3 mb-4 space-y-2">
           {/* Row 1: Sort (left) + Search (center) + Filters button (right) */}
           <div className="flex flex-col sm:flex-row gap-2 items-stretch">
             <select value={filters.sort || 'newest'}
@@ -154,20 +154,20 @@ const HomePage: React.FC = () => {
               <option value="price_desc">Цена ↓</option>
             </select>
             <div className="relative flex-1 min-w-0">
-              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#555]" />
+              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-th-muted" />
               <input type="text" value={searchInput}
                 onChange={e => handleSearchChange(e.target.value)}
                 placeholder="Название, мастер, комплектующие, цена..."
                 className="input-field pl-8 pr-8 text-sm w-full" />
               {searchInput && (
                 <button onClick={() => handleSearchChange('')}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#555] hover:text-white">
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-th-muted hover:text-th-text">
                   <X size={14} />
                 </button>
               )}
             </div>
             <button onClick={() => setShowAdvanced(!showAdvanced)}
-              className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded text-sm transition-colors shrink-0 w-full sm:w-auto ${showAdvanced ? 'bg-[#FF6B00] text-white' : 'bg-[#2A2A2A] text-[#AAAAAA] hover:text-white'}`}>
+              className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded text-sm transition-colors shrink-0 w-full sm:w-auto ${showAdvanced ? 'bg-[#FF6B00] text-th-text' : 'bg-th-surface-2 text-th-text-2 hover:text-th-text'}`}>
               <SlidersHorizontal size={14} />
               <span>Фильтры</span>
               {hasActiveFilters && <span className="w-1.5 h-1.5 bg-[#FF6B00] rounded-full" />}
@@ -176,7 +176,7 @@ const HomePage: React.FC = () => {
 
           {/* Row 2: Advanced filters (collapsible) */}
           {showAdvanced && (
-            <div className="grid grid-cols-2 sm:grid-cols-[1fr_1fr_1fr_auto] gap-2 pt-2 border-t border-[#2A2A2A]">
+            <div className="grid grid-cols-2 sm:grid-cols-[1fr_1fr_1fr_auto] gap-2 pt-2 border-t border-th-border">
               {/* City */}
               <div className="col-span-1">
                 <CitySelect
@@ -195,7 +195,7 @@ const HomePage: React.FC = () => {
                   onKeyDown={e => e.key === 'Enter' && applyPriceFilter()}
                   placeholder="Цена от"
                   className="input-field text-sm w-full" />
-                <span className="text-[#444] text-xs shrink-0">—</span>
+                <span className="text-th-muted text-xs shrink-0">—</span>
                 <input type="number" value={priceTo}
                   onChange={e => setPriceTo(e.target.value)}
                   onBlur={applyPriceFilter}
@@ -214,7 +214,7 @@ const HomePage: React.FC = () => {
 
               {/* Clear */}
               <button onClick={clearFilters}
-                className={`text-sm px-3 py-2 rounded transition-colors col-span-2 sm:col-span-1 ${hasActiveFilters ? 'text-[#FF6B00] hover:bg-[#FF6B00]/10' : 'text-[#444] cursor-default'}`}
+                className={`text-sm px-3 py-2 rounded transition-colors col-span-2 sm:col-span-1 ${hasActiveFilters ? 'text-[#FF6B00] hover:bg-[#FF6B00]/10' : 'text-th-muted cursor-default'}`}
                 disabled={!hasActiveFilters}>
                 Сбросить
               </button>
@@ -226,7 +226,7 @@ const HomePage: React.FC = () => {
         {buildsLoading ? (
           <div className="space-y-3">
             {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="bg-[#111111] border border-[#2A2A2A] rounded-lg p-4 animate-pulse h-28" />
+              <div key={i} className="bg-th-surface border border-th-border rounded-lg p-4 animate-pulse h-28" />
             ))}
           </div>
         ) : buildsData && buildsData.items.length > 0 ? (
@@ -239,18 +239,18 @@ const HomePage: React.FC = () => {
                 <button
                   onClick={() => setFilters(f => ({ ...f, page: Math.max(1, (f.page || 1) - 1) }))}
                   disabled={!filters.page || filters.page <= 1}
-                  className="px-3 py-1.5 bg-[#111111] border border-[#2A2A2A] text-[#AAAAAA] hover:text-white hover:border-[#FF6B00] rounded text-sm disabled:opacity-40"
+                  className="px-3 py-1.5 bg-th-surface border border-th-border text-th-text-2 hover:text-th-text hover:border-[#FF6B00] rounded text-sm disabled:opacity-40"
                 >← Назад</button>
                 {Array.from({ length: Math.min(totalPages, 7) }, (_, i) => {
                   const page = i + 1
                   const cur = filters.page || 1
                   if (totalPages > 7 && page > 2 && page < totalPages - 1 && Math.abs(page - cur) > 1) {
-                    if (page === 3 || page === totalPages - 2) return <span key={page} className="text-[#AAAAAA] px-1">...</span>
+                    if (page === 3 || page === totalPages - 2) return <span key={page} className="text-th-text-2 px-1">...</span>
                     return null
                   }
                   return (
                     <button key={page} onClick={() => setFilters(f => ({ ...f, page }))}
-                      className={`w-8 h-8 rounded text-sm transition-colors ${cur === page ? 'bg-[#FF6B00] text-white' : 'bg-[#111111] border border-[#2A2A2A] text-[#AAAAAA] hover:text-white hover:border-[#FF6B00]'}`}>
+                      className={`w-8 h-8 rounded text-sm transition-colors ${cur === page ? 'bg-[#FF6B00] text-th-text' : 'bg-th-surface border border-th-border text-th-text-2 hover:text-th-text hover:border-[#FF6B00]'}`}>
                       {page}
                     </button>
                   )
@@ -258,16 +258,16 @@ const HomePage: React.FC = () => {
                 <button
                   onClick={() => setFilters(f => ({ ...f, page: Math.min(totalPages, (f.page || 1) + 1) }))}
                   disabled={filters.page === totalPages}
-                  className="px-3 py-1.5 bg-[#111111] border border-[#2A2A2A] text-[#AAAAAA] hover:text-white hover:border-[#FF6B00] rounded text-sm disabled:opacity-40"
+                  className="px-3 py-1.5 bg-th-surface border border-th-border text-th-text-2 hover:text-th-text hover:border-[#FF6B00] rounded text-sm disabled:opacity-40"
                 >Вперёд →</button>
               </div>
             )}
           </>
         ) : (
           <div className="flex flex-col items-center justify-center py-16 text-center">
-            <Search size={40} className="text-[#2A2A2A] mb-4" />
-            <p className="text-[#AAAAAA] mb-2">Сборки не найдены</p>
-            <p className="text-[#555555] text-sm mb-5">
+            <Search size={40} className="text-th-border mb-4" />
+            <p className="text-th-text-2 mb-2">Сборки не найдены</p>
+            <p className="text-th-muted text-sm mb-5">
               {hasActiveFilters ? 'Попробуйте изменить фильтры' : 'Пока нет публичных сборок'}
             </p>
             {isAuthenticated && (
@@ -298,19 +298,19 @@ const HomePage: React.FC = () => {
         )}
 
         {/* Support / contacts */}
-        <div className="bg-[#111111] border border-[#2A2A2A] rounded-lg p-4">
-          <h3 className="text-white font-semibold text-sm mb-3">Задать вопрос</h3>
-          <p className="text-[#555555] text-xs mb-3">
+        <div className="bg-th-surface border border-th-border rounded-lg p-4">
+          <h3 className="text-th-text font-semibold text-sm mb-3">Задать вопрос</h3>
+          <p className="text-th-muted text-xs mb-3">
             В наших чатах обсуждайте любые вопросы о подборе комплектующих и программах
           </p>
           <div className="space-y-2">
             <a href="#" onClick={e => e.preventDefault()}
-               className="flex items-center gap-2 w-full py-2 px-3 rounded-lg text-sm text-white font-medium transition-colors"
+               className="flex items-center gap-2 w-full py-2 px-3 rounded-lg text-sm text-th-text font-medium transition-colors"
                style={{ background: '#2ca5e0' }}>
               <MessageCircle size={15} />Чат в Telegram
             </a>
             <a href="#" onClick={e => e.preventDefault()}
-               className="flex items-center gap-2 w-full py-2 px-3 rounded-lg text-sm text-white font-medium transition-colors"
+               className="flex items-center gap-2 w-full py-2 px-3 rounded-lg text-sm text-th-text font-medium transition-colors"
                style={{ background: '#0077ff' }}>
               <MessageCircle size={15} />Чат в VK
             </a>
@@ -318,15 +318,15 @@ const HomePage: React.FC = () => {
         </div>
 
         {/* Popular tags */}
-        <div className="bg-[#111111] border border-[#2A2A2A] rounded-lg p-4">
-          <h3 className="text-white font-semibold text-sm mb-3">Популярные теги сборки</h3>
+        <div className="bg-th-surface border border-th-border rounded-lg p-4">
+          <h3 className="text-th-text font-semibold text-sm mb-3">Популярные теги сборки</h3>
           <div className="flex flex-wrap gap-1.5">
             {POPULAR_TAGS.map(tag => (
               <span key={tag} onClick={() => handleTagClick(tag)}
                 className={`px-2 py-0.5 border text-xs rounded-full cursor-pointer transition-colors ${
                   filters.tag === tag
                     ? 'bg-[#FF6B00]/20 border-[#FF6B00] text-[#FF6B00]'
-                    : 'bg-[#1A1A1A] border-[#2A2A2A] text-[#888888] hover:border-[#FF6B00] hover:text-[#FF6B00]'
+                    : 'bg-th-surface-2 border-th-border text-th-text-3 hover:border-[#FF6B00] hover:text-[#FF6B00]'
                 }`}>
                 {tag}
               </span>
@@ -336,12 +336,12 @@ const HomePage: React.FC = () => {
 
         {/* Stats */}
         {buildsData && buildsData.total > 0 && (
-          <div className="bg-[#111111] border border-[#2A2A2A] rounded-lg p-4">
-            <h3 className="text-white font-semibold text-sm mb-3">Статистика</h3>
+          <div className="bg-th-surface border border-th-border rounded-lg p-4">
+            <h3 className="text-th-text font-semibold text-sm mb-3">Статистика</h3>
             <div className="space-y-1.5">
               <div className="flex justify-between text-sm">
-                <span className="text-[#AAAAAA]">Всего сборок</span>
-                <span className="text-white font-medium">{buildsData.total}</span>
+                <span className="text-th-text-2">Всего сборок</span>
+                <span className="text-th-text font-medium">{buildsData.total}</span>
               </div>
             </div>
           </div>

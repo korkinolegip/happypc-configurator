@@ -21,24 +21,24 @@ const PriceBlock: React.FC<PriceBlockProps> = ({
   const isFixed = laborPriceManual != null && laborPriceManual > 0
 
   return (
-    <div className="bg-[#111111] border border-[#2A2A2A] rounded-lg overflow-hidden">
-      <div className="px-4 py-3 flex items-center justify-between border-b border-[#2A2A2A]">
-        <span className="text-[#AAAAAA] text-sm">Стоимость железа</span>
-        <span className="text-white font-medium">{fmt(hardwareTotal)}</span>
+    <div className="bg-th-surface border border-th-border rounded-lg overflow-hidden">
+      <div className="px-4 py-3 flex items-center justify-between border-b border-th-border">
+        <span className="text-th-text-2 text-sm">Стоимость железа</span>
+        <span className="text-th-text font-medium">{fmt(hardwareTotal)}</span>
       </div>
 
-      <div className="px-4 py-3 flex items-center justify-between border-b border-[#2A2A2A]">
-        <span className="text-[#AAAAAA] text-sm">
+      <div className="px-4 py-3 flex items-center justify-between border-b border-th-border">
+        <span className="text-th-text-2 text-sm">
           Стоимость работы{' '}
           <span className="text-xs">
             {isFixed ? '(фикс.)' : `(${laborPercent}%)`}
           </span>
         </span>
-        <span className="text-white font-medium">{fmt(laborCost)}</span>
+        <span className="text-th-text font-medium">{fmt(laborCost)}</span>
       </div>
 
-      <div className="px-4 py-4 flex items-center justify-between bg-[#1A1A1A]">
-        <span className="text-white font-semibold text-sm">Цена «под ключ»</span>
+      <div className="px-4 py-4 flex items-center justify-between bg-th-surface-2">
+        <span className="text-th-text font-semibold text-sm">Цена «под ключ»</span>
         <span className="text-[#FF6B00] font-bold text-xl">{fmt(totalPrice)}</span>
       </div>
     </div>

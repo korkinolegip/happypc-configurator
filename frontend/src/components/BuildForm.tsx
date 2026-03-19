@@ -157,12 +157,12 @@ function ItemRow({ fieldName, category, canDelete, canChangeCategory, onDelete, 
           <select
             value={category}
             onChange={e => onCategoryChange?.(e.target.value)}
-            className="mt-1 w-full text-[9px] text-[#888888] bg-transparent text-center cursor-pointer outline-none border-0 hover:text-[#FF6B00] transition-colors truncate"
+            className="mt-1 w-full text-[9px] text-th-text-3 bg-transparent text-center cursor-pointer outline-none border-0 hover:text-[#FF6B00] transition-colors truncate"
           >
             {EXTRA_CATEGORIES.map(c => <option key={c} value={c} className="text-xs">{c}</option>)}
           </select>
         ) : (
-          <span className="text-[10px] text-[#888888] text-center mt-1 leading-tight break-words w-full">{category}</span>
+          <span className="text-[10px] text-th-text-3 text-center mt-1 leading-tight break-words w-full">{category}</span>
         )}
       </div>
 
@@ -172,7 +172,7 @@ function ItemRow({ fieldName, category, canDelete, canChangeCategory, onDelete, 
         <div className="flex gap-1.5 mb-1">
           <input
             {...register(`${fieldName}.name` as never)}
-            className="flex-1 min-w-0 border rounded px-2 py-1.5 text-white text-sm placeholder-[#444444] focus:outline-none focus:border-[#FF6B00] transition-colors"
+            className="flex-1 min-w-0 bg-th-surface-3 border border-th-border rounded px-2 py-1.5 text-th-text text-sm placeholder-th-placeholder focus:outline-none focus:border-[#FF6B00] transition-colors"
             placeholder={`Введите название ${category.toLowerCase()}`}
           />
           <div className="relative shrink-0 w-28">
@@ -181,10 +181,10 @@ function ItemRow({ fieldName, category, canDelete, canChangeCategory, onDelete, 
               type="number"
               min="0"
               step="1"
-              className="w-full border rounded pl-2 pr-6 py-1.5 text-white text-sm placeholder-[#444444] focus:outline-none focus:border-[#FF6B00] transition-colors"
+              className="w-full border rounded pl-2 pr-6 py-1.5 text-th-text text-sm placeholder-th-placeholder focus:outline-none focus:border-[#FF6B00] transition-colors"
               placeholder="0"
             />
-            <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[#555555] text-xs pointer-events-none">₽</span>
+            <span className="absolute right-2 top-1/2 -translate-y-1/2 text-th-muted text-xs pointer-events-none">₽</span>
           </div>
         </div>
         {/* Row 2: URL + qty */}
@@ -193,7 +193,7 @@ function ItemRow({ fieldName, category, canDelete, canChangeCategory, onDelete, 
             <input
               value={currentUrl}
               onChange={handleUrlChange}
-              className="w-full border rounded px-2 py-1.5 text-white text-sm placeholder-[#444444] focus:outline-none focus:border-[#FF6B00] transition-colors"
+              className="w-full bg-th-surface-3 border border-th-border rounded px-2 py-1.5 text-th-text text-sm placeholder-th-placeholder focus:outline-none focus:border-[#FF6B00] transition-colors"
               style={{ paddingRight: detectedStore ? '7rem' : '1.75rem' }}
               placeholder="Вставьте ссылку на товар"
               type="url"
@@ -205,7 +205,7 @@ function ItemRow({ fieldName, category, canDelete, canChangeCategory, onDelete, 
               {detectedStore && !loading && <StoreBadge store={detectedStore} />}
               {currentUrl && !loading && (
                 <a href={currentUrl} target="_blank" rel="noopener noreferrer"
-                   className="text-[#444444] hover:text-[#FF6B00] transition-colors"
+                   className="text-th-muted hover:text-[#FF6B00] transition-colors"
                    onClick={e => e.stopPropagation()}>
                   <ExternalLink size={11} />
                 </a>
@@ -241,7 +241,7 @@ function ItemRow({ fieldName, category, canDelete, canChangeCategory, onDelete, 
           </div>
           {canDelete && (
             <button type="button" onClick={onDelete}
-              className="shrink-0 p-1 text-[#444444] hover:text-red-400 transition-colors">
+              className="shrink-0 p-1 text-th-muted hover:text-red-400 transition-colors">
               <Trash2 size={14} />
             </button>
           )}
@@ -264,25 +264,25 @@ function Section({ title, total, children, defaultOpen = true }: SectionProps) {
   const [open, setOpen] = useState(defaultOpen)
   const fmt = (n: number) => new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 0 }).format(n)
   return (
-    <div className="bg-[#111111] border border-[#2A2A2A] rounded-lg overflow-hidden mb-3">
+    <div className="bg-th-surface border border-th-border rounded-lg overflow-hidden mb-3">
       <button
         type="button"
         onClick={() => setOpen(v => !v)}
-        className="w-full flex items-center justify-between px-4 py-3 hover:bg-[#1A1A1A] transition-colors"
+        className="w-full flex items-center justify-between px-4 py-3 hover:bg-th-surface-2 transition-colors"
       >
-        <span className="text-white font-semibold text-sm flex items-center gap-2">
+        <span className="text-th-text font-semibold text-sm flex items-center gap-2">
           <span className="w-1.5 h-1.5 bg-[#FF6B00] rounded-full" />
           {title}
         </span>
         <div className="flex items-center gap-3">
           {total > 0 && <span className="text-[#FF6B00] text-sm font-medium">{fmt(total)} ₽</span>}
-          {open ? <ChevronUp size={16} className="text-[#AAAAAA]" /> : <ChevronDown size={16} className="text-[#AAAAAA]" />}
+          {open ? <ChevronUp size={16} className="text-th-text-2" /> : <ChevronDown size={16} className="text-th-text-2" />}
         </div>
       </button>
       {open && <div>{children}</div>}
       {open && total > 0 && (
-        <div className="px-4 py-2 border-t border-[#2A2A2A] flex justify-end">
-          <span className="text-[#AAAAAA] text-xs">ИТОГО: <span className="text-white font-medium">{fmt(total)} ₽</span></span>
+        <div className="px-4 py-2 border-t border-th-border flex justify-end">
+          <span className="text-th-text-2 text-xs">ИТОГО: <span className="text-th-text font-medium">{fmt(total)} ₽</span></span>
         </div>
       )}
     </div>
@@ -294,14 +294,14 @@ function Section({ title, total, children, defaultOpen = true }: SectionProps) {
 function SidePanel({ title, children, defaultOpen = false }: { title: string; children: React.ReactNode; defaultOpen?: boolean }) {
   const [open, setOpen] = useState(defaultOpen)
   return (
-    <div className="bg-[#111111] border border-[#2A2A2A] rounded-lg overflow-hidden">
+    <div className="bg-th-surface border border-th-border rounded-lg overflow-hidden">
       <button
         type="button"
         onClick={() => setOpen(v => !v)}
-        className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-[#1A1A1A] transition-colors"
+        className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-th-surface-2 transition-colors"
       >
-        <span className="text-[#AAAAAA] text-sm">{title}</span>
-        {open ? <ChevronUp size={14} className="text-[#555555] shrink-0" /> : <ChevronDown size={14} className="text-[#555555] shrink-0" />}
+        <span className="text-th-text-2 text-sm">{title}</span>
+        {open ? <ChevronUp size={14} className="text-th-muted shrink-0" /> : <ChevronDown size={14} className="text-th-muted shrink-0" />}
       </button>
       {open && <div className="px-4 pb-4 pt-1">{children}</div>}
     </div>
@@ -434,7 +434,7 @@ const BuildForm: React.FC<BuildFormProps> = ({ initialData, onSubmit, isSubmitti
             <button
               type="button"
               onClick={() => appendExtra(makeEmpty('Другое'))}
-              className="w-full flex items-center justify-center gap-1.5 py-2 border border-dashed border-[#2A2A2A] hover:border-[#FF6B00] text-[#AAAAAA] hover:text-[#FF6B00] rounded transition-colors text-xs"
+              className="w-full flex items-center justify-center gap-1.5 py-2 border border-dashed border-th-border hover:border-[#FF6B00] text-th-text-2 hover:text-[#FF6B00] rounded transition-colors text-xs"
             >
               <Plus size={13} />
               Добавить позицию
@@ -458,25 +458,25 @@ const BuildForm: React.FC<BuildFormProps> = ({ initialData, onSubmit, isSubmitti
         </Section>
 
         {/* Labor + Total */}
-        <div className="bg-[#111111] border border-[#2A2A2A] rounded-lg p-4">
+        <div className="bg-th-surface border border-th-border rounded-lg p-4">
           <div className="grid grid-cols-2 gap-3 mb-4">
             <div>
-              <label className="block text-xs text-[#AAAAAA] mb-1">Стоимость работы (%)</label>
+              <label className="block text-xs text-th-text-2 mb-1">Стоимость работы (%)</label>
               <input {...register('labor_percent', { min: 0, max: 100 })} type="number" min="0" max="100" step="0.5"
                 className="input-field text-sm" placeholder="7" />
             </div>
             <div>
-              <label className="block text-xs text-[#AAAAAA] mb-1">Фикс. стоимость (₽) <span className="text-[#444444]">(заменяет %)</span></label>
+              <label className="block text-xs text-th-text-2 mb-1">Фикс. стоимость (₽) <span className="text-th-muted">(заменяет %)</span></label>
               <input {...register('labor_price_manual', { min: 0 })} type="number" min="0" step="1"
                 className="input-field text-sm" placeholder="Пусто" />
             </div>
           </div>
           <div className="space-y-1">
-            <div className="flex justify-between text-sm"><span className="text-[#AAAAAA]">Железо</span><span className="text-white">{fmt(hardware)} ₽</span></div>
-            <div className="flex justify-between text-sm"><span className="text-[#AAAAAA]">Работа {laborManual > 0 ? '(фикс.)' : `(${laborPercent}%)`}</span><span className="text-white">{fmt(laborCost)} ₽</span></div>
+            <div className="flex justify-between text-sm"><span className="text-th-text-2">Железо</span><span className="text-th-text">{fmt(hardware)} ₽</span></div>
+            <div className="flex justify-between text-sm"><span className="text-th-text-2">Работа {laborManual > 0 ? '(фикс.)' : `(${laborPercent}%)`}</span><span className="text-th-text">{fmt(laborCost)} ₽</span></div>
           </div>
-          <div className={`mt-3 pt-3 border-t border-[#2A2A2A] flex justify-between items-center`}>
-            <span className="text-white font-semibold">ИТОГО СБОРКИ:</span>
+          <div className={`mt-3 pt-3 border-t border-th-border flex justify-between items-center`}>
+            <span className="text-th-text font-semibold">ИТОГО СБОРКИ:</span>
             <span className={`font-bold text-xl ${overBudget ? 'text-red-400' : 'text-[#FF6B00]'}`}>{fmt(grandTotal)} ₽</span>
           </div>
           {overBudget && (
@@ -491,11 +491,11 @@ const BuildForm: React.FC<BuildFormProps> = ({ initialData, onSubmit, isSubmitti
         {/* Budget */}
         <SidePanel title="Установить бюджет сборки?">
           <div>
-            <label className="block text-xs text-[#AAAAAA] mb-1">Бюджет сборки</label>
+            <label className="block text-xs text-th-text-2 mb-1">Бюджет сборки</label>
             <div className="relative">
               <input {...register('budget')} type="number" min="0" step="1000"
                 className="input-field text-sm pr-6" placeholder="0" />
-              <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[#555555] text-xs pointer-events-none">₽</span>
+              <span className="absolute right-2 top-1/2 -translate-y-1/2 text-th-muted text-xs pointer-events-none">₽</span>
             </div>
             {budgetVal > 0 && (
               <p className="text-xs mt-1" style={{ color: overBudget ? '#f87171' : '#22c55e' }}>
@@ -509,12 +509,12 @@ const BuildForm: React.FC<BuildFormProps> = ({ initialData, onSubmit, isSubmitti
         <SidePanel title="Назовём сборку, добавим комментарии и настроим?" defaultOpen>
           <div className="space-y-3">
             <div>
-              <label className="block text-xs text-[#AAAAAA] mb-1">Название сборки</label>
+              <label className="block text-xs text-th-text-2 mb-1">Название сборки</label>
               <input {...register('title', { required: true })}
                 className="input-field text-sm" placeholder="Название сборки" />
             </div>
             <div>
-              <label className="block text-xs text-[#AAAAAA] mb-1">Публичный комментарий</label>
+              <label className="block text-xs text-th-text-2 mb-1">Публичный комментарий</label>
               <textarea {...register('description')}
                 className="input-field text-sm resize-none h-20" placeholder="Описание, особенности, назначение..." />
             </div>
@@ -522,7 +522,7 @@ const BuildForm: React.FC<BuildFormProps> = ({ initialData, onSubmit, isSubmitti
             {/* Grand total preview */}
             {grandTotal > 0 && (
               <div className="border rounded px-3 py-2 flex justify-between">
-                <span className="text-[#AAAAAA] text-xs">Итого</span>
+                <span className="text-th-text-2 text-xs">Итого</span>
                 <span className={`text-sm font-bold ${overBudget ? 'text-red-400' : 'text-[#FF6B00]'}`}>{fmt(grandTotal)} ₽</span>
               </div>
             )}
@@ -531,11 +531,11 @@ const BuildForm: React.FC<BuildFormProps> = ({ initialData, onSubmit, isSubmitti
             <label className="flex items-center gap-2 cursor-pointer select-none">
               <div className="relative">
                 <input type="checkbox" {...register('is_private')} className="sr-only peer" />
-                <div className="w-9 h-5 bg-[#2A2A2A] peer-checked:bg-[#FF6B00] rounded-full transition-colors" />
+                <div className="w-9 h-5 bg-th-surface-2 peer-checked:bg-[#FF6B00] rounded-full transition-colors" />
                 <div className="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform peer-checked:translate-x-4 shadow" />
               </div>
               <div>
-                <span className="text-sm text-white flex items-center gap-1">
+                <span className="text-sm text-th-text flex items-center gap-1">
                   {isPrivate ? <EyeOff size={13} /> : <Eye size={13} className="text-[#FF6B00]" />}
                   {isPrivate ? 'Доступ только по ссылке' : 'Публичная сборка'}
                 </span>
@@ -544,14 +544,14 @@ const BuildForm: React.FC<BuildFormProps> = ({ initialData, onSubmit, isSubmitti
 
             {isPrivate && (
               <div>
-                <label className="block text-xs text-[#AAAAAA] mb-1 flex items-center gap-1">
+                <label className="block text-xs text-th-text-2 mb-1 flex items-center gap-1">
                   <Lock size={11} /> Пароль (необязательно)
                 </label>
                 <div className="relative">
                   <input {...register('password')} type={showPassword ? 'text' : 'password'}
                     className="input-field text-sm pr-9" placeholder="Оставьте пустым" />
                   <button type="button" onClick={() => setShowPassword(v => !v)}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#AAAAAA] hover:text-white transition-colors">
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-th-text-2 hover:text-th-text transition-colors">
                     {showPassword ? <EyeOff size={14} /> : <Eye size={14} />}
                   </button>
                 </div>

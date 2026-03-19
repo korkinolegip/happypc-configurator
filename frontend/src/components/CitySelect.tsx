@@ -52,7 +52,7 @@ const CitySelect: React.FC<CitySelectProps> = ({
         onClick={() => { setOpen(!open); setSearch('') }}
         className="input-field w-full text-left flex items-center justify-between gap-2"
       >
-        <span className={value ? 'text-white' : 'text-[#555555]'}>
+        <span className={value ? 'text-th-text' : 'text-th-muted'}>
           {value || placeholder}
         </span>
         <div className="flex items-center gap-1">
@@ -63,30 +63,30 @@ const CitySelect: React.FC<CitySelectProps> = ({
                 onChange('')
                 setOpen(false)
               }}
-              className="text-[#555555] hover:text-white cursor-pointer"
+              className="text-th-muted hover:text-th-text cursor-pointer"
             >
               <X size={14} />
             </span>
           )}
-          <ChevronDown size={14} className={`text-[#555555] transition-transform ${open ? 'rotate-180' : ''}`} />
+          <ChevronDown size={14} className={`text-th-muted transition-transform ${open ? 'rotate-180' : ''}`} />
         </div>
       </button>
 
       {open && (
-        <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-[#111111] border border-[#2A2A2A] rounded-lg shadow-xl max-h-60 overflow-hidden">
-          <div className="p-2 border-b border-[#2A2A2A]">
+        <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-th-surface border border-th-border rounded-lg shadow-xl max-h-60 overflow-hidden">
+          <div className="p-2 border-b border-th-border">
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Поиск города..."
-              className="w-full bg-[#0A0A0A] border border-[#2A2A2A] rounded px-3 py-1.5 text-sm text-white placeholder-[#555555] outline-none focus:border-[#FF6B00]"
+              className="w-full bg-th-surface-3 border border-th-border rounded px-3 py-1.5 text-sm text-th-text placeholder-th-placeholder outline-none focus:border-[#FF6B00]"
               autoFocus
             />
           </div>
           <div className="overflow-y-auto max-h-48">
             {filtered.length === 0 ? (
-              <div className="px-3 py-2 text-[#555555] text-sm">Не найдено</div>
+              <div className="px-3 py-2 text-th-muted text-sm">Не найдено</div>
             ) : (
               filtered.map((city) => (
                 <button
@@ -96,11 +96,11 @@ const CitySelect: React.FC<CitySelectProps> = ({
                     onChange(city.name)
                     setOpen(false)
                   }}
-                  className={`w-full text-left px-3 py-1.5 text-sm hover:bg-[#2A2A2A] transition-colors flex items-center gap-2 ${
-                    value === city.name ? 'text-[#FF6B00] bg-[#FF6B00]/5' : 'text-white'
+                  className={`w-full text-left px-3 py-1.5 text-sm hover:bg-th-surface-2 transition-colors flex items-center gap-2 ${
+                    value === city.name ? 'text-[#FF6B00] bg-[#FF6B00]/5' : 'text-th-text'
                   }`}
                 >
-                  <MapPin size={12} className="text-[#555555] shrink-0" />
+                  <MapPin size={12} className="text-th-muted shrink-0" />
                   {city.name}
                 </button>
               ))

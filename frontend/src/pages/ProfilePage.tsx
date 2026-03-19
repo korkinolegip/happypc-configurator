@@ -156,15 +156,15 @@ const ProfilePage: React.FC = () => {
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
-      <h1 className="text-2xl font-bold text-white">Настройки профиля</h1>
+      <h1 className="text-2xl font-bold text-th-text">Настройки профиля</h1>
 
       {/* Avatar + Info */}
-      <div className="bg-[#111111] border border-[#2A2A2A] rounded-lg p-6">
+      <div className="bg-th-surface border border-th-border rounded-lg p-6">
         <div className="flex flex-col sm:flex-row items-start gap-6">
           {/* Avatar */}
           <div className="relative shrink-0">
             <div
-              className="w-24 h-24 rounded-full overflow-hidden bg-[#2A2A2A] cursor-pointer group relative"
+              className="w-24 h-24 rounded-full overflow-hidden bg-th-surface-2 cursor-pointer group relative"
               onClick={() => fileInputRef.current?.click()}
             >
               {currentAvatar ? (
@@ -202,7 +202,7 @@ const ProfilePage: React.FC = () => {
           {/* Quick info */}
           <div className="flex-1">
             <div className="flex items-center gap-3 mb-1">
-              <h2 className="text-white font-semibold text-lg">{user.name}</h2>
+              <h2 className="text-th-text font-semibold text-lg">{user.name}</h2>
               <span
                 className={`text-xs px-2 py-0.5 rounded font-medium ${
                   user.role === 'superadmin'
@@ -211,29 +211,29 @@ const ProfilePage: React.FC = () => {
                     ? 'bg-blue-900/40 text-blue-300 border border-blue-700'
                     : user.role === 'master'
                     ? 'bg-orange-900/40 text-orange-300 border border-orange-700'
-                    : 'bg-[#2A2A2A] text-[#AAAAAA]'
+                    : 'bg-th-surface-2 text-th-text-2'
                 }`}
               >
                 {user.role === 'superadmin' ? 'Суперадмин' : user.role === 'admin' ? 'Администратор' : user.role === 'master' ? 'Мастер' : 'Пользователь'}
               </span>
             </div>
-            {user.email && <p className="text-[#AAAAAA] text-sm">{user.email}</p>}
-            {user.workshop_name && <p className="text-[#AAAAAA] text-sm">Мастерская: {user.workshop_name}</p>}
-            {user.city && <p className="text-[#AAAAAA] text-sm flex items-center gap-1"><MapPin size={12} /> {user.city}</p>}
+            {user.email && <p className="text-th-text-2 text-sm">{user.email}</p>}
+            {user.workshop_name && <p className="text-th-text-2 text-sm">Мастерская: {user.workshop_name}</p>}
+            {user.city && <p className="text-th-text-2 text-sm flex items-center gap-1"><MapPin size={12} /> {user.city}</p>}
           </div>
         </div>
       </div>
 
       {/* Edit Profile Form */}
-      <div className="bg-[#111111] border border-[#2A2A2A] rounded-lg p-6">
-        <h2 className="text-white font-semibold mb-4 flex items-center gap-2">
+      <div className="bg-th-surface border border-th-border rounded-lg p-6">
+        <h2 className="text-th-text font-semibold mb-4 flex items-center gap-2">
           <UserIcon size={18} />
           Личные данные
         </h2>
         <form onSubmit={handleSubmit(handleProfileUpdate)} className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm text-[#AAAAAA] mb-1.5">Имя</label>
+              <label className="block text-sm text-th-text-2 mb-1.5">Имя</label>
               <input
                 {...register('name', {
                   required: 'Введите имя',
@@ -245,7 +245,7 @@ const ProfilePage: React.FC = () => {
               {errors.name && <p className="text-red-400 text-xs mt-1">{errors.name.message}</p>}
             </div>
             <div>
-              <label className="block text-sm text-[#AAAAAA] mb-1.5 flex items-center gap-1">
+              <label className="block text-sm text-th-text-2 mb-1.5 flex items-center gap-1">
                 <Mail size={12} /> Email
               </label>
               <input
@@ -256,7 +256,7 @@ const ProfilePage: React.FC = () => {
               />
             </div>
             <div>
-              <label className="block text-sm text-[#AAAAAA] mb-1.5 flex items-center gap-1">
+              <label className="block text-sm text-th-text-2 mb-1.5 flex items-center gap-1">
                 <Phone size={12} /> Телефон
               </label>
               <input
@@ -266,7 +266,7 @@ const ProfilePage: React.FC = () => {
               />
             </div>
             <div>
-              <label className="block text-sm text-[#AAAAAA] mb-1.5 flex items-center gap-1">
+              <label className="block text-sm text-th-text-2 mb-1.5 flex items-center gap-1">
                 <MapPin size={12} /> Город
               </label>
               <CitySelect
@@ -279,7 +279,7 @@ const ProfilePage: React.FC = () => {
 
           {/* Gender */}
           <div>
-            <label className="block text-sm text-[#AAAAAA] mb-2">Пол</label>
+            <label className="block text-sm text-th-text-2 mb-2">Пол</label>
             <div className="flex gap-3">
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
@@ -288,7 +288,7 @@ const ProfilePage: React.FC = () => {
                   value="male"
                   className="sr-only peer"
                 />
-                <div className="w-8 h-8 rounded-lg border border-[#2A2A2A] peer-checked:border-[#FF6B00] peer-checked:bg-[#FF6B00]/10 flex items-center justify-center text-sm font-medium text-[#AAAAAA] peer-checked:text-[#FF6B00] transition-all">
+                <div className="w-8 h-8 rounded-lg border border-th-border peer-checked:border-[#FF6B00] peer-checked:bg-[#FF6B00]/10 flex items-center justify-center text-sm font-medium text-th-text-2 peer-checked:text-[#FF6B00] transition-all">
                   М
                 </div>
               </label>
@@ -299,7 +299,7 @@ const ProfilePage: React.FC = () => {
                   value="female"
                   className="sr-only peer"
                 />
-                <div className="w-8 h-8 rounded-lg border border-[#2A2A2A] peer-checked:border-[#FF6B00] peer-checked:bg-[#FF6B00]/10 flex items-center justify-center text-sm font-medium text-[#AAAAAA] peer-checked:text-[#FF6B00] transition-all">
+                <div className="w-8 h-8 rounded-lg border border-th-border peer-checked:border-[#FF6B00] peer-checked:bg-[#FF6B00]/10 flex items-center justify-center text-sm font-medium text-th-text-2 peer-checked:text-[#FF6B00] transition-all">
                   Ж
                 </div>
               </label>
@@ -325,8 +325,8 @@ const ProfilePage: React.FC = () => {
 
       {/* Social Links (read-only) */}
       {hasSocialAuth && (
-        <div className="bg-[#111111] border border-[#2A2A2A] rounded-lg p-6">
-          <h2 className="text-white font-semibold mb-4 flex items-center gap-2">
+        <div className="bg-th-surface border border-th-border rounded-lg p-6">
+          <h2 className="text-th-text font-semibold mb-4 flex items-center gap-2">
             <ExternalLink size={18} />
             Привязанные аккаунты
           </h2>
@@ -334,7 +334,7 @@ const ProfilePage: React.FC = () => {
             {user.telegram_username && (
               <div className="flex items-center gap-3 text-sm">
                 <Send size={16} className="text-[#2AABEE]" />
-                <span className="text-[#AAAAAA]">Telegram:</span>
+                <span className="text-th-text-2">Telegram:</span>
                 <a
                   href={`https://t.me/${user.telegram_username}`}
                   target="_blank"
@@ -348,7 +348,7 @@ const ProfilePage: React.FC = () => {
             {user.vk_url && (
               <div className="flex items-center gap-3 text-sm">
                 <span className="text-[#4C75A3] font-bold text-xs w-4 text-center">VK</span>
-                <span className="text-[#AAAAAA]">ВКонтакте:</span>
+                <span className="text-th-text-2">ВКонтакте:</span>
                 <a
                   href={user.vk_url}
                   target="_blank"
@@ -364,9 +364,9 @@ const ProfilePage: React.FC = () => {
       )}
 
       {/* Change Password */}
-      <div className="bg-[#111111] border border-[#2A2A2A] rounded-lg p-6">
+      <div className="bg-th-surface border border-th-border rounded-lg p-6">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-white font-semibold flex items-center gap-2">
+          <h2 className="text-th-text font-semibold flex items-center gap-2">
             <Lock size={18} />
             Пароль
           </h2>
@@ -383,7 +383,7 @@ const ProfilePage: React.FC = () => {
         {showPasswordForm ? (
           <form onSubmit={handleSubmitPwd(handlePasswordChange)} className="space-y-4 max-w-sm">
             <div>
-              <label className="block text-sm text-[#AAAAAA] mb-1.5">Текущий пароль</label>
+              <label className="block text-sm text-th-text-2 mb-1.5">Текущий пароль</label>
               <input
                 {...registerPwd('old_password', { required: 'Введите текущий пароль' })}
                 type="password"
@@ -395,7 +395,7 @@ const ProfilePage: React.FC = () => {
               )}
             </div>
             <div>
-              <label className="block text-sm text-[#AAAAAA] mb-1.5">Новый пароль</label>
+              <label className="block text-sm text-th-text-2 mb-1.5">Новый пароль</label>
               <input
                 {...registerPwd('new_password', {
                   required: 'Введите новый пароль',
@@ -410,7 +410,7 @@ const ProfilePage: React.FC = () => {
               )}
             </div>
             <div>
-              <label className="block text-sm text-[#AAAAAA] mb-1.5">Подтвердите пароль</label>
+              <label className="block text-sm text-th-text-2 mb-1.5">Подтвердите пароль</label>
               <input
                 {...registerPwd('confirm_password', { required: 'Подтвердите пароль' })}
                 type="password"
@@ -438,14 +438,14 @@ const ProfilePage: React.FC = () => {
             </div>
           </form>
         ) : (
-          <p className="text-[#555555] text-sm">Рекомендуем использовать надёжный пароль длиной не менее 8 символов</p>
+          <p className="text-th-muted text-sm">Рекомендуем использовать надёжный пароль длиной не менее 8 символов</p>
         )}
       </div>
 
       {/* My Builds */}
       <div>
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-white font-semibold text-lg">Мои сборки</h2>
+          <h2 className="text-th-text font-semibold text-lg">Мои сборки</h2>
           <Link
             to="/builds/create"
             className="flex items-center gap-1.5 bg-[#FF6B00] hover:bg-[#E05A00] text-white font-medium px-3 py-2 rounded-lg text-sm transition-colors"
@@ -458,7 +458,7 @@ const ProfilePage: React.FC = () => {
         {buildsLoading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="bg-[#111111] border border-[#2A2A2A] rounded-lg p-4 animate-pulse h-40" />
+              <div key={i} className="bg-th-surface border border-th-border rounded-lg p-4 animate-pulse h-40" />
             ))}
           </div>
         ) : builds && builds.length > 0 ? (
@@ -469,7 +469,7 @@ const ProfilePage: React.FC = () => {
                 <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                   <Link
                     to={`/builds/${build.id}/edit`}
-                    className="w-7 h-7 bg-[#2A2A2A] hover:bg-[#3A3A3A] rounded flex items-center justify-center text-[#AAAAAA] hover:text-white transition-colors"
+                    className="w-7 h-7 bg-th-surface-2 hover:bg-th-border rounded flex items-center justify-center text-th-text-2 hover:text-th-text transition-colors"
                     title="Редактировать"
                     onClick={(e) => e.stopPropagation()}
                   >
@@ -495,8 +495,8 @@ const ProfilePage: React.FC = () => {
             ))}
           </div>
         ) : (
-          <div className="bg-[#111111] border border-[#2A2A2A] rounded-lg p-8 text-center">
-            <p className="text-[#AAAAAA] mb-4">У вас пока нет сборок</p>
+          <div className="bg-th-surface border border-th-border rounded-lg p-8 text-center">
+            <p className="text-th-text-2 mb-4">У вас пока нет сборок</p>
             <Link
               to="/builds/create"
               className="inline-flex items-center gap-2 bg-[#FF6B00] hover:bg-[#E05A00] text-white font-medium px-5 py-2.5 rounded-lg transition-colors"
