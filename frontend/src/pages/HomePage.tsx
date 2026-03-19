@@ -1,7 +1,7 @@
-import React, { useState } from 'react'
+import React, { useState, useCallback, useRef, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { Plus, Search, Filter, Link2, Cpu, Zap, FileText, Users, MessageCircle } from 'lucide-react'
+import { Plus, Search, Filter, Link2, Cpu, Zap, FileText, Users, MessageCircle, MapPin, SlidersHorizontal, X, ChevronDown } from 'lucide-react'
 import BuildCard from '../components/BuildCard'
 import { getBuilds, getPublicSettings, getPublicBuilds } from '../api/builds'
 import { getWorkshops } from '../api/admin'
@@ -52,9 +52,13 @@ const POPULAR_TAGS = [
 ]
 
 const HomePage: React.FC = () => {
-  const { isAuthenticated } = useAuth()
+  const { isAuthenticated, user } = useAuth()
   const [filters, setFilters] = useState<BuildFilters>({ sort: 'newest', page: 1, per_page: 20 })
-  const [authorSearch, setAuthorSearch] = useState('')
+  const [searchInput, setSearchInput] = useState('')
+  const [showAdvanced, setShowAdvanced] = useState(false)
+  const [priceFrom, setPriceFrom] = useState('')
+  const [priceTo, setPriceTo] = useState('')
+  const searchDebounce = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const { data: settings } = useQuery({ queryKey: ['settings-public'], queryFn: getPublicSettings, retry: false })
   const feedEnabled = settings?.public_feed_enabled !== 'false'
@@ -70,12 +74,50 @@ const HomePage: React.FC = () => {
     queryKey: ['workshops-list'], queryFn: getWorkshops, retry: false, enabled: isAuthenticated,
   })
 
-  const handleAuthorSearch = (e: React.FormEvent) => {
-    e.preventDefault()
-    setFilters(f => ({ ...f, author: authorSearch, page: 1 }))
-  }
+  // Live search with debounce
+  const handleSearchChange = useCallback((value: string) => {
+    setSearchInput(value)
+    if (searchDebounce.current) clearTimeout(searchDebounce.current)
+    searchDebounce.current = setTimeout(() => {
+      setFilters(f => ({ ...f, search: value || undefined, page: 1 }))
+    }, 400)
+  }, [])
+
+  // Price filter apply
+  const applyPriceFilter = useCallback(() => {
+    setFilters(f => ({
+      ...f,
+      price_from: priceFrom ? Number(priceFrom) : undefined,
+      price_to: priceTo ? Number(priceTo) : undefined,
+      page: 1,
+    }))
+  }, [priceFrom, priceTo])
+
+  // Tag click
+  const handleTagClick = useCallback((tag: string) => {
+    setFilters(f => ({ ...f, tag: f.tag === tag ? undefined : tag, page: 1 }))
+  }, [])
+
+  // Clear all filters
+  const clearFilters = useCallback(() => {
+    setFilters({ sort: 'newest', page: 1, per_page: 20 })
+    setSearchInput('')
+    setPriceFrom('')
+    setPriceTo('')
+  }, [])
+
+  const hasActiveFilters = filters.search || filters.city || filters.workshop_id ||
+    filters.price_from || filters.price_to || filters.tag || filters.author_id
 
   const totalPages = buildsData ? Math.ceil(buildsData.total / (filters.per_page || 20)) : 1
+
+  // Get unique cities from builds
+  const cities = buildsData?.items
+    ? [...new Set(buildsData.items.map(b => b.city).filter(Boolean))]
+    : []
+
+  const isAdmin = user?.role === 'admin' || user?.role === 'superadmin'
+  const isMaster = user?.role === 'master' || isAdmin
 
   if (!feedEnabled && !isAuthenticated) return <GuestLanding />
 
@@ -99,38 +141,86 @@ const HomePage: React.FC = () => {
         </div>
 
         {/* Filters */}
-        <div className="bg-[#111111] border border-[#2A2A2A] rounded-lg p-3 mb-4">
+        <div className="bg-[#111111] border border-[#2A2A2A] rounded-lg p-3 mb-4 space-y-2">
+          {/* Row 1: Search + Sort */}
           <div className="flex flex-col sm:flex-row gap-2">
-            <form onSubmit={handleAuthorSearch} className="flex gap-2 flex-1">
-              <div className="relative flex-1">
-                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#AAAAAA]" />
-                <input type="text" value={authorSearch} onChange={e => setAuthorSearch(e.target.value)}
-                  placeholder="Поиск по автору..."
-                  className="input-field pl-8 text-sm" />
+            <div className="relative flex-1">
+              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#555]" />
+              <input type="text" value={searchInput}
+                onChange={e => handleSearchChange(e.target.value)}
+                placeholder="Поиск: название, мастер, комплектующие, цена, дата..."
+                className="input-field pl-8 pr-8 text-sm" />
+              {searchInput && (
+                <button onClick={() => handleSearchChange('')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#555] hover:text-white">
+                  <X size={14} />
+                </button>
+              )}
+            </div>
+            <select value={filters.sort || 'newest'}
+              onChange={e => setFilters(f => ({ ...f, sort: e.target.value as BuildFilters['sort'], page: 1 }))}
+              className="select-field text-sm min-w-[160px]">
+              <option value="newest">Сначала новые</option>
+              <option value="oldest">Сначала старые</option>
+              <option value="price_asc">Цена ↑</option>
+              <option value="price_desc">Цена ↓</option>
+            </select>
+            <button onClick={() => setShowAdvanced(!showAdvanced)}
+              className={`flex items-center gap-1.5 px-3 py-2 rounded text-sm transition-colors shrink-0 ${showAdvanced ? 'bg-[#FF6B00] text-white' : 'bg-[#2A2A2A] text-[#AAAAAA] hover:text-white'}`}>
+              <SlidersHorizontal size={14} />Фильтры
+              {hasActiveFilters && <span className="w-1.5 h-1.5 bg-[#FF6B00] rounded-full" />}
+            </button>
+          </div>
+
+          {/* Row 2: Advanced filters (collapsible) */}
+          {showAdvanced && (
+            <div className="flex flex-col sm:flex-row gap-2 pt-2 border-t border-[#2A2A2A]">
+              {/* City */}
+              <div className="flex items-center gap-1.5 flex-1">
+                <MapPin size={14} className="text-[#555] shrink-0" />
+                <input type="text" value={filters.city || ''}
+                  onChange={e => setFilters(f => ({ ...f, city: e.target.value || undefined, page: 1 }))}
+                  placeholder="Город..."
+                  className="input-field text-sm" />
               </div>
-              <button type="submit"
-                className="bg-[#2A2A2A] hover:bg-[#3A3A3A] text-white px-3 py-2 rounded text-sm transition-colors">
-                Найти
-              </button>
-            </form>
-            {workshops && workshops.length > 0 && (
-              <div className="flex items-center gap-2">
-                <Filter size={14} className="text-[#AAAAAA] shrink-0" />
+
+              {/* Price range */}
+              <div className="flex items-center gap-1.5">
+                <span className="text-[#555] text-xs shrink-0">₽</span>
+                <input type="number" value={priceFrom}
+                  onChange={e => setPriceFrom(e.target.value)}
+                  onBlur={applyPriceFilter}
+                  onKeyDown={e => e.key === 'Enter' && applyPriceFilter()}
+                  placeholder="от"
+                  className="input-field text-sm w-24" />
+                <span className="text-[#555] text-xs">—</span>
+                <input type="number" value={priceTo}
+                  onChange={e => setPriceTo(e.target.value)}
+                  onBlur={applyPriceFilter}
+                  onKeyDown={e => e.key === 'Enter' && applyPriceFilter()}
+                  placeholder="до"
+                  className="input-field text-sm w-24" />
+              </div>
+
+              {/* Workshop */}
+              {workshops && workshops.length > 0 && (
                 <select value={filters.workshop_id || ''}
                   onChange={e => setFilters(f => ({ ...f, workshop_id: e.target.value || undefined, page: 1 }))}
                   className="select-field text-sm min-w-[150px]">
                   <option value="">Все мастерские</option>
-                  {workshops.map(ws => <option key={ws.id} value={ws.id}>{ws.name}</option>)}
+                  {workshops.map(ws => <option key={ws.id} value={ws.id}>{ws.name} ({ws.city})</option>)}
                 </select>
-              </div>
-            )}
-            <select value={filters.sort || 'newest'}
-              onChange={e => setFilters(f => ({ ...f, sort: e.target.value as 'newest' | 'oldest', page: 1 }))}
-              className="select-field text-sm min-w-[140px]">
-              <option value="newest">Сначала новые</option>
-              <option value="oldest">Сначала старые</option>
-            </select>
-          </div>
+              )}
+
+              {/* Clear */}
+              {hasActiveFilters && (
+                <button onClick={clearFilters}
+                  className="text-[#FF6B00] text-sm hover:underline shrink-0">
+                  Сбросить
+                </button>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Build list */}
@@ -179,7 +269,7 @@ const HomePage: React.FC = () => {
             <Search size={40} className="text-[#2A2A2A] mb-4" />
             <p className="text-[#AAAAAA] mb-2">Сборки не найдены</p>
             <p className="text-[#555555] text-sm mb-5">
-              {filters.author || filters.workshop_id ? 'Попробуйте изменить фильтры' : 'Пока нет публичных сборок'}
+              {hasActiveFilters ? 'Попробуйте изменить фильтры' : 'Пока нет публичных сборок'}
             </p>
             {isAuthenticated && (
               <Link to="/builds/create"
@@ -233,8 +323,12 @@ const HomePage: React.FC = () => {
           <h3 className="text-white font-semibold text-sm mb-3">Популярные теги сборки</h3>
           <div className="flex flex-wrap gap-1.5">
             {POPULAR_TAGS.map(tag => (
-              <span key={tag}
-                className="px-2 py-0.5 bg-[#1A1A1A] border border-[#2A2A2A] text-[#888888] text-xs rounded-full hover:border-[#FF6B00] hover:text-[#FF6B00] cursor-pointer transition-colors">
+              <span key={tag} onClick={() => handleTagClick(tag)}
+                className={`px-2 py-0.5 border text-xs rounded-full cursor-pointer transition-colors ${
+                  filters.tag === tag
+                    ? 'bg-[#FF6B00]/20 border-[#FF6B00] text-[#FF6B00]'
+                    : 'bg-[#1A1A1A] border-[#2A2A2A] text-[#888888] hover:border-[#FF6B00] hover:text-[#FF6B00]'
+                }`}>
                 {tag}
               </span>
             ))}

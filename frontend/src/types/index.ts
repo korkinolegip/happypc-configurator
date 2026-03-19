@@ -43,9 +43,12 @@ export interface BuildListItem {
   title: string
   author_name: string
   author_avatar: string | null
+  author_id: string
   workshop_name: string | null
+  city: string | null
   total_price: number
   items_count: number
+  tags: string[]
   created_at: string
 }
 

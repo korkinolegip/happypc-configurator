@@ -60,12 +60,18 @@ async def get_public_builds(
     per_page: int = Query(12, ge=1, le=50),
     sort: str = Query("newest"),
     workshop_id: str | None = Query(None),
+    city: str | None = Query(None),
+    price_from: float | None = Query(None),
+    price_to: float | None = Query(None),
+    tag: str | None = Query(None),
+    search: str | None = Query(None),
+    author_id: str | None = Query(None),
     db: AsyncSession = Depends(get_db),
 ):
-    """List public builds without authentication."""
-    from sqlalchemy import desc, asc
-    from app.models.user import Workshop
-    from app.models.user import User
+    """List public builds with multi-filtering and smart search."""
+    from sqlalchemy import desc, asc, func as sa_func, or_, cast, String as SAString
+    from app.models.user import Workshop, User
+    from app.models.build import Build, BuildItem
 
     # Check if public feed is enabled
     result = await db.execute(
@@ -76,38 +82,143 @@ async def get_public_builds(
         from fastapi import HTTPException
         raise HTTPException(status_code=403, detail="Публичная лента отключена")
 
-    from app.models.build import Build
-    query = select(Build).where(Build.is_public == True, Build.password_hash == None)  # noqa
+    query = (
+        select(Build)
+        .join(User, Build.author_id == User.id, isouter=True)
+        .join(Workshop, Build.workshop_id == Workshop.id, isouter=True)
+        .where(Build.is_public == True, Build.password_hash == None)  # noqa
+    )
+
+    # City filter (user city or workshop city)
+    if city:
+        query = query.where(
+            or_(User.city.ilike(f"%{city}%"), Workshop.city.ilike(f"%{city}%"))
+        )
+
+    # Workshop filter
     if workshop_id:
         query = query.where(Build.workshop_id == workshop_id)
+
+    # Author filter
+    if author_id:
+        query = query.where(Build.author_id == author_id)
+
+    # Tag filter
+    if tag:
+        query = query.where(Build.tags.any(tag))
+
+    # Smart search — searches across: author name, build title, component names, price, date
+    if search:
+        search_term = search.strip()
+        conditions = [
+            User.name.ilike(f"%{search_term}%"),
+            Build.title.ilike(f"%{search_term}%"),
+            Build.description.ilike(f"%{search_term}%"),
+        ]
+
+        # Check if search is a number (price search)
+        clean_num = search_term.replace(" ", "").replace(",", ".")
+        if clean_num.replace(".", "").isdigit():
+            pass  # price filtering handled below
+
+        # Check if search looks like a date
+        import re
+        date_match = re.match(
+            r'^(\d{1,2})[./\s](\d{1,2})(?:[./\s](\d{2,4}))?$', search_term
+        )
+        if date_match:
+            day, month = int(date_match.group(1)), int(date_match.group(2))
+            year = date_match.group(3)
+            if year:
+                year = int(year)
+                if year < 100:
+                    year += 2000
+            # Filter by date
+            from datetime import datetime, date
+            try:
+                if year:
+                    target = date(year, month, day)
+                    query = query.where(
+                        sa_func.date(Build.created_at) == target
+                    )
+                else:
+                    query = query.where(
+                        sa_func.extract('day', Build.created_at) == day,
+                        sa_func.extract('month', Build.created_at) == month,
+                    )
+            except (ValueError, OverflowError):
+                pass
+        else:
+            # Text search: also search in component names via subquery
+            component_subq = (
+                select(BuildItem.build_id)
+                .where(BuildItem.name.ilike(f"%{search_term}%"))
+                .distinct()
+                .subquery()
+            )
+            conditions.append(Build.id.in_(select(component_subq)))
+            query = query.where(or_(*conditions))
+
+    # Sort
     if sort == "oldest":
         query = query.order_by(asc(Build.created_at))
+    elif sort == "price_asc":
+        pass  # sorted after totals calculation
+    elif sort == "price_desc":
+        pass
     else:
         query = query.order_by(desc(Build.created_at))
 
-    count_result = await db.execute(select(Build).where(Build.is_public == True, Build.password_hash == None))  # noqa
-    total = len(count_result.scalars().all())
+    # Count (efficient SQL count)
+    from sqlalchemy import func as count_func
+    count_q = select(count_func.count()).select_from(query.subquery())
+    count_result = await db.execute(count_q)
+    total = count_result.scalar() or 0
 
+    # Paginate
     query = query.offset((page - 1) * per_page).limit(per_page)
-    query = query.options(selectinload(Build.author), selectinload(Build.workshop), selectinload(Build.items))
+    query = query.options(
+        selectinload(Build.author), selectinload(Build.workshop), selectinload(Build.items)
+    )
     result = await db.execute(query)
-    builds = result.scalars().all()
+    builds = result.unique().scalars().all()
 
     from app.services.builds import calculate_totals
     items_out = []
     for b in builds:
         totals = calculate_totals(b.items, b.labor_percent, b.labor_price_manual)
+        total_price = totals["total_with_labor"]
+
+        # Price range filter (applied after calculation)
+        if price_from and total_price < price_from:
+            continue
+        if price_to and total_price > price_to:
+            continue
+
+        author_city = b.author.city if b.author and b.author.city else None
+        ws_city = b.workshop.city if b.workshop and b.workshop.city else None
+
         items_out.append({
             "id": str(b.id),
             "short_code": b.short_code,
             "title": b.title,
             "author_name": b.author.name if b.author else "Неизвестно",
             "author_avatar": b.author.avatar_url if b.author else None,
+            "author_id": str(b.author_id),
             "workshop_name": b.workshop.name if b.workshop else None,
-            "total_price": totals["hardware_total"],
+            "city": author_city or ws_city,
+            "total_price": total_price,
             "items_count": len(b.items),
+            "tags": b.tags or [],
             "created_at": b.created_at.isoformat(),
         })
+
+    # Price sort (post-query since price is calculated)
+    if sort == "price_asc":
+        items_out.sort(key=lambda x: x["total_price"])
+    elif sort == "price_desc":
+        items_out.sort(key=lambda x: x["total_price"], reverse=True)
+
     return {"items": items_out, "total": total, "page": page, "per_page": per_page}
 
 

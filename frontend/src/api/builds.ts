@@ -7,14 +7,31 @@ export const getPublicSettings = async (): Promise<Record<string, string>> => {
 }
 
 export const getPublicBuilds = async (filters?: BuildFilters): Promise<PaginatedResponse<BuildListItem>> => {
-  const response = await client.get('/api/public/builds', { params: filters })
+  const params: Record<string, string> = {}
+  if (filters?.workshop_id) params.workshop_id = filters.workshop_id
+  if (filters?.author_id) params.author_id = filters.author_id
+  if (filters?.city) params.city = filters.city
+  if (filters?.price_from) params.price_from = String(filters.price_from)
+  if (filters?.price_to) params.price_to = String(filters.price_to)
+  if (filters?.tag) params.tag = filters.tag
+  if (filters?.search) params.search = filters.search
+  if (filters?.sort) params.sort = filters.sort
+  if (filters?.page) params.page = String(filters.page)
+  if (filters?.per_page) params.per_page = String(filters.per_page)
+  const response = await client.get('/api/public/builds', { params })
   return response.data
 }
 
 export interface BuildFilters {
   workshop_id?: string
   author?: string
-  sort?: 'newest' | 'oldest'
+  author_id?: string
+  city?: string
+  price_from?: number
+  price_to?: number
+  tag?: string
+  search?: string
+  sort?: 'newest' | 'oldest' | 'price_asc' | 'price_desc'
   page?: number
   per_page?: number
 }
@@ -39,6 +56,12 @@ export const getBuilds = async (filters?: BuildFilters): Promise<PaginatedRespon
   const params = new URLSearchParams()
   if (filters?.workshop_id) params.set('workshop_id', filters.workshop_id)
   if (filters?.author) params.set('author', filters.author)
+  if (filters?.author_id) params.set('author_id', filters.author_id)
+  if (filters?.city) params.set('city', filters.city)
+  if (filters?.price_from) params.set('price_from', String(filters.price_from))
+  if (filters?.price_to) params.set('price_to', String(filters.price_to))
+  if (filters?.tag) params.set('tag', filters.tag)
+  if (filters?.search) params.set('search', filters.search)
   if (filters?.sort) params.set('sort', filters.sort)
   if (filters?.page) params.set('page', String(filters.page))
   if (filters?.per_page) params.set('per_page', String(filters.per_page))
