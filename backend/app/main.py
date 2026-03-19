@@ -108,9 +108,13 @@ async def init_default_settings():
 @app.on_event("startup")
 async def startup():
     """Initialize database tables and default settings on application startup."""
-    async with engine.begin() as conn:
-        await conn.run_sync(models.Base.metadata.create_all)
-    await init_default_settings()
+    try:
+        async with engine.begin() as conn:
+            await conn.run_sync(models.Base.metadata.create_all)
+        await init_default_settings()
+    except Exception as e:
+        print(f"WARNING: startup DB init failed: {e}")
+        print("App will still start — DB may be unavailable temporarily.")
 
 
 @app.get("/api/health")
