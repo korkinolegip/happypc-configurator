@@ -1,14 +1,18 @@
 """
 URL parser service — extracts product name and price from store URLs.
 
-Strategy:
-- Wildberries: basket CDN (name) + ZenRows (price)
-- Ozon:        ZenRows (js_render + antibot)
-- DNS-shop:    ZenRows (js_render + antibot)
-- Yandex Market: ZenRows (js_render + antibot)
-- Avito:       ZenRows (js_render + antibot)
-- Others:      curl_cffi / httpx generic fallback
+Strategy (priority order):
+- Wildberries:   basket CDN (name, free) + Camoufox (price)
+- Ozon:          Camoufox (primary) → ZenRows (fallback)
+- DNS-shop:      Camoufox (primary) → ZenRows (fallback)
+- Yandex Market: Camoufox (primary) → Apify (fallback)
+- Avito:         Camoufox (primary) → ZenRows (fallback)
+- Others:        curl_cffi / httpx generic fallback
+
+Camoufox = anti-detect Firefox browser, free, works on home IP.
+ZenRows/Apify = paid fallback for datacenter IPs.
 """
+import asyncio
 import json
 import re
 from typing import Optional
@@ -58,9 +62,11 @@ def _clean_price(raw: str) -> Optional[float]:
         return None
 
 
-def _extract_json_ld(html: str) -> dict:
-    """Extract name and price from JSON-LD structured data."""
+def _extract_from_html(html: str) -> dict:
+    """Universal HTML extractor: JSON-LD → H1 → OG → price patterns."""
     name = price = None
+
+    # JSON-LD
     for m in re.finditer(
         r'application/ld\+json["\x27][^>]*>(.*?)</script>', html, re.DOTALL | re.IGNORECASE
     ):
@@ -82,30 +88,85 @@ def _extract_json_ld(html: str) -> dict:
                             price = _clean_price(str(p))
         except Exception:
             continue
+
+    # H1
+    if not name:
+        m = re.search(r'<h1[^>]*>(.*?)</h1>', html[:200000], re.DOTALL)
+        if m:
+            import html as html_lib
+            text = re.sub(r'<[^>]+>', '', m.group(1)).strip()
+            name = html_lib.unescape(text) if text else None
+
+    # OG title
+    if not name:
+        for pattern in [
+            r'og:title["\x27][^>]+content=["\x27]([^"\x27]+)',
+            r'content=["\x27]([^"\x27]+)["\x27][^>]+og:title',
+        ]:
+            m = re.search(pattern, html[:30000], re.IGNORECASE)
+            if m:
+                name = m.group(1).strip()
+                break
+
+    # Price fallbacks
+    if not price:
+        for pat in [
+            r'content="(\d+)"\s*itemprop="price"',
+            r'itemprop="price"[^>]*content="(\d+)"',
+            r'"cardPrice":\s*"([\d\s]+)"',
+            r'"finalPrice":\s*"?([\d\s]+)',
+            r'price-current[^>]*>.*?(\d[\d\s\xa0]*\d)',
+            r'(\d[\d\xa0\s]{2,8})\s*₽',
+        ]:
+            pm = re.search(pat, html[:300000], re.DOTALL)
+            if pm:
+                raw = pm.group(1).replace('\xa0', '').replace(' ', '')
+                if raw.isdigit() and int(raw) > 100:
+                    price = float(raw)
+                    break
+
     return {"name": name, "price": price}
 
 
-def _extract_og_title(html: str) -> Optional[str]:
-    for pattern in [
-        r'og:title["\x27][^>]+content=["\x27]([^"\x27]+)',
-        r'content=["\x27]([^"\x27]+)["\x27][^>]+og:title',
-    ]:
-        m = re.search(pattern, html[:30000], re.IGNORECASE)
-        if m:
-            return m.group(1).strip()
-    return None
+# ─── Camoufox (anti-detect browser) ─────────────────────────────────────────
+
+async def _camoufox_fetch(url: str, wait_seconds: int = 8) -> Optional[str]:
+    """Fetch URL via Camoufox (anti-detect Firefox). Returns rendered HTML."""
+    try:
+        return await asyncio.wait_for(
+            _camoufox_fetch_inner(url, wait_seconds), timeout=60
+        )
+    except (asyncio.TimeoutError, Exception):
+        return None
 
 
-def _extract_h1(html: str) -> Optional[str]:
-    m = re.search(r'<h1[^>]*>(.*?)</h1>', html[:200000], re.DOTALL)
-    if m:
-        text = re.sub(r'<[^>]+>', '', m.group(1)).strip()
-        import html as html_lib
-        return html_lib.unescape(text) if text else None
-    return None
+async def _camoufox_fetch_inner(url: str, wait_seconds: int) -> Optional[str]:
+    loop = asyncio.get_event_loop()
+    return await loop.run_in_executor(None, _camoufox_fetch_sync, url, wait_seconds)
 
 
-# ─── ZenRows fetch ───────────────────────────────────────────────────────────
+def _camoufox_fetch_sync(url: str, wait_seconds: int) -> Optional[str]:
+    try:
+        from camoufox.sync_api import Camoufox
+        import time
+        with Camoufox(headless=True) as browser:
+            page = browser.new_page()
+            page.goto(url, timeout=25000)
+            time.sleep(wait_seconds)
+            title = page.title()
+            # Check for bot-detection pages
+            blocked = [
+                "Почти готово", "Доступ ограничен", "HTTP 403",
+                "captcha", "робот", "Подтвердите",
+            ]
+            if any(b.lower() in title.lower() for b in blocked):
+                return None
+            return page.content()
+    except Exception:
+        return None
+
+
+# ─── ZenRows fetch (paid fallback) ──────────────────────────────────────────
 
 async def _zenrows_fetch(url: str, wait: str = "10000") -> Optional[str]:
     """Fetch URL via ZenRows API with JS rendering and anti-bot bypass."""
@@ -184,27 +245,18 @@ async def _fetch_wildberries(url: str) -> dict:
     except Exception:
         pass
 
-    # 2) Price from ZenRows (rendered page)
+    # 2) Price via Camoufox (WB blocks aggressively, may not work)
     if name:
-        html = await _zenrows_fetch(url, wait="12000")
+        html = await _camoufox_fetch(url, wait_seconds=8)
         if html:
-            # Try JSON-LD first
-            ld = _extract_json_ld(html)
-            if ld.get("price"):
-                price = ld["price"]
-            else:
-                # Regex patterns for WB price
-                for pat in [
-                    r'price-block__final-price[^>]*>([\d\s]+)',
-                    r'"finalPrice":\s*"?([\d\s]+)',
-                    r'"priceForProduct"[^}]*"basicPrice":\s*(\d+)',
-                    r'price__lower[^>]*>([\d\s]+)',
-                ]:
-                    pm = re.search(pat, html)
-                    if pm:
-                        price = _clean_price(pm.group(1))
-                        if price:
-                            break
+            result = _extract_from_html(html)
+            if result.get("price"):
+                price = result["price"]
+            # Validate name isn't homepage
+            page_name = result.get("name", "")
+            if page_name and "Wildberries" not in page_name and "широкий ассортимент" not in page_name:
+                if not name:
+                    name = page_name
 
     return {"name": name, "price": price, "store": "wildberries"} if name else {}
 
@@ -212,111 +264,84 @@ async def _fetch_wildberries(url: str) -> dict:
 # ─── Ozon ────────────────────────────────────────────────────────────────────
 
 async def _fetch_ozon(url: str) -> dict:
+    # 1) Camoufox (free)
+    html = await _camoufox_fetch(url)
+    if html:
+        result = _extract_from_html(html)
+        if result.get("name"):
+            return {"name": result["name"], "price": result.get("price"), "store": "ozon"}
+
+    # 2) ZenRows fallback (paid)
     html = await _zenrows_fetch(url)
-    if not html:
-        return {"store": "ozon"}
+    if html:
+        result = _extract_from_html(html)
+        if result.get("name"):
+            return {"name": result["name"], "price": result.get("price"), "store": "ozon"}
 
-    ld = _extract_json_ld(html)
-    name = ld.get("name")
-    price = ld.get("price")
-
-    if not name:
-        name = _extract_h1(html)
-    if not name:
-        og = _extract_og_title(html)
-        if og:
-            name = re.sub(r"\s*[—–|]\s*(?:OZON|Ozon).*$", "", og).strip()
-
-    if not price:
-        for pat in [
-            r'"cardPrice":\s*"([\d\s]+)',
-            r'"finalPrice":\s*"?([\d\s]+)',
-            r'"price":\s*"([\d\s]+)\s*₽',
-        ]:
-            pm = re.search(pat, html)
-            if pm:
-                price = _clean_price(pm.group(1))
-                if price:
-                    break
-
-    return {"name": name, "price": price, "store": "ozon"} if name else {"store": "ozon"}
+    return {"store": "ozon"}
 
 
 # ─── DNS-shop ────────────────────────────────────────────────────────────────
 
 async def _fetch_dns(url: str) -> dict:
+    # 1) Camoufox (free, bypasses Qrator on home IP)
+    html = await _camoufox_fetch(url, wait_seconds=10)
+    if html:
+        result = _extract_from_html(html)
+        if result.get("name"):
+            name = result["name"]
+            name = re.sub(r"\s*[—–|-]\s*(?:DNS|купить).*$", "", name, flags=re.IGNORECASE).strip()
+            return {"name": name, "price": result.get("price"), "store": "dns"}
+
+    # 2) ZenRows fallback (paid, for datacenter IPs)
     html = await _zenrows_fetch(url, wait="12000")
-    if not html:
-        return {"store": "dns"}
+    if html:
+        result = _extract_from_html(html)
+        if result.get("name"):
+            name = result["name"]
+            name = re.sub(r"\s*[—–|-]\s*(?:DNS|купить).*$", "", name, flags=re.IGNORECASE).strip()
+            return {"name": name, "price": result.get("price"), "store": "dns"}
 
-    ld = _extract_json_ld(html)
-    name = ld.get("name")
-    price = ld.get("price")
-
-    if not name:
-        name = _extract_h1(html)
-    if not name:
-        og = _extract_og_title(html)
-        if og:
-            name = re.sub(r"\s*[—–|-]\s*(?:DNS|купить).*$", "", og, flags=re.IGNORECASE).strip()
-
-    if not price:
-        for pat in [r'"price":\s*"?([\d\s]+)', r'product-buy__price[^>]*>([\d\s]+)']:
-            pm = re.search(pat, html)
-            if pm:
-                price = _clean_price(pm.group(1))
-                if price:
-                    break
-
-    return {"name": name, "price": price, "store": "dns"} if name else {"store": "dns"}
+    return {"store": "dns"}
 
 
 # ─── Yandex Market ───────────────────────────────────────────────────────────
 
 async def _fetch_yandex_market(url: str) -> dict:
-    """YM: Apify scraper (primary) → ZenRows (fallback)."""
-    # 1) Try Apify YM scraper — reliable, bypasses SmartCaptcha
+    # 1) Camoufox (free)
+    html = await _camoufox_fetch(url, wait_seconds=10)
+    if html:
+        result = _extract_from_html(html)
+        name = result.get("name")
+        # Filter captcha/error pages
+        if name and not any(s in name.lower() for s in ["confirme", "captcha", "робот", "ошейник"]):
+            name = re.sub(r"\s*[—–|]\s*(?:Яндекс|Yandex|купить).*$", "", name, flags=re.IGNORECASE).strip()
+            return {"name": name, "price": result.get("price"), "store": "yandex_market"}
+
+    # 2) Apify fallback (free tier)
     result = await _apify_yandex_market(url)
     if result.get("name"):
         return result
-
-    # 2) ZenRows fallback
-    html = await _zenrows_fetch(url, wait="15000")
-    if html:
-        ld = _extract_json_ld(html)
-        name = ld.get("name") or _extract_h1(html)
-        price = ld.get("price")
-        if not price:
-            pm = re.search(r'price-current[^>]*>.*?(\d[\d\s]*\d)', html[:200000], re.DOTALL)
-            if pm:
-                price = _clean_price(pm.group(1))
-        if name and not any(s in name.lower() for s in ["confirme", "captcha", "робот"]):
-            return {"name": name, "price": price, "store": "yandex_market"}
 
     return {"store": "yandex_market"}
 
 
 async def _apify_yandex_market(url: str) -> dict:
     """Fetch YM product via Apify zen-studio~yandex-market-scraper-parser."""
-    import asyncio
     from app.config import settings
     token = settings.APIFY_TOKEN
     if not token:
         return {}
 
-    # Extract search query from URL slug
     m = re.search(r'/card/([^/]+)', url) or re.search(r'/product[/-]+([^/]+)', url)
     if not m:
         return {}
     slug = m.group(1)
-    # Convert slug to human-readable query
     query = slug.replace("-", " ").strip()
-    # Remove common suffixes
     query = re.sub(r'\d{8,}$', '', query).strip()
 
     try:
         async with httpx.AsyncClient(timeout=30) as client:
-            # Start actor run
             resp = await client.post(
                 "https://api.apify.com/v2/acts/zen-studio~yandex-market-scraper-parser/runs",
                 params={"token": token},
@@ -331,7 +356,6 @@ async def _apify_yandex_market(url: str) -> dict:
             if not run_id:
                 return {}
 
-            # Poll for completion (max ~60s)
             for _ in range(12):
                 await asyncio.sleep(5)
                 r = await client.get(
@@ -345,7 +369,6 @@ async def _apify_yandex_market(url: str) -> dict:
             if status != "SUCCEEDED" or not dataset_id:
                 return {}
 
-            # Get results
             r = await client.get(
                 f"https://api.apify.com/v2/datasets/{dataset_id}/items",
                 params={"token": token},
@@ -369,49 +392,30 @@ async def _apify_yandex_market(url: str) -> dict:
 # ─── Avito ───────────────────────────────────────────────────────────────────
 
 async def _fetch_avito(url: str) -> dict:
-    html = await _zenrows_fetch(url)
-    if not html:
-        return {"store": "avito"}
-
-    ld = _extract_json_ld(html)
-    name = ld.get("name")
-    price = ld.get("price")
-
-    if not name:
-        name = _extract_h1(html)
-
-    if not name:
-        og = _extract_og_title(html)
-        if og:
+    # 1) Camoufox (free, works on home IP)
+    html = await _camoufox_fetch(url)
+    if html:
+        result = _extract_from_html(html)
+        name = result.get("name")
+        if name:
+            for suffix in ["Авито", "Avito", "Объявление"]:
+                name = re.sub(rf"\s*[—–|]\s*(?:на\s+)?{suffix}.*$", "", name, flags=re.IGNORECASE).strip()
             import html as html_lib
-            name = html_lib.unescape(og)
-            name = re.sub(r"\s*(?:купить|в\s+\w+).*$", "", name, flags=re.IGNORECASE).strip()
-            name = re.sub(r"\s*[—–|]\s*(?:Объявление)?.*Авито.*$", "", name, flags=re.IGNORECASE).strip()
+            name = html_lib.unescape(name)
+            name = re.sub(r"\s*(?:купить|в\s+\w+\s+по).*$", "", name, flags=re.IGNORECASE).strip()
+            return {"name": name, "price": result.get("price"), "store": "avito"}
 
-    if not price:
-        for pat in [
-            r'content="(\d+)"\s*itemprop="price"',
-            r'itemprop="price"[^>]*content="(\d+)"',
-            r'itemprop="price"[^>]*>(\d[\d\xa0\s]*\d)',
-            r'data-marker="item-view/item-price"[^>]*>(\d[\d\xa0\s&;nbp]*\d)',
-            r'"price":\s*\{[^}]*"value":\s*(\d+)',
-            r'"price":\s*(\d{3,7})\b',
-        ]:
-            pm = re.search(pat, html)
-            if pm:
-                raw = pm.group(1).replace("\xa0", "").replace("&nbsp;", "")
-                candidate = _clean_price(raw)
-                if candidate and candidate > 50:
-                    price = candidate
-                    break
+    # 2) ZenRows fallback (paid)
+    html = await _zenrows_fetch(url)
+    if html:
+        result = _extract_from_html(html)
+        name = result.get("name")
+        if name:
+            for suffix in ["Авито", "Avito"]:
+                name = re.sub(rf"\s*[—–|]\s*(?:на\s+)?{suffix}.*$", "", name, flags=re.IGNORECASE).strip()
+            return {"name": name, "price": result.get("price"), "store": "avito"}
 
-    # Clean up name
-    if name:
-        # Remove Avito-specific suffixes
-        for suffix in ["Авито", "Avito", "Объявление"]:
-            name = re.sub(rf"\s*[—–|]\s*(?:на\s+)?{suffix}.*$", "", name, flags=re.IGNORECASE).strip()
-
-    return {"name": name, "price": price, "store": "avito"} if name else {"store": "avito"}
+    return {"store": "avito"}
 
 
 # ─── Generic (curl_cffi / httpx) ─────────────────────────────────────────────
@@ -422,7 +426,6 @@ async def _fetch_generic(url: str, store: str) -> dict:
         "Accept-Language": "ru-RU,ru;q=0.9",
     }
     html = None
-    # Try curl_cffi first
     try:
         from curl_cffi.requests import AsyncSession
         async with AsyncSession() as session:
@@ -431,7 +434,6 @@ async def _fetch_generic(url: str, store: str) -> dict:
                 html = resp.text
     except Exception:
         pass
-    # Fallback to httpx
     if not html:
         try:
             async with httpx.AsyncClient(timeout=12, headers=headers, follow_redirects=True) as client:
@@ -440,22 +442,17 @@ async def _fetch_generic(url: str, store: str) -> dict:
                     html = resp.text
         except Exception:
             pass
-    # Try ZenRows as last resort
     if not html:
-        html = await _zenrows_fetch(url)
-
+        html = await _camoufox_fetch(url)
     if not html:
         return {"store": store if store != "unknown" else None}
 
-    ld = _extract_json_ld(html)
-    name = ld.get("name") or _extract_og_title(html) or _extract_h1(html)
-    price = ld.get("price")
-
+    result = _extract_from_html(html)
+    name = result.get("name")
     if name:
         for suffix in ["Citilink", "М.Видео", "МегаМаркет", "Эльдорадо", "AliExpress"]:
             name = re.sub(rf"\s*[—–|]\s*{re.escape(suffix)}.*$", "", name, flags=re.IGNORECASE).strip()
-
-    return {"name": name, "price": price, "store": store}
+    return {"name": name, "price": result.get("price"), "store": store}
 
 
 # ─── Public entry point ──────────────────────────────────────────────────────
