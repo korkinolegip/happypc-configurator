@@ -333,16 +333,18 @@ async def _fetch_avito(url: str) -> dict:
 
     if not price:
         for pat in [
-            r'itemprop="price"\s*content="(\d+)"',
+            r'content="(\d+)"\s*itemprop="price"',
+            r'itemprop="price"[^>]*content="(\d+)"',
+            r'itemprop="price"[^>]*>(\d[\d\xa0\s]*\d)',
+            r'data-marker="item-view/item-price"[^>]*>(\d[\d\xa0\s&;nbp]*\d)',
             r'"price":\s*\{[^}]*"value":\s*(\d+)',
             r'"price":\s*(\d{3,7})\b',
-            r'js-item-price[^>]*data-value="(\d+)"',
-            r'item-price[^>]*>([\d\s]+)',
         ]:
             pm = re.search(pat, html)
             if pm:
-                candidate = _clean_price(pm.group(1))
-                if candidate and candidate > 50:  # filter out garbage like "6"
+                raw = pm.group(1).replace("\xa0", "").replace("&nbsp;", "")
+                candidate = _clean_price(raw)
+                if candidate and candidate > 50:
                     price = candidate
                     break
 
