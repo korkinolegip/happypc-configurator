@@ -6,6 +6,11 @@ export interface User {
   role: 'superadmin' | 'admin' | 'master' | 'user'
   workshop_id: string | null
   workshop_name: string | null
+  gender: string | null
+  city: string | null
+  phone: string | null
+  telegram_username: string | null
+  vk_url: string | null
   created_at: string
 }
 
@@ -103,6 +108,9 @@ export interface RegisterRequest {
   email: string
   password: string
   name: string
+  phone: string
+  gender: 'male' | 'female'
+  city?: string
 }
 
 export interface AuthResponse {

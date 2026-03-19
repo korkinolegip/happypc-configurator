@@ -43,6 +43,7 @@ class User(Base):
     workshop_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("workshops.id", ondelete="SET NULL"), nullable=True
     )
+    gender: Mapped[str | None] = mapped_column(String(10), nullable=True)  # male / female
     city: Mapped[str | None] = mapped_column(String(255), nullable=True)
     phone: Mapped[str | None] = mapped_column(String(32), nullable=True)
     telegram_id: Mapped[str | None] = mapped_column(String(64), unique=True, nullable=True)

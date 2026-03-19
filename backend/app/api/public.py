@@ -8,6 +8,7 @@ from sqlalchemy.orm import selectinload
 
 from app.database import get_db
 from app.models.build import Build
+from app.models.user import User
 from app.models.settings import AppSettings
 from app.schemas.build import AuthorInfo, BuildItemResponse, BuildPublicResponse, WorkshopInfo
 from app.services.builds import calculate_totals, get_build_by_code
@@ -220,6 +221,80 @@ async def get_public_builds(
         items_out.sort(key=lambda x: x["total_price"], reverse=True)
 
     return {"items": items_out, "total": total, "page": page, "per_page": per_page}
+
+
+@router.get("/user/{user_id}")
+async def get_user_public_profile(
+    user_id: str,
+    page: int = Query(1, ge=1),
+    per_page: int = Query(12, ge=1, le=50),
+    db: AsyncSession = Depends(get_db),
+):
+    """Public user profile with their public builds."""
+    import uuid as _uuid
+    from sqlalchemy import desc, func as sa_func
+
+    try:
+        uid = _uuid.UUID(user_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Некорректный ID пользователя")
+
+    result = await db.execute(
+        select(User).options(selectinload(User.workshop)).where(User.id == uid)
+    )
+    user = result.scalar_one_or_none()
+    if not user:
+        raise HTTPException(status_code=404, detail="Пользователь не найден")
+
+    # Count builds
+    count_result = await db.execute(
+        select(sa_func.count()).where(Build.author_id == uid, Build.is_public == True)  # noqa
+    )
+    builds_count = count_result.scalar() or 0
+
+    # Get builds
+    builds_q = (
+        select(Build)
+        .where(Build.author_id == uid, Build.is_public == True, Build.password_hash == None)  # noqa
+        .order_by(desc(Build.created_at))
+        .offset((page - 1) * per_page).limit(per_page)
+        .options(selectinload(Build.author), selectinload(Build.workshop), selectinload(Build.items))
+    )
+    builds_result = await db.execute(builds_q)
+    builds = builds_result.scalars().all()
+
+    from app.services.builds import calculate_totals
+    builds_out = []
+    for b in builds:
+        totals = calculate_totals(b.items, b.labor_percent, b.labor_price_manual)
+        builds_out.append({
+            "id": str(b.id),
+            "short_code": b.short_code,
+            "title": b.title,
+            "total_price": totals["total_with_labor"],
+            "items_count": len(b.items),
+            "tags": b.tags or [],
+            "created_at": b.created_at.isoformat(),
+        })
+
+    return {
+        "user": {
+            "id": str(user.id),
+            "name": user.name,
+            "avatar_url": user.avatar_url,
+            "role": user.role,
+            "city": user.city,
+            "workshop_name": user.workshop.name if user.workshop else None,
+            "telegram_username": user.telegram_username,
+            "vk_url": user.vk_url,
+            "builds_count": builds_count,
+            "created_at": user.created_at.isoformat(),
+        },
+        "builds": builds_out,
+        "total": builds_count,
+        "page": page,
+        "per_page": per_page,
+    }
 
 
 @router.get("/{short_code}", response_model=BuildPublicResponse)

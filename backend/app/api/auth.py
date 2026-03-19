@@ -41,6 +41,8 @@ async def _make_token(user: User, db: AsyncSession) -> Token:
             role=u.role,
             workshop_id=u.workshop_id,
             workshop_name=u.workshop.name if u.workshop else None,
+            gender=u.gender,
+            city=u.city,
             created_at=u.created_at,
         ),
     )
@@ -50,6 +52,14 @@ async def get_setting(db: AsyncSession, key: str, default: str = "") -> str:
     result = await db.execute(select(AppSettings).where(AppSettings.key == key))
     setting = result.scalar_one_or_none()
     return setting.value if setting else default
+
+
+def _random_avatar(gender: str) -> str:
+    """Pick a random cyberpunk avatar based on gender."""
+    import random
+    folder = "male" if gender == "male" else "female"
+    num = random.randint(1, 15)
+    return f"/static/avatars/{folder}/{num}.webp"
 
 
 @router.post("/register", response_model=Token, status_code=status.HTTP_201_CREATED)
@@ -73,6 +83,10 @@ async def register(user_data: UserCreate, db: AsyncSession = Depends(get_db)):
         email=user_data.email,
         password_hash=hash_password(user_data.password),
         name=user_data.name,
+        phone=user_data.phone,
+        gender=user_data.gender,
+        city=user_data.city,
+        avatar_url=_random_avatar(user_data.gender),
         role="user",
     )
     db.add(user)
@@ -172,8 +186,9 @@ async def telegram_auth(
 
         user = User(
             telegram_id=telegram_id_str,
+            telegram_username=tg_data.username,
             name=name,
-            avatar_url=tg_data.photo_url,
+            avatar_url=tg_data.photo_url or _random_avatar("male"),
             role="user",
         )
         db.add(user)
@@ -274,11 +289,13 @@ async def vk_auth_callback(
         except Exception:
             pass
 
+        vk_screen_name = vk_user.get("screen_name", "") if 'vk_user' in dir() else ""
         user = User(
             vk_id=vk_user_id,
+            vk_url=f"https://vk.com/id{vk_user_id}" if vk_user_id else None,
             email=vk_email if vk_email else None,
             name=name or "VK User",
-            avatar_url=avatar_url,
+            avatar_url=avatar_url or _random_avatar("male"),
             role="user",
         )
         db.add(user)
@@ -305,5 +322,10 @@ async def get_me(current_user: User = Depends(get_current_active_user)):
         role=current_user.role,
         workshop_id=current_user.workshop_id,
         workshop_name=workshop_name,
+        gender=current_user.gender,
+        city=current_user.city,
+        phone=current_user.phone,
+        telegram_username=current_user.telegram_username,
+        vk_url=current_user.vk_url,
         created_at=current_user.created_at,
     )

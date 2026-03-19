@@ -12,6 +12,27 @@ class UserResponse(BaseModel):
     role: str
     workshop_id: uuid.UUID | None
     workshop_name: str | None
+    gender: str | None = None
+    city: str | None = None
+    phone: str | None = None
+    telegram_username: str | None = None
+    vk_url: str | None = None
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class UserPublicProfile(BaseModel):
+    """Public profile — phone hidden from regular users."""
+    id: uuid.UUID
+    name: str
+    avatar_url: str | None
+    role: str
+    city: str | None = None
+    workshop_name: str | None = None
+    telegram_username: str | None = None
+    vk_url: str | None = None
+    builds_count: int = 0
     created_at: datetime
 
     model_config = {"from_attributes": True}
@@ -20,6 +41,9 @@ class UserResponse(BaseModel):
 class UserUpdate(BaseModel):
     name: str | None = None
     avatar_url: str | None = None
+    city: str | None = None
+    phone: str | None = None
+    gender: str | None = None
 
 
 class UserAdminCreate(BaseModel):
@@ -36,3 +60,6 @@ class UserAdminUpdate(BaseModel):
     workshop_id: uuid.UUID | None = None
     is_active: bool | None = None
     password: str | None = None
+    city: str | None = None
+    phone: str | None = None
+    gender: str | None = None

@@ -16,6 +16,9 @@ interface LoginFormValues {
 interface RegisterFormValues {
   email: string
   name: string
+  phone: string
+  gender: 'male' | 'female'
+  city: string
   password: string
   password_confirm: string
 }
@@ -84,6 +87,9 @@ const LoginPage: React.FC = () => {
       const response = await apiRegister({
         email: data.email,
         name: data.name,
+        phone: data.phone,
+        gender: data.gender,
+        city: data.city || undefined,
         password: data.password,
       })
       authLogin(response.access_token, response.user)
@@ -221,44 +227,104 @@ const LoginPage: React.FC = () => {
         {mode === 'register' && registrationEnabled && (
           <form
             onSubmit={registerForm.handleSubmit(handleRegister)}
-            className="bg-[#111111] border border-[#2A2A2A] rounded-lg p-6 space-y-4"
+            className="bg-[#111111] border border-[#2A2A2A] rounded-lg p-6 space-y-3"
           >
+            {/* Имя Фамилия */}
             <div>
-              <label className="block text-sm text-[#AAAAAA] mb-1.5">Имя</label>
+              <label className="block text-sm text-[#AAAAAA] mb-1">Имя и фамилия *</label>
               <input
-                {...registerForm.register('name', { required: 'Введите имя' })}
+                {...registerForm.register('name', {
+                  required: 'Введите имя и фамилию',
+                  minLength: { value: 2, message: 'Минимум 2 символа' },
+                })}
                 className="input-field"
-                placeholder="Ваше имя"
+                placeholder="Иван Иванов"
                 autoComplete="name"
               />
               {registerForm.formState.errors.name && (
-                <p className="text-red-400 text-xs mt-1">
-                  {registerForm.formState.errors.name.message}
-                </p>
+                <p className="text-red-400 text-xs mt-1">{registerForm.formState.errors.name.message}</p>
               )}
             </div>
 
-            <div>
-              <label className="block text-sm text-[#AAAAAA] mb-1.5">Email</label>
-              <input
-                {...registerForm.register('email', {
-                  required: 'Введите email',
-                  pattern: { value: /^\S+@\S+\.\S+$/, message: 'Некорректный email' },
-                })}
-                type="email"
-                className="input-field"
-                placeholder="your@email.com"
-                autoComplete="email"
-              />
-              {registerForm.formState.errors.email && (
-                <p className="text-red-400 text-xs mt-1">
-                  {registerForm.formState.errors.email.message}
-                </p>
-              )}
+            {/* Телефон + Пол */}
+            <div className="grid grid-cols-[1fr_auto] gap-2">
+              <div>
+                <label className="block text-sm text-[#AAAAAA] mb-1">Телефон *</label>
+                <input
+                  {...registerForm.register('phone', {
+                    required: 'Введите телефон',
+                    pattern: {
+                      value: /^[\d\s()+\-]{10,18}$/,
+                      message: 'Формат: +7 (999) 999-99-99',
+                    },
+                  })}
+                  type="tel"
+                  className="input-field"
+                  placeholder="+7 (999) 999-99-99"
+                  autoComplete="tel"
+                />
+                {registerForm.formState.errors.phone && (
+                  <p className="text-red-400 text-xs mt-1">{registerForm.formState.errors.phone.message}</p>
+                )}
+              </div>
+              <div>
+                <label className="block text-sm text-[#AAAAAA] mb-1">Пол *</label>
+                <div className="flex gap-1 h-[42px]">
+                  <label className={`flex items-center px-3 rounded cursor-pointer border transition-colors text-sm ${
+                    registerForm.watch('gender') === 'male'
+                      ? 'border-[#FF6B00] bg-[#FF6B00]/10 text-[#FF6B00]'
+                      : 'border-[#2A2A2A] text-[#888] hover:border-[#555]'
+                  }`}>
+                    <input type="radio" value="male" {...registerForm.register('gender', { required: 'Выберите пол' })} className="hidden" />
+                    М
+                  </label>
+                  <label className={`flex items-center px-3 rounded cursor-pointer border transition-colors text-sm ${
+                    registerForm.watch('gender') === 'female'
+                      ? 'border-[#FF6B00] bg-[#FF6B00]/10 text-[#FF6B00]'
+                      : 'border-[#2A2A2A] text-[#888] hover:border-[#555]'
+                  }`}>
+                    <input type="radio" value="female" {...registerForm.register('gender', { required: 'Выберите пол' })} className="hidden" />
+                    Ж
+                  </label>
+                </div>
+                {registerForm.formState.errors.gender && (
+                  <p className="text-red-400 text-xs mt-1">{registerForm.formState.errors.gender.message}</p>
+                )}
+              </div>
             </div>
 
+            {/* Email + Город */}
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="block text-sm text-[#AAAAAA] mb-1">Email *</label>
+                <input
+                  {...registerForm.register('email', {
+                    required: 'Введите email',
+                    pattern: { value: /^\S+@\S+\.\S+$/, message: 'Некорректный email' },
+                  })}
+                  type="email"
+                  className="input-field"
+                  placeholder="your@email.com"
+                  autoComplete="email"
+                />
+                {registerForm.formState.errors.email && (
+                  <p className="text-red-400 text-xs mt-1">{registerForm.formState.errors.email.message}</p>
+                )}
+              </div>
+              <div>
+                <label className="block text-sm text-[#AAAAAA] mb-1">Город</label>
+                <input
+                  {...registerForm.register('city')}
+                  className="input-field"
+                  placeholder="Москва"
+                  autoComplete="address-level2"
+                />
+              </div>
+            </div>
+
+            {/* Пароль */}
             <div>
-              <label className="block text-sm text-[#AAAAAA] mb-1.5">Пароль</label>
+              <label className="block text-sm text-[#AAAAAA] mb-1">Пароль *</label>
               <div className="relative">
                 <input
                   {...registerForm.register('password', {
@@ -270,23 +336,19 @@ const LoginPage: React.FC = () => {
                   placeholder="••••••••"
                   autoComplete="new-password"
                 />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword((v) => !v)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#AAAAAA] hover:text-white transition-colors"
-                >
+                <button type="button" onClick={() => setShowPassword((v) => !v)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#AAAAAA] hover:text-white transition-colors">
                   {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               </div>
               {registerForm.formState.errors.password && (
-                <p className="text-red-400 text-xs mt-1">
-                  {registerForm.formState.errors.password.message}
-                </p>
+                <p className="text-red-400 text-xs mt-1">{registerForm.formState.errors.password.message}</p>
               )}
             </div>
 
+            {/* Подтверждение пароля */}
             <div>
-              <label className="block text-sm text-[#AAAAAA] mb-1.5">Подтвердите пароль</label>
+              <label className="block text-sm text-[#AAAAAA] mb-1">Подтвердите пароль *</label>
               <input
                 {...registerForm.register('password_confirm', { required: 'Подтвердите пароль' })}
                 type={showPassword ? 'text' : 'password'}
@@ -295,17 +357,12 @@ const LoginPage: React.FC = () => {
                 autoComplete="new-password"
               />
               {registerForm.formState.errors.password_confirm && (
-                <p className="text-red-400 text-xs mt-1">
-                  {registerForm.formState.errors.password_confirm.message}
-                </p>
+                <p className="text-red-400 text-xs mt-1">{registerForm.formState.errors.password_confirm.message}</p>
               )}
             </div>
 
-            <button
-              type="submit"
-              disabled={registerForm.formState.isSubmitting}
-              className="w-full bg-[#FF6B00] hover:bg-[#E05A00] text-white font-semibold py-2.5 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
+            <button type="submit" disabled={registerForm.formState.isSubmitting}
+              className="w-full bg-[#FF6B00] hover:bg-[#E05A00] text-white font-semibold py-2.5 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed mt-2">
               {registerForm.formState.isSubmitting ? (
                 <span className="flex items-center justify-center gap-2">
                   <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
