@@ -1,23 +1,130 @@
 """
 URL parser service — extracts product name and price from store URLs.
 
+Performance layers:
+1. Cache — same URL returns cached result for 24h (instant)
+2. Browser pool — single Camoufox browser, reused across requests
+3. Queue — max 2 concurrent scrapes, rest wait in line
+
 Strategy (priority order):
 - Wildberries:   basket CDN (name, free) + Camoufox (price)
 - Ozon:          Camoufox (primary) → ZenRows (fallback)
-- DNS-shop:      Camoufox (primary) → ZenRows (fallback)
+- DNS-shop:      iMac scraper (home IP) → Camoufox → ZenRows
 - Yandex Market: Camoufox (primary) → Apify (fallback)
 - Avito:         Camoufox (primary) → ZenRows (fallback)
 - Others:        curl_cffi / httpx generic fallback
-
-Camoufox = anti-detect Firefox browser, free, works on home IP.
-ZenRows/Apify = paid fallback for datacenter IPs.
 """
 import asyncio
 import json
 import re
+import time
+import threading
 from typing import Optional
 
 import httpx
+
+
+# ─── Layer 1: Cache ─────────────────────────────────────────────────────────
+
+_cache: dict[str, dict] = {}  # url -> {"result": {...}, "ts": float}
+CACHE_TTL = 86400  # 24 hours
+
+
+def _normalize_url(url: str) -> str:
+    """Normalize URL for cache key (strip tracking params)."""
+    url = url.split("?")[0].split("#")[0].rstrip("/")
+    return url.lower()
+
+
+def _cache_get(url: str) -> Optional[dict]:
+    key = _normalize_url(url)
+    entry = _cache.get(key)
+    if entry and (time.time() - entry["ts"]) < CACHE_TTL:
+        return entry["result"]
+    if entry:
+        del _cache[key]
+    return None
+
+
+def _cache_set(url: str, result: dict):
+    if result.get("name"):  # only cache successful results
+        key = _normalize_url(url)
+        _cache[key] = {"result": result, "ts": time.time()}
+        # Evict old entries if cache grows too large
+        if len(_cache) > 1000:
+            oldest = sorted(_cache.items(), key=lambda x: x[1]["ts"])[:200]
+            for k, _ in oldest:
+                _cache.pop(k, None)
+
+
+# ─── Layer 2: Browser pool (single Camoufox, reused) ────────────────────────
+
+_browser_instance = None
+_browser_lock = threading.Lock()
+
+
+def _get_browser():
+    """Get or create shared Camoufox browser instance."""
+    global _browser_instance
+    with _browser_lock:
+        if _browser_instance is None:
+            try:
+                from camoufox.sync_api import Camoufox
+                ctx = Camoufox(headless=True)
+                _browser_instance = ctx.__enter__()
+            except Exception:
+                return None
+        return _browser_instance
+
+
+def _scrape_with_pool(url: str, wait_seconds: int = 8) -> Optional[str]:
+    """Scrape URL using shared browser (new tab, not new browser)."""
+    browser = _get_browser()
+    if not browser:
+        return None
+    try:
+        page = browser.new_page()
+        try:
+            page.goto(url, timeout=25000)
+            import time as t
+            t.sleep(wait_seconds)
+            title = page.title()
+            blocked = [
+                "Почти готово", "Доступ ограничен", "HTTP 403",
+                "captcha", "робот", "Подтвердите",
+            ]
+            if any(b.lower() in title.lower() for b in blocked):
+                return None
+            return page.content()
+        finally:
+            page.close()
+    except Exception:
+        # Browser might be dead, reset it
+        global _browser_instance
+        try:
+            _browser_instance = None
+        except Exception:
+            pass
+        return None
+
+
+# ─── Layer 3: Queue (limit concurrent scrapes) ──────────────────────────────
+
+_scrape_semaphore = asyncio.Semaphore(2)  # max 2 concurrent browser scrapes
+
+
+async def _camoufox_fetch(url: str, wait_seconds: int = 8) -> Optional[str]:
+    """Fetch URL via Camoufox with concurrency control."""
+    async with _scrape_semaphore:
+        try:
+            return await asyncio.wait_for(
+                asyncio.get_event_loop().run_in_executor(
+                    None, _scrape_with_pool, url, wait_seconds
+                ),
+                timeout=60,
+            )
+        except (asyncio.TimeoutError, Exception):
+            return None
 
 
 # ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -128,45 +235,7 @@ def _extract_from_html(html: str) -> dict:
     return {"name": name, "price": price}
 
 
-# ─── Camoufox (anti-detect browser) ─────────────────────────────────────────
-
-async def _camoufox_fetch(url: str, wait_seconds: int = 8) -> Optional[str]:
-    """Fetch URL via Camoufox (anti-detect Firefox). Returns rendered HTML."""
-    try:
-        return await asyncio.wait_for(
-            _camoufox_fetch_inner(url, wait_seconds), timeout=60
-        )
-    except (asyncio.TimeoutError, Exception):
-        return None
-
-
-async def _camoufox_fetch_inner(url: str, wait_seconds: int) -> Optional[str]:
-    loop = asyncio.get_event_loop()
-    return await loop.run_in_executor(None, _camoufox_fetch_sync, url, wait_seconds)
-
-
-def _camoufox_fetch_sync(url: str, wait_seconds: int) -> Optional[str]:
-    try:
-        from camoufox.sync_api import Camoufox
-        import time
-        with Camoufox(headless=True) as browser:
-            page = browser.new_page()
-            page.goto(url, timeout=25000)
-            time.sleep(wait_seconds)
-            title = page.title()
-            # Check for bot-detection pages
-            blocked = [
-                "Почти готово", "Доступ ограничен", "HTTP 403",
-                "captcha", "робот", "Подтвердите",
-            ]
-            if any(b.lower() in title.lower() for b in blocked):
-                return None
-            return page.content()
-    except Exception:
-        return None
-
-
-# ─── iMac scraper (home IP) ──────────────────────────────────────────────────
+# ─── iMac scraper (home IP) ─────────────────────────────────────────────────
 
 async def _imac_scrape(url: str) -> dict:
     """Call iMac scraping microservice (Camoufox on home IP)."""
@@ -272,11 +341,6 @@ async def _fetch_wildberries(url: str) -> dict:
             result = _extract_from_html(html)
             if result.get("price"):
                 price = result["price"]
-            # Validate name isn't homepage
-            page_name = result.get("name", "")
-            if page_name and "Wildberries" not in page_name and "широкий ассортимент" not in page_name:
-                if not name:
-                    name = page_name
 
     return {"name": name, "price": price, "store": "wildberries"} if name else {}
 
@@ -337,8 +401,7 @@ async def _fetch_yandex_market(url: str) -> dict:
     if html:
         result = _extract_from_html(html)
         name = result.get("name")
-        # Filter captcha/error pages
-        if name and not any(s in name.lower() for s in ["confirme", "captcha", "робот", "ошейник"]):
+        if name and not any(s in name.lower() for s in ["confirme", "captcha", "робот"]):
             name = re.sub(r"\s*[—–|]\s*(?:Яндекс|Yandex|купить).*$", "", name, flags=re.IGNORECASE).strip()
             return {"name": name, "price": result.get("price"), "store": "yandex_market"}
 
@@ -380,6 +443,7 @@ async def _apify_yandex_market(url: str) -> dict:
             if not run_id:
                 return {}
 
+            status = None
             for _ in range(12):
                 await asyncio.sleep(5)
                 r = await client.get(
@@ -482,7 +546,17 @@ async def _fetch_generic(url: str, store: str) -> dict:
 # ─── Public entry point ──────────────────────────────────────────────────────
 
 async def parse_product_url(url: str) -> dict:
-    """Parse a product URL and return {name, price, store}."""
+    """Parse a product URL and return {name, price, store}.
+
+    Layer 1: Check cache first (instant if cached).
+    Layer 2: Browser pool (single browser, reused).
+    Layer 3: Queue (max 2 concurrent scrapes).
+    """
+    # Layer 1: Cache
+    cached = _cache_get(url)
+    if cached:
+        return cached
+
     store = _detect_store(url)
     base = {"store": store if store != "unknown" else None}
 
@@ -506,7 +580,12 @@ async def parse_product_url(url: str) -> dict:
         if not result.get("store") and base.get("store"):
             result["store"] = base["store"]
 
-        return result if result else base
+        final = result if result else base
+
+        # Cache successful result
+        _cache_set(url, final)
+
+        return final
 
     except Exception:
         return base
