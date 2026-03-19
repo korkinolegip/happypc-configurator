@@ -1,11 +1,13 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Menu, X, ChevronDown, User, LogOut, Shield, Plus, Cpu } from 'lucide-react'
+import { Menu, X, ChevronDown, User, LogOut, Shield, Plus, Cpu, Sun, Moon } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
+import { useTheme } from '../context/ThemeContext'
 import toast from 'react-hot-toast'
 
 const Header: React.FC = () => {
   const { user, isAuthenticated, logout } = useAuth()
+  const { theme, toggleTheme } = useTheme()
   const navigate = useNavigate()
   const [mobileOpen, setMobileOpen] = useState(false)
   const [dropdownOpen, setDropdownOpen] = useState(false)
@@ -31,13 +33,13 @@ const Header: React.FC = () => {
   const isAdmin = user?.role === 'admin' || user?.role === 'superadmin'
 
   return (
-    <header className="bg-[#111111] border-b border-[#2A2A2A] sticky top-0 z-40">
+    <header className="sticky top-0 z-40" style={{ backgroundColor: 'var(--surface)', borderBottom: '1px solid var(--border)' }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2 shrink-0">
             <img
-              src="/static/logo-white.png"
+              src={theme === 'dark' ? '/static/logo-white.png' : '/static/logo-color.png'}
               alt="HappyPC"
               className="h-8 w-auto"
               onError={(e) => {
@@ -48,9 +50,9 @@ const Header: React.FC = () => {
               }}
             />
             <span className="hidden items-center gap-1.5 text-xl font-bold">
-              <Cpu className="text-[#FF6B00]" size={22} />
-              <span className="text-white">Happy</span>
-              <span className="text-[#FF6B00]">PC</span>
+              <Cpu className="text-accent" size={22} />
+              <span style={{ color: 'var(--text)' }}>Happy</span>
+              <span className="text-accent">PC</span>
             </span>
           </Link>
 
@@ -58,7 +60,8 @@ const Header: React.FC = () => {
           <nav className="flex items-center gap-2 sm:gap-6">
             <Link
               to="/"
-              className="hidden sm:block text-[#AAAAAA] hover:text-white transition-colors text-sm font-medium"
+              className="hidden sm:block text-sm font-medium transition-colors hover:text-[#FF6B00]"
+              style={{ color: 'var(--text-2)' }}
             >
               Сборки
             </Link>
@@ -74,12 +77,23 @@ const Header: React.FC = () => {
           </nav>
 
           {/* Right side */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            {/* Theme toggle */}
+            <button
+              onClick={toggleTheme}
+              className="p-2 rounded-lg transition-colors"
+              style={{ color: 'var(--text-2)' }}
+              title={theme === 'light' ? 'Тёмная тема' : 'Светлая тема'}
+            >
+              {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
+            </button>
+
             {isAuthenticated && user ? (
               <div className="relative" ref={dropdownRef}>
                 <button
                   onClick={() => setDropdownOpen((v) => !v)}
-                  className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-[#2A2A2A] transition-colors"
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors"
+                  style={{ color: 'var(--text)' }}
                 >
                   {user.avatar_url ? (
                     <img
@@ -92,39 +106,42 @@ const Header: React.FC = () => {
                       {user.name.charAt(0).toUpperCase()}
                     </div>
                   )}
-                  <span className="text-sm text-white hidden sm:block max-w-[120px] truncate">
+                  <span className="text-sm hidden sm:block max-w-[120px] truncate" style={{ color: 'var(--text)' }}>
                     {user.name}
                   </span>
                   <ChevronDown
                     size={14}
-                    className={`text-[#AAAAAA] transition-transform ${dropdownOpen ? 'rotate-180' : ''}`}
+                    className={`transition-transform ${dropdownOpen ? 'rotate-180' : ''}`}
+                    style={{ color: 'var(--text-2)' }}
                   />
                 </button>
 
                 {dropdownOpen && (
-                  <div className="absolute right-0 mt-2 w-48 bg-[#111111] border border-[#2A2A2A] rounded-lg shadow-xl py-1 z-50">
+                  <div className="absolute right-0 mt-2 w-48 rounded-lg py-1 z-50" style={{ backgroundColor: 'var(--surface)', border: '1px solid var(--border)', boxShadow: 'var(--shadow-lg)' }}>
                     <Link
                       to="/profile"
                       onClick={() => setDropdownOpen(false)}
-                      className="flex items-center gap-2 px-4 py-2.5 text-sm text-white hover:bg-[#2A2A2A] transition-colors"
+                      className="flex items-center gap-2 px-4 py-2.5 text-sm transition-colors"
+                      style={{ color: 'var(--text)' }}
                     >
-                      <User size={15} className="text-[#AAAAAA]" />
+                      <User size={15} style={{ color: 'var(--text-2)' }} />
                       Профиль
                     </Link>
                     {isAdmin && (
                       <Link
                         to="/admin"
                         onClick={() => setDropdownOpen(false)}
-                        className="flex items-center gap-2 px-4 py-2.5 text-sm text-white hover:bg-[#2A2A2A] transition-colors"
+                        className="flex items-center gap-2 px-4 py-2.5 text-sm transition-colors"
+                        style={{ color: 'var(--text)' }}
                       >
                         <Shield size={15} className="text-[#FF6B00]" />
                         Администрирование
                       </Link>
                     )}
-                    <div className="border-t border-[#2A2A2A] my-1" />
+                    <div style={{ borderTop: '1px solid var(--border)', margin: '4px 0' }} />
                     <button
                       onClick={handleLogout}
-                      className="flex items-center gap-2 px-4 py-2.5 text-sm text-red-400 hover:bg-[#2A2A2A] transition-colors w-full text-left"
+                      className="flex items-center gap-2 px-4 py-2.5 text-sm text-red-500 w-full text-left transition-colors"
                     >
                       <LogOut size={15} />
                       Выйти
@@ -143,9 +160,10 @@ const Header: React.FC = () => {
 
             {/* Mobile menu button */}
             <button
-              className="md:hidden p-2 text-[#AAAAAA] hover:text-white transition-colors"
+              className="md:hidden p-2 transition-colors"
               onClick={() => setMobileOpen((v) => !v)}
               aria-label="Меню"
+              style={{ color: 'var(--text-2)' }}
             >
               {mobileOpen ? <X size={20} /> : <Menu size={20} />}
             </button>
@@ -154,11 +172,12 @@ const Header: React.FC = () => {
 
         {/* Mobile Nav */}
         {mobileOpen && (
-          <div className="md:hidden border-t border-[#2A2A2A] py-3 space-y-1">
+          <div className="md:hidden py-3 space-y-1" style={{ borderTop: '1px solid var(--border)' }}>
             <Link
               to="/"
               onClick={() => setMobileOpen(false)}
-              className="block px-3 py-2 text-sm text-[#AAAAAA] hover:text-white hover:bg-[#2A2A2A] rounded transition-colors"
+              className="block px-3 py-2 text-sm rounded transition-colors"
+              style={{ color: 'var(--text-2)' }}
             >
               Сборки
             </Link>
@@ -166,7 +185,8 @@ const Header: React.FC = () => {
               <Link
                 to="/builds/create"
                 onClick={() => setMobileOpen(false)}
-                className="flex items-center gap-1.5 px-3 py-2 text-sm text-[#AAAAAA] hover:text-white hover:bg-[#2A2A2A] rounded transition-colors"
+                className="flex items-center gap-1.5 px-3 py-2 text-sm rounded transition-colors"
+                style={{ color: 'var(--text-2)' }}
               >
                 <Plus size={15} />
                 Создать сборку

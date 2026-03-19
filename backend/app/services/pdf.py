@@ -17,19 +17,49 @@ def format_price(value: float) -> str:
 
 
 CATEGORY_ICONS = {
-    "Процессор": "🖥️",
-    "Видеокарта": "🎮",
-    "Материнская плата": "🔌",
-    "Оперативная память": "💾",
-    "SSD": "💿",
-    "HDD": "💽",
-    "Блок питания": "⚡",
-    "Корпус": "🖥",
-    "Охлаждение": "❄️",
-    "Монитор": "🖵",
-    "Периферия": "⌨️",
-    "Другое": "📦",
+    "Процессор": "CPU",
+    "Видеокарта": "GPU",
+    "Материнская плата": "MB",
+    "Оперативная память": "RAM",
+    "SSD": "SSD",
+    "HDD": "HDD",
+    "Блок питания": "PSU",
+    "Корпус": "CASE",
+    "Охлаждение": "COOL",
+    "Вентиляторы": "FAN",
+    "Монитор": "MON",
+    "Клавиатура": "KB",
+    "Мышь": "MOUSE",
+    "Наушники": "AUDIO",
+    "Колонки": "SPK",
+    "Операционная система": "OS",
+    "Периферия": "PER",
+    "Другое": "OTHER",
 }
+
+STORE_DETECT = {
+    "wildberries.ru": ("WB", "#CB11AB"),
+    "wb.ru": ("WB", "#CB11AB"),
+    "dns-shop.ru": ("DNS", "#F62A00"),
+    "ozon.ru": ("Ozon", "#005BFF"),
+    "market.yandex.ru": ("YM", "#FFCC00"),
+    "ya.cc": ("YM", "#FFCC00"),
+    "avito.ru": ("Avito", "#00AAFF"),
+    "megamarket.ru": ("MM", "#FF5C00"),
+    "citilink.ru": ("CL", "#FF8C00"),
+    "mvideo.ru": ("MV", "#FF0000"),
+    "eldorado.ru": ("EL", "#FFD700"),
+}
+
+
+def detect_store(url: str | None) -> tuple[str, str] | None:
+    if not url:
+        return None
+    u = url.lower()
+    for domain, info in STORE_DETECT.items():
+        if domain in u:
+            return info
+    return None
 
 
 async def generate_build_pdf(build, author_name: str, workshop_name: str | None) -> bytes:
@@ -65,6 +95,7 @@ async def generate_build_pdf(build, author_name: str, workshop_name: str | None)
         "labor_price_manual": build.labor_price_manual,
         "logo_path": LOGO_PATH if logo_exists else None,
         "category_icons": CATEGORY_ICONS,
+        "detect_store": detect_store,
         "format_price": format_price,
     }
 

@@ -1,7 +1,7 @@
 import React, { useState, useRef, useCallback } from 'react'
 import { useForm, useFieldArray } from 'react-hook-form'
 import {
-  Plus, Trash2, ChevronDown, ChevronUp, ExternalLink, Lock, Loader2, Eye, EyeOff,
+  Plus, Minus, Trash2, ChevronDown, ChevronUp, ExternalLink, Lock, Loader2, Eye, EyeOff,
 } from 'lucide-react'
 import CategoryIcon from './CategoryIcon'
 import type { Build } from '../types'
@@ -62,16 +62,17 @@ const makeEmpty = (category: string): SectionItem => ({
 
 // ─── Store detection & badge ──────────────────────────────────────────────────
 
-const STORE_INFO: Record<string, { label: string; color: string; favicon: string }> = {
-  wildberries: { label: 'Wildberries', color: '#CB11AB', favicon: 'https://www.wildberries.ru/favicon.ico' },
-  dns:         { label: 'DNS',         color: '#F62A00', favicon: 'https://www.dns-shop.ru/favicon.ico' },
-  ozon:        { label: 'Ozon',        color: '#005BFF', favicon: 'https://www.ozon.ru/favicon.ico' },
-  megamarket:  { label: 'МегаМаркет',  color: '#FF5C00', favicon: 'https://megamarket.ru/favicon.ico' },
-  aliexpress:  { label: 'AliExpress',  color: '#FF6A00', favicon: 'https://aliexpress.ru/favicon.ico' },
-  avito:       { label: 'Авито',       color: '#00AAFF', favicon: 'https://www.avito.ru/favicon.ico' },
-  citilink:    { label: 'Ситилинк',    color: '#FF8C00', favicon: 'https://www.citilink.ru/favicon.ico' },
-  mvideo:      { label: 'М.Видео',     color: '#FF0000', favicon: 'https://www.mvideo.ru/favicon.ico' },
-  eldorado:    { label: 'Эльдорадо',   color: '#FFD700', favicon: 'https://www.eldorado.ru/favicon.ico' },
+const STORE_INFO: Record<string, { label: string; color: string; shortLabel: string }> = {
+  wildberries: { label: 'Wildberries', color: '#CB11AB', shortLabel: 'WB' },
+  dns:         { label: 'DNS',         color: '#F62A00', shortLabel: 'DNS' },
+  ozon:        { label: 'Ozon',        color: '#005BFF', shortLabel: 'Ozon' },
+  yandex:      { label: 'Яндекс Маркет', color: '#FFCC00', shortLabel: 'YM' },
+  megamarket:  { label: 'МегаМаркет',  color: '#FF5C00', shortLabel: 'MM' },
+  aliexpress:  { label: 'AliExpress',  color: '#FF6A00', shortLabel: 'Ali' },
+  avito:       { label: 'Авито',       color: '#00AAFF', shortLabel: 'Avito' },
+  citilink:    { label: 'Ситилинк',    color: '#FF8C00', shortLabel: 'CL' },
+  mvideo:      { label: 'М.Видео',     color: '#FF0000', shortLabel: 'MV' },
+  eldorado:    { label: 'Эльдорадо',   color: '#FFD700', shortLabel: 'EL' },
 }
 
 function detectStore(url: string): string | null {
@@ -82,6 +83,7 @@ function detectStore(url: string): string | null {
   if (u.includes('ozon.ru')) return 'ozon'
   if (u.includes('megamarket.ru')) return 'megamarket'
   if (u.includes('aliexpress.ru') || u.includes('aliexpress.com')) return 'aliexpress'
+  if (u.includes('market.yandex.ru') || u.includes('ya.cc')) return 'yandex'
   if (u.includes('avito.ru')) return 'avito'
   if (u.includes('citilink.ru')) return 'citilink'
   if (u.includes('mvideo.ru')) return 'mvideo'
@@ -94,14 +96,16 @@ function StoreBadge({ store }: { store: string }) {
   if (!info) return null
   return (
     <span
-      className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium whitespace-nowrap shrink-0"
+      className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold whitespace-nowrap shrink-0 uppercase tracking-wide"
       style={{ backgroundColor: info.color + '22', color: info.color, border: `1px solid ${info.color}44` }}
     >
-      <img src={info.favicon} alt={info.label} className="w-3 h-3 rounded-sm" onError={e => { e.currentTarget.style.display = 'none' }} />
-      {info.label}
+      <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: info.color }} />
+      {info.shortLabel}
     </span>
   )
 }
+
+export { STORE_INFO, detectStore, StoreBadge }
 
 // ─── Single item row ──────────────────────────────────────────────────────────
 
@@ -142,18 +146,20 @@ function ItemRow({ fieldName, category, canDelete, canChangeCategory, onDelete, 
     }, 700)
   }, [fieldName, setValue])
 
+  const currentQty = parseInt((watch(`${fieldName}.qty` as never) as unknown as string) || '1', 10) || 1
+
   return (
-    <div className="flex gap-0 border-b border-[#2A2A2A] last:border-b-0">
+    <div className="flex gap-0 last:border-b-0" style={{ borderBottom: '1px solid var(--border)' }}>
       {/* Left: icon + label */}
-      <div className="w-[72px] shrink-0 flex flex-col items-center justify-center py-2 px-1 border-r border-[#2A2A2A]">
-        <CategoryIcon category={category} size={28} />
+      <div className="w-[80px] shrink-0 flex flex-col items-center justify-center py-2 px-1" style={{ borderRight: '1px solid var(--border)' }}>
+        <CategoryIcon category={category} size={36} />
         {canChangeCategory ? (
           <select
             value={category}
             onChange={e => onCategoryChange?.(e.target.value)}
             className="mt-1 w-full text-[9px] text-[#888888] bg-transparent text-center cursor-pointer outline-none border-0 hover:text-[#FF6B00] transition-colors truncate"
           >
-            {EXTRA_CATEGORIES.map(c => <option key={c} value={c} className="bg-[#111111] text-white text-xs">{c}</option>)}
+            {EXTRA_CATEGORIES.map(c => <option key={c} value={c} className="text-xs">{c}</option>)}
           </select>
         ) : (
           <span className="text-[10px] text-[#888888] text-center mt-1 leading-tight break-words w-full">{category}</span>
@@ -166,7 +172,7 @@ function ItemRow({ fieldName, category, canDelete, canChangeCategory, onDelete, 
         <div className="flex gap-1.5 mb-1">
           <input
             {...register(`${fieldName}.name` as never)}
-            className="flex-1 min-w-0 bg-[#0A0A0A] border border-[#2A2A2A] rounded px-2 py-1.5 text-white text-sm placeholder-[#444444] focus:outline-none focus:border-[#FF6B00] transition-colors"
+            className="flex-1 min-w-0 border rounded px-2 py-1.5 text-white text-sm placeholder-[#444444] focus:outline-none focus:border-[#FF6B00] transition-colors"
             placeholder={`Введите название ${category.toLowerCase()}`}
           />
           <div className="relative shrink-0 w-28">
@@ -175,7 +181,7 @@ function ItemRow({ fieldName, category, canDelete, canChangeCategory, onDelete, 
               type="number"
               min="0"
               step="1"
-              className="w-full bg-[#0A0A0A] border border-[#2A2A2A] rounded pl-2 pr-6 py-1.5 text-white text-sm placeholder-[#444444] focus:outline-none focus:border-[#FF6B00] transition-colors"
+              className="w-full border rounded pl-2 pr-6 py-1.5 text-white text-sm placeholder-[#444444] focus:outline-none focus:border-[#FF6B00] transition-colors"
               placeholder="0"
             />
             <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[#555555] text-xs pointer-events-none">₽</span>
@@ -187,7 +193,7 @@ function ItemRow({ fieldName, category, canDelete, canChangeCategory, onDelete, 
             <input
               value={currentUrl}
               onChange={handleUrlChange}
-              className="w-full bg-[#0A0A0A] border border-[#2A2A2A] rounded px-2 py-1.5 text-white text-sm placeholder-[#444444] focus:outline-none focus:border-[#FF6B00] transition-colors"
+              className="w-full border rounded px-2 py-1.5 text-white text-sm placeholder-[#444444] focus:outline-none focus:border-[#FF6B00] transition-colors"
               style={{ paddingRight: detectedStore ? '7rem' : '1.75rem' }}
               placeholder="Вставьте ссылку на товар"
               type="url"
@@ -206,15 +212,32 @@ function ItemRow({ fieldName, category, canDelete, canChangeCategory, onDelete, 
               )}
             </div>
           </div>
-          <div className="relative shrink-0 w-16">
+          <div className="shrink-0 flex items-center gap-0 rounded overflow-hidden" style={{ border: '1px solid var(--border)' }}>
+            <button
+              type="button"
+              onClick={() => { if (currentQty > 1) setValue(`${fieldName}.qty` as never, String(currentQty - 1) as never) }}
+              className="w-7 h-[30px] flex items-center justify-center transition-colors hover:text-[#FF6B00]"
+              style={{ backgroundColor: 'var(--surface-2)', color: 'var(--text-2)' }}
+            >
+              <Minus size={12} />
+            </button>
             <input
               {...register(`${fieldName}.qty` as never)}
               type="number"
               min="1"
               step="1"
               defaultValue="1"
-              className="w-full bg-[#0A0A0A] border border-[#2A2A2A] rounded pl-2 pr-4 py-1.5 text-white text-sm focus:outline-none focus:border-[#FF6B00] transition-colors text-center"
+              className="w-8 h-[30px] text-center text-sm outline-none border-x"
+              style={{ backgroundColor: 'var(--input-bg)', color: 'var(--text)', borderColor: 'var(--border)' }}
             />
+            <button
+              type="button"
+              onClick={() => setValue(`${fieldName}.qty` as never, String(currentQty + 1) as never)}
+              className="w-7 h-[30px] flex items-center justify-center transition-colors hover:text-[#FF6B00]"
+              style={{ backgroundColor: 'var(--surface-2)', color: 'var(--text-2)' }}
+            >
+              <Plus size={12} />
+            </button>
           </div>
           {canDelete && (
             <button type="button" onClick={onDelete}
@@ -498,7 +521,7 @@ const BuildForm: React.FC<BuildFormProps> = ({ initialData, onSubmit, isSubmitti
 
             {/* Grand total preview */}
             {grandTotal > 0 && (
-              <div className="bg-[#0A0A0A] border border-[#2A2A2A] rounded px-3 py-2 flex justify-between">
+              <div className="border rounded px-3 py-2 flex justify-between">
                 <span className="text-[#AAAAAA] text-xs">Итого</span>
                 <span className={`text-sm font-bold ${overBudget ? 'text-red-400' : 'text-[#FF6B00]'}`}>{fmt(grandTotal)} ₽</span>
               </div>

@@ -10,40 +10,13 @@ import { getPublicBuild, downloadPDF, copyBuild } from '../api/builds'
 import { useAuth } from '../hooks/useAuth'
 import CategoryIcon from '../components/CategoryIcon'
 import PriceBlock from '../components/PriceBlock'
-
-const STORE_FAVICONS: Record<string, { favicon: string; label: string }> = {
-  'wildberries.ru': { favicon: 'https://www.wildberries.ru/favicon.ico', label: 'Wildberries' },
-  'wb.ru':          { favicon: 'https://www.wildberries.ru/favicon.ico', label: 'Wildberries' },
-  'dns-shop.ru':    { favicon: 'https://www.dns-shop.ru/favicon.ico',    label: 'DNS' },
-  'ozon.ru':        { favicon: 'https://www.ozon.ru/favicon.ico',        label: 'Ozon' },
-  'megamarket.ru':  { favicon: 'https://megamarket.ru/favicon.ico',      label: 'МегаМаркет' },
-  'aliexpress.ru':  { favicon: 'https://aliexpress.ru/favicon.ico',      label: 'AliExpress' },
-  'aliexpress.com': { favicon: 'https://aliexpress.ru/favicon.ico',      label: 'AliExpress' },
-  'avito.ru':       { favicon: 'https://www.avito.ru/favicon.ico',       label: 'Авито' },
-  'citilink.ru':    { favicon: 'https://www.citilink.ru/favicon.ico',    label: 'Ситилинк' },
-  'mvideo.ru':      { favicon: 'https://www.mvideo.ru/favicon.ico',      label: 'М.Видео' },
-  'eldorado.ru':    { favicon: 'https://www.eldorado.ru/favicon.ico',    label: 'Эльдорадо' },
-}
-
-function getStoreFavicon(url: string | null) {
-  if (!url) return null
-  try {
-    const hostname = new URL(url).hostname.replace('www.', '')
-    for (const [domain, info] of Object.entries(STORE_FAVICONS)) {
-      if (hostname.includes(domain)) return info
-    }
-  } catch {}
-  return null
-}
+import { STORE_INFO, detectStore, StoreBadge } from '../components/BuildForm'
 
 function StoreIcon({ url }: { url: string | null }) {
-  const info = getStoreFavicon(url)
-  if (!info) return null
-  return (
-    <img src={info.favicon} alt={info.label} title={info.label}
-      className="w-3.5 h-3.5 rounded-sm shrink-0 opacity-70"
-      onError={e => { e.currentTarget.style.display = 'none' }} />
-  )
+  if (!url) return null
+  const store = detectStore(url)
+  if (!store) return null
+  return <StoreBadge store={store} />
 }
 
 const formatDate = (s: string) =>
@@ -139,7 +112,7 @@ function ComponentsSection({ items }: { items: { id: string; category: string; n
               {sorted.map((item, idx) => (
                 <tr key={item.id} className={`${idx % 2 === 0 ? 'bg-[#0D0D0D]' : 'bg-[#111111]'} hover:bg-[#1A1A1A] transition-colors`}>
                   <td className="px-3 py-2.5 w-9">
-                    <CategoryIcon category={item.category} size={18} />
+                    <CategoryIcon category={item.category} size={28} />
                   </td>
                   <td className="px-2 py-2.5 w-36">
                     <span className="text-[#AAAAAA] text-xs">{item.category}</span>

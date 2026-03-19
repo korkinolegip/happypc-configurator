@@ -157,6 +157,29 @@
             white-space: nowrap;
         }
 
+        .cat-badge {
+            display: inline-block;
+            background: #FF6B00;
+            color: #ffffff;
+            font-size: 8px;
+            font-weight: 700;
+            padding: 1px 5px;
+            border-radius: 3px;
+            letter-spacing: 0.5px;
+            margin-right: 4px;
+            vertical-align: middle;
+        }
+
+        .store-badge {
+            display: inline-block;
+            font-size: 8px;
+            font-weight: 700;
+            padding: 1px 5px;
+            border-radius: 3px;
+            margin-left: 4px;
+            vertical-align: middle;
+        }
+
         table.components tbody td.name-col {
             color: #111111;
         }
@@ -341,11 +364,16 @@
                 {% for item in items %}
                 <tr>
                     <td class="category-col">
-                        {{ category_icons.get(item.category, '📦') }} {{ item.category }}
+                        <span class="cat-badge">{{ category_icons.get(item.category, 'OTHER') }}</span>
+                        {{ item.category }}
                     </td>
                     <td class="name-col">
                         {{ item.name }}
                         {% if item.url %}
+                        {% set store = detect_store(item.url) %}
+                        {% if store %}
+                        <span class="store-badge" style="background: {{ store[1] }}22; color: {{ store[1] }}; border: 1px solid {{ store[1] }}44;">{{ store[0] }}</span>
+                        {% endif %}
                         <a class="item-link" href="{{ item.url }}">{{ item.url }}</a>
                         {% endif %}
                     </td>
