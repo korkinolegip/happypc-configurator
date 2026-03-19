@@ -10,6 +10,8 @@ from app.database import engine
 from app import models
 from app.database import AsyncSessionLocal
 from app.models.settings import AppSettings
+from app.models.user import User
+from app.models.workshop import Workshop
 
 app = FastAPI(
     title="HappyPC Configurator",
@@ -83,6 +85,35 @@ DEFAULT_SETTINGS = [
 ]
 
 
+async def init_superadmin():
+    """Create initial superadmin and workshop if no users exist."""
+    from app.services.auth import hash_password
+    async with AsyncSessionLocal() as session:
+        try:
+            result = await session.execute(select(User))
+            if result.scalars().first() is not None:
+                return  # users already exist
+
+            workshop = Workshop(name="HappyPC", city="")
+            session.add(workshop)
+            await session.flush()
+
+            admin_user = User(
+                email="admin@happypc.ru",
+                password_hash=hash_password("admin123"),
+                name="Администратор",
+                role="superadmin",
+                workshop_id=workshop.id,
+                is_active=True,
+            )
+            session.add(admin_user)
+            await session.commit()
+            print("INFO: Created initial superadmin: admin@happypc.ru / admin123")
+        except Exception as e:
+            await session.rollback()
+            print(f"Warning: Could not create superadmin: {e}")
+
+
 async def init_default_settings():
     """Create default app_settings rows if they do not exist."""
     async with AsyncSessionLocal() as session:
@@ -112,6 +143,7 @@ async def startup():
         async with engine.begin() as conn:
             await conn.run_sync(models.Base.metadata.create_all)
         await init_default_settings()
+        await init_superadmin()
     except Exception as e:
         print(f"WARNING: startup DB init failed: {e}")
         print("App will still start — DB may be unavailable temporarily.")
