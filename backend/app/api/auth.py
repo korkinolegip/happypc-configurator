@@ -59,7 +59,7 @@ def _random_avatar(gender: str) -> str:
     import random
     folder = "male" if gender == "male" else "female"
     num = random.randint(1, 15)
-    return f"/static/avatars/{folder}/{num}.webp"
+    return f"/static/avatars/{folder}/{num}.svg"
 
 
 @router.post("/register", response_model=Token, status_code=status.HTTP_201_CREATED)
