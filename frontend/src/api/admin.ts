@@ -2,8 +2,9 @@ import { client } from './client'
 import type { User, Workshop, AppSettings, DashboardStats } from '../types'
 
 // Users
-export const getUsers = async (): Promise<User[]> => {
-  const response = await client.get<User[]>('/api/admin/users')
+export const getUsers = async (search?: string): Promise<User[]> => {
+  const params = search ? { search } : {}
+  const response = await client.get<User[]>('/api/admin/users', { params })
   return response.data
 }
 
@@ -13,6 +14,9 @@ export interface CreateUserData {
   name: string
   role: string
   workshop_id?: string
+  city?: string
+  phone?: string
+  gender?: string
 }
 
 export interface UpdateUserData {
@@ -20,6 +24,11 @@ export interface UpdateUserData {
   name?: string
   role?: string
   workshop_id?: string | null
+  is_active?: boolean
+  password?: string
+  city?: string
+  phone?: string
+  gender?: string
 }
 
 export const createUser = async (data: CreateUserData): Promise<User> => {
@@ -38,6 +47,55 @@ export const deleteUser = async (id: string): Promise<void> => {
 
 export const resetUserPassword = async (id: string): Promise<{ new_password: string }> => {
   const response = await client.post<{ new_password: string }>(`/api/admin/users/${id}/reset-password`)
+  return response.data
+}
+
+// Builds (admin)
+export interface AdminBuildListItem {
+  id: string
+  short_code: string
+  title: string
+  author_name: string
+  author_avatar: string | null
+  author_id: string | null
+  workshop_name: string | null
+  is_public: boolean
+  has_password: boolean
+  total_price: number
+  items_count: number
+  tags: string[]
+  created_at: string
+}
+
+export const getAdminBuilds = async (params: {
+  page?: number
+  per_page?: number
+  search?: string
+}): Promise<{ items: AdminBuildListItem[]; total: number; page: number; per_page: number }> => {
+  const response = await client.get('/api/admin/builds', { params })
+  return response.data
+}
+
+export const deleteAdminBuild = async (id: string): Promise<void> => {
+  await client.delete(`/api/admin/builds/${id}`)
+}
+
+// Export
+export const exportUsersCSV = () => {
+  return `${client.defaults.baseURL || ''}/api/admin/export/users-csv`
+}
+
+export const exportBuildsCSV = () => {
+  return `${client.defaults.baseURL || ''}/api/admin/export/builds-csv`
+}
+
+// Logo upload
+export const uploadLogo = async (type: 'header' | 'pdf', file: File): Promise<{ url: string }> => {
+  const formData = new FormData()
+  formData.append('file', file)
+  const response = await client.post<{ url: string }>(`/api/admin/upload-logo/${type}`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  })
   return response.data
 }
 

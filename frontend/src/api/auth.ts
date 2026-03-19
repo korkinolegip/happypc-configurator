@@ -36,19 +36,27 @@ export const logout = async (): Promise<void> => {
   }
 }
 
-export const updateProfile = async (data: FormData): Promise<User> => {
-  // If FormData contains 'avatar', upload to /api/profile/avatar
-  // If it contains 'name', update profile via PUT /api/profile
-  if (data.has('avatar')) {
-    const response = await client.post<{ avatar_url: string }>('/api/profile/avatar', data, {
+export const updateProfile = async (data: FormData | Record<string, unknown>): Promise<User> => {
+  if (data instanceof FormData && data.has('avatar')) {
+    await client.post<{ avatar_url: string }>('/api/profile/avatar', data, {
       headers: { 'Content-Type': 'multipart/form-data' },
     })
-    // Return current user with updated avatar
     const meResp = await client.get<User>('/api/auth/me')
     return meResp.data
   } else {
-    const name = data.get('name') as string | null
-    const response = await client.put<User>('/api/profile', name ? { name } : {})
+    const payload = data instanceof FormData
+      ? Object.fromEntries(data.entries())
+      : data
+    const response = await client.put<User>('/api/profile', payload)
     return response.data
   }
+}
+
+export const changePassword = async (data: {
+  old_password: string
+  new_password: string
+  confirm_password: string
+}): Promise<{ message: string }> => {
+  const response = await client.post<{ message: string }>('/api/profile/change-password', data)
+  return response.data
 }

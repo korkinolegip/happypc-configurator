@@ -17,6 +17,7 @@ class UserResponse(BaseModel):
     phone: str | None = None
     telegram_username: str | None = None
     vk_url: str | None = None
+    is_active: bool = True
     created_at: datetime
 
     model_config = {"from_attributes": True}
@@ -40,10 +41,17 @@ class UserPublicProfile(BaseModel):
 
 class UserUpdate(BaseModel):
     name: str | None = None
+    email: EmailStr | None = None
     avatar_url: str | None = None
     city: str | None = None
     phone: str | None = None
     gender: str | None = None
+
+
+class ChangePassword(BaseModel):
+    old_password: str
+    new_password: str
+    confirm_password: str
 
 
 class UserAdminCreate(BaseModel):
@@ -52,10 +60,14 @@ class UserAdminCreate(BaseModel):
     name: str
     role: str = "user"
     workshop_id: uuid.UUID | None = None
+    city: str | None = None
+    phone: str | None = None
+    gender: str | None = None
 
 
 class UserAdminUpdate(BaseModel):
     name: str | None = None
+    email: str | None = None
     role: str | None = None
     workshop_id: uuid.UUID | None = None
     is_active: bool | None = None

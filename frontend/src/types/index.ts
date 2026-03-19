@@ -11,6 +11,7 @@ export interface User {
   phone: string | null
   telegram_username: string | null
   vk_url: string | null
+  is_active: boolean
   created_at: string
 }
 
@@ -73,6 +74,10 @@ export interface AppSettings {
   company_name: string
   telegram_bot_name?: string
   vk_client_id?: string
+  pdf_footer_text?: string
+  header_logo_url?: string
+  pdf_logo_url?: string
+  [key: string]: string | undefined
 }
 
 export interface DashboardStats {

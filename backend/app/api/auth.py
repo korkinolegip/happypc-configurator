@@ -327,5 +327,6 @@ async def get_me(current_user: User = Depends(get_current_active_user)):
         phone=current_user.phone,
         telegram_username=current_user.telegram_username,
         vk_url=current_user.vk_url,
+        is_active=current_user.is_active,
         created_at=current_user.created_at,
     )

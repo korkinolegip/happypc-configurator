@@ -1,7 +1,10 @@
 import React, { useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
-import { Plus, Edit2, Trash2, KeyRound, X, Shield, Copy } from 'lucide-react'
+import {
+  Plus, Edit2, Trash2, KeyRound, X, Shield, Copy,
+  Search, UserCheck, UserX, Phone, MapPin,
+} from 'lucide-react'
 import toast from 'react-hot-toast'
 import {
   getUsers,
@@ -23,14 +26,10 @@ const ROLES = [
 
 const roleBadge = (role: string) => {
   switch (role) {
-    case 'superadmin':
-      return 'bg-purple-900/40 text-purple-300 border-purple-700'
-    case 'admin':
-      return 'bg-blue-900/40 text-blue-300 border-blue-700'
-    case 'master':
-      return 'bg-orange-900/40 text-orange-300 border-orange-700'
-    default:
-      return 'bg-[#2A2A2A] text-[#AAAAAA] border-[#3A3A3A]'
+    case 'superadmin': return 'bg-purple-900/40 text-purple-300 border-purple-700'
+    case 'admin': return 'bg-blue-900/40 text-blue-300 border-blue-700'
+    case 'master': return 'bg-orange-900/40 text-orange-300 border-orange-700'
+    default: return 'bg-[#2A2A2A] text-[#AAAAAA] border-[#3A3A3A]'
   }
 }
 
@@ -47,7 +46,7 @@ const CreateUserModal: React.FC<CreateModalProps> = ({ onClose, workshops }) => 
 
   const onSubmit = async (data: CreateUserData) => {
     try {
-      await createUser(data)
+      await createUser({ ...data, workshop_id: data.workshop_id || undefined })
       await queryClient.invalidateQueries({ queryKey: ['admin-users'] })
       toast.success('Пользователь создан')
       onClose()
@@ -58,8 +57,8 @@ const CreateUserModal: React.FC<CreateModalProps> = ({ onClose, workshops }) => 
   }
 
   return (
-    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-      <div className="bg-[#111111] border border-[#2A2A2A] rounded-lg w-full max-w-md">
+    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4" onClick={onClose}>
+      <div className="bg-[#111111] border border-[#2A2A2A] rounded-lg w-full max-w-lg" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between px-5 py-4 border-b border-[#2A2A2A]">
           <h2 className="text-white font-semibold">Создать пользователя</h2>
           <button onClick={onClose} className="text-[#AAAAAA] hover:text-white transition-colors">
@@ -67,57 +66,66 @@ const CreateUserModal: React.FC<CreateModalProps> = ({ onClose, workshops }) => 
           </button>
         </div>
         <form onSubmit={handleSubmit(onSubmit)} className="p-5 space-y-4">
-          <div>
-            <label className="block text-sm text-[#AAAAAA] mb-1.5">Имя *</label>
-            <input {...register('name', { required: 'Введите имя' })} className="input-field" placeholder="Имя пользователя" />
-            {errors.name && <p className="text-red-400 text-xs mt-1">{errors.name.message}</p>}
-          </div>
-          <div>
-            <label className="block text-sm text-[#AAAAAA] mb-1.5">Email *</label>
-            <input
-              {...register('email', {
-                required: 'Введите email',
-                pattern: { value: /^\S+@\S+\.\S+$/, message: 'Некорректный email' },
-              })}
-              type="email"
-              className="input-field"
-              placeholder="user@example.com"
-            />
-            {errors.email && <p className="text-red-400 text-xs mt-1">{errors.email.message}</p>}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm text-[#AAAAAA] mb-1.5">Имя *</label>
+              <input {...register('name', { required: 'Введите имя' })} className="input-field" placeholder="Имя" />
+              {errors.name && <p className="text-red-400 text-xs mt-1">{errors.name.message}</p>}
+            </div>
+            <div>
+              <label className="block text-sm text-[#AAAAAA] mb-1.5">Email *</label>
+              <input
+                {...register('email', { required: 'Введите email', pattern: { value: /^\S+@\S+\.\S+$/, message: 'Некорректный email' } })}
+                type="email" className="input-field" placeholder="email@example.com"
+              />
+              {errors.email && <p className="text-red-400 text-xs mt-1">{errors.email.message}</p>}
+            </div>
           </div>
           <div>
             <label className="block text-sm text-[#AAAAAA] mb-1.5">Пароль *</label>
             <input
               {...register('password', { required: 'Введите пароль', minLength: { value: 6, message: 'Минимум 6 символов' } })}
-              type="password"
-              className="input-field"
-              placeholder="Минимум 6 символов"
+              type="password" className="input-field" placeholder="Минимум 6 символов"
             />
             {errors.password && <p className="text-red-400 text-xs mt-1">{errors.password.message}</p>}
           </div>
-          <div>
-            <label className="block text-sm text-[#AAAAAA] mb-1.5">Роль</label>
-            <select {...register('role')} className="select-field" defaultValue="user">
-              {ROLES.map((r) => (
-                <option key={r.value} value={r.value}>{r.label}</option>
-              ))}
-            </select>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm text-[#AAAAAA] mb-1.5">Телефон</label>
+              <input {...register('phone')} className="input-field" placeholder="+7 (999) 123-45-67" />
+            </div>
+            <div>
+              <label className="block text-sm text-[#AAAAAA] mb-1.5">Город</label>
+              <input {...register('city')} className="input-field" placeholder="Москва" />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm text-[#AAAAAA] mb-1.5">Пол</label>
+              <select {...register('gender')} className="select-field">
+                <option value="">Не указан</option>
+                <option value="male">Мужской</option>
+                <option value="female">Женский</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm text-[#AAAAAA] mb-1.5">Роль</label>
+              <select {...register('role')} className="select-field" defaultValue="user">
+                {ROLES.map((r) => <option key={r.value} value={r.value}>{r.label}</option>)}
+              </select>
+            </div>
           </div>
           {workshops.length > 0 && (
             <div>
               <label className="block text-sm text-[#AAAAAA] mb-1.5">Мастерская</label>
               <select {...register('workshop_id')} className="select-field">
                 <option value="">Без мастерской</option>
-                {workshops.map((ws) => (
-                  <option key={ws.id} value={ws.id}>{ws.name}</option>
-                ))}
+                {workshops.map((ws) => <option key={ws.id} value={ws.id}>{ws.name}</option>)}
               </select>
             </div>
           )}
           <div className="flex gap-3 pt-2">
-            <button type="button" onClick={onClose} className="btn-secondary flex-1">
-              Отмена
-            </button>
+            <button type="button" onClick={onClose} className="btn-secondary flex-1">Отмена</button>
             <button type="submit" disabled={isSubmitting} className="btn-primary flex-1">
               {isSubmitting ? 'Создание...' : 'Создать'}
             </button>
@@ -142,15 +150,15 @@ const EditUserModal: React.FC<EditModalProps> = ({ user, onClose, workshops }) =
       email: user.email || '',
       role: user.role,
       workshop_id: user.workshop_id || '',
+      city: user.city || '',
+      phone: user.phone || '',
+      gender: user.gender || '',
     },
   })
 
   const onSubmit = async (data: UpdateUserData) => {
     try {
-      const payload = {
-        ...data,
-        workshop_id: data.workshop_id || null,
-      }
+      const payload = { ...data, workshop_id: data.workshop_id || null }
       await updateUser(user.id, payload)
       await queryClient.invalidateQueries({ queryKey: ['admin-users'] })
       toast.success('Пользователь обновлён')
@@ -162,45 +170,65 @@ const EditUserModal: React.FC<EditModalProps> = ({ user, onClose, workshops }) =
   }
 
   return (
-    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-      <div className="bg-[#111111] border border-[#2A2A2A] rounded-lg w-full max-w-md">
+    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4" onClick={onClose}>
+      <div className="bg-[#111111] border border-[#2A2A2A] rounded-lg w-full max-w-lg" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between px-5 py-4 border-b border-[#2A2A2A]">
-          <h2 className="text-white font-semibold">Редактировать пользователя</h2>
+          <h2 className="text-white font-semibold">Редактировать: {user.name}</h2>
           <button onClick={onClose} className="text-[#AAAAAA] hover:text-white transition-colors">
             <X size={18} />
           </button>
         </div>
         <form onSubmit={handleSubmit(onSubmit)} className="p-5 space-y-4">
-          <div>
-            <label className="block text-sm text-[#AAAAAA] mb-1.5">Имя</label>
-            <input {...register('name', { required: 'Введите имя' })} className="input-field" />
-            {errors.name && <p className="text-red-400 text-xs mt-1">{errors.name.message}</p>}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm text-[#AAAAAA] mb-1.5">Имя</label>
+              <input {...register('name', { required: 'Введите имя' })} className="input-field" />
+              {errors.name && <p className="text-red-400 text-xs mt-1">{errors.name.message}</p>}
+            </div>
+            <div>
+              <label className="block text-sm text-[#AAAAAA] mb-1.5">Email</label>
+              <input {...register('email')} type="email" className="input-field" />
+            </div>
           </div>
-          <div>
-            <label className="block text-sm text-[#AAAAAA] mb-1.5">Email</label>
-            <input {...register('email')} type="email" className="input-field" />
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm text-[#AAAAAA] mb-1.5">Телефон</label>
+              <input {...register('phone')} className="input-field" placeholder="+7 (999) 123-45-67" />
+            </div>
+            <div>
+              <label className="block text-sm text-[#AAAAAA] mb-1.5">Город</label>
+              <input {...register('city')} className="input-field" />
+            </div>
           </div>
-          <div>
-            <label className="block text-sm text-[#AAAAAA] mb-1.5">Роль</label>
-            <select {...register('role')} className="select-field">
-              {ROLES.map((r) => (
-                <option key={r.value} value={r.value}>{r.label}</option>
-              ))}
-            </select>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm text-[#AAAAAA] mb-1.5">Пол</label>
+              <select {...register('gender')} className="select-field">
+                <option value="">Не указан</option>
+                <option value="male">Мужской</option>
+                <option value="female">Женский</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm text-[#AAAAAA] mb-1.5">Роль</label>
+              <select {...register('role')} className="select-field">
+                {ROLES.map((r) => <option key={r.value} value={r.value}>{r.label}</option>)}
+              </select>
+            </div>
           </div>
           <div>
             <label className="block text-sm text-[#AAAAAA] mb-1.5">Мастерская</label>
             <select {...register('workshop_id')} className="select-field">
               <option value="">Без мастерской</option>
-              {workshops.map((ws) => (
-                <option key={ws.id} value={ws.id}>{ws.name}</option>
-              ))}
+              {workshops.map((ws) => <option key={ws.id} value={ws.id}>{ws.name}</option>)}
             </select>
           </div>
+          <div>
+            <label className="block text-sm text-[#AAAAAA] mb-1.5">Новый пароль (оставьте пустым, чтобы не менять)</label>
+            <input {...register('password')} type="password" className="input-field" placeholder="Новый пароль" />
+          </div>
           <div className="flex gap-3 pt-2">
-            <button type="button" onClick={onClose} className="btn-secondary flex-1">
-              Отмена
-            </button>
+            <button type="button" onClick={onClose} className="btn-secondary flex-1">Отмена</button>
             <button type="submit" disabled={isSubmitting} className="btn-primary flex-1">
               {isSubmitting ? 'Сохранение...' : 'Сохранить'}
             </button>
@@ -236,25 +264,15 @@ const NewPasswordModal: React.FC<PasswordModalProps> = ({ newPassword, onClose }
           </button>
         </div>
         <div className="p-5">
-          <p className="text-[#AAAAAA] text-sm mb-4">
-            Пароль был сброшен. Сохраните его и передайте пользователю.
-          </p>
+          <p className="text-[#AAAAAA] text-sm mb-4">Пароль был сброшен. Сохраните его и передайте пользователю.</p>
           <div className="flex items-center gap-2 bg-[#0A0A0A] border border-[#2A2A2A] rounded-lg px-4 py-3">
             <code className="text-[#FF6B00] font-mono text-lg flex-1">{newPassword}</code>
-            <button
-              onClick={handleCopy}
-              className="text-[#AAAAAA] hover:text-white transition-colors"
-              title="Скопировать"
-            >
+            <button onClick={handleCopy} className="text-[#AAAAAA] hover:text-white transition-colors" title="Скопировать">
               <Copy size={16} />
             </button>
           </div>
-          <p className="text-yellow-500/80 text-xs mt-3">
-            ⚠ Этот пароль будет показан только один раз
-          </p>
-          <button onClick={onClose} className="btn-primary w-full mt-4">
-            Понятно
-          </button>
+          <p className="text-yellow-500/80 text-xs mt-3">Этот пароль будет показан только один раз</p>
+          <button onClick={onClose} className="btn-primary w-full mt-4">Понятно</button>
         </div>
       </div>
     </div>
@@ -268,10 +286,12 @@ const UsersPage: React.FC = () => {
   const [newPassword, setNewPassword] = useState<string | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [resettingId, setResettingId] = useState<string | null>(null)
+  const [togglingId, setTogglingId] = useState<string | null>(null)
+  const [searchQuery, setSearchQuery] = useState('')
 
   const { data: users, isLoading } = useQuery({
-    queryKey: ['admin-users'],
-    queryFn: getUsers,
+    queryKey: ['admin-users', searchQuery],
+    queryFn: () => getUsers(searchQuery || undefined),
   })
 
   const { data: workshops } = useQuery({
@@ -306,6 +326,21 @@ const UsersPage: React.FC = () => {
     }
   }
 
+  const handleToggleActive = async (user: User) => {
+    const action = user.is_active !== false ? 'деактивировать' : 'активировать'
+    if (!confirm(`${action.charAt(0).toUpperCase() + action.slice(1)} пользователя «${user.name}»?`)) return
+    setTogglingId(user.id)
+    try {
+      await updateUser(user.id, { is_active: user.is_active === false })
+      await queryClient.invalidateQueries({ queryKey: ['admin-users'] })
+      toast.success(user.is_active === false ? 'Пользователь активирован' : 'Пользователь деактивирован')
+    } catch {
+      toast.error('Ошибка')
+    } finally {
+      setTogglingId(null)
+    }
+  }
+
   const workshopList = workshops ?? []
 
   return (
@@ -317,13 +352,22 @@ const UsersPage: React.FC = () => {
             {users ? `${users.length} пользователей` : 'Загрузка...'}
           </p>
         </div>
-        <button
-          onClick={() => setCreateOpen(true)}
-          className="flex items-center gap-2 btn-primary"
-        >
+        <button onClick={() => setCreateOpen(true)} className="flex items-center gap-2 btn-primary">
           <Plus size={16} />
           Создать
         </button>
+      </div>
+
+      {/* Search */}
+      <div className="relative">
+        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#555555]" />
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="input-field pl-9"
+          placeholder="Поиск по имени, email, телефону, городу..."
+        />
       </div>
 
       <div className="bg-[#111111] border border-[#2A2A2A] rounded-lg overflow-hidden">
@@ -340,6 +384,8 @@ const UsersPage: React.FC = () => {
                 <tr>
                   <th className="table-header text-left">Пользователь</th>
                   <th className="table-header text-left hidden sm:table-cell">Email</th>
+                  <th className="table-header text-left hidden lg:table-cell">Телефон</th>
+                  <th className="table-header text-left hidden lg:table-cell">Город</th>
                   <th className="table-header text-left">Роль</th>
                   <th className="table-header text-left hidden md:table-cell">Мастерская</th>
                   <th className="table-header text-right">Действия</th>
@@ -349,16 +395,14 @@ const UsersPage: React.FC = () => {
                 {users?.map((user) => (
                   <tr
                     key={user.id}
-                    className="border-b border-[#2A2A2A] last:border-0 hover:bg-[#1A1A1A] transition-colors"
+                    className={`border-b border-[#2A2A2A] last:border-0 hover:bg-[#1A1A1A] transition-colors ${
+                      user.is_active === false ? 'opacity-50' : ''
+                    }`}
                   >
                     <td className="table-cell">
                       <div className="flex items-center gap-2">
                         {user.avatar_url ? (
-                          <img
-                            src={user.avatar_url}
-                            alt={user.name}
-                            className="w-7 h-7 rounded-full object-cover shrink-0"
-                          />
+                          <img src={user.avatar_url} alt={user.name} className="w-7 h-7 rounded-full object-cover shrink-0" />
                         ) : (
                           <div className="w-7 h-7 rounded-full bg-[#FF6B00] flex items-center justify-center text-white text-xs font-bold shrink-0">
                             {user.name.charAt(0).toUpperCase()}
@@ -367,24 +411,32 @@ const UsersPage: React.FC = () => {
                         <span className="text-white text-sm font-medium">{user.name}</span>
                       </div>
                     </td>
-                    <td className="table-cell text-[#AAAAAA] text-sm hidden sm:table-cell">
-                      {user.email || '—'}
-                    </td>
+                    <td className="table-cell text-[#AAAAAA] text-sm hidden sm:table-cell">{user.email || '—'}</td>
+                    <td className="table-cell text-[#AAAAAA] text-sm hidden lg:table-cell">{user.phone || '—'}</td>
+                    <td className="table-cell text-[#AAAAAA] text-sm hidden lg:table-cell">{user.city || '—'}</td>
                     <td className="table-cell">
-                      <span
-                        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs border font-medium ${roleBadge(user.role)}`}
-                      >
-                        {(user.role === 'admin' || user.role === 'superadmin') && (
-                          <Shield size={10} />
-                        )}
+                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs border font-medium ${roleBadge(user.role)}`}>
+                        {(user.role === 'admin' || user.role === 'superadmin') && <Shield size={10} />}
                         {roleLabel(user.role)}
                       </span>
                     </td>
-                    <td className="table-cell text-[#AAAAAA] text-sm hidden md:table-cell">
-                      {user.workshop_name || '—'}
-                    </td>
+                    <td className="table-cell text-[#AAAAAA] text-sm hidden md:table-cell">{user.workshop_name || '—'}</td>
                     <td className="table-cell text-right">
                       <div className="flex items-center justify-end gap-1">
+                        <button
+                          onClick={() => handleToggleActive(user)}
+                          disabled={togglingId === user.id}
+                          className="p-1.5 text-[#AAAAAA] hover:text-green-400 hover:bg-green-900/20 rounded transition-colors"
+                          title={user.is_active === false ? 'Активировать' : 'Деактивировать'}
+                        >
+                          {togglingId === user.id ? (
+                            <span className="w-3.5 h-3.5 border border-current border-t-transparent rounded-full animate-spin block" />
+                          ) : user.is_active === false ? (
+                            <UserX size={14} />
+                          ) : (
+                            <UserCheck size={14} />
+                          )}
+                        </button>
                         <button
                           onClick={() => handleResetPassword(user)}
                           disabled={resettingId === user.id}
@@ -426,27 +478,9 @@ const UsersPage: React.FC = () => {
         )}
       </div>
 
-      {createOpen && (
-        <CreateUserModal
-          onClose={() => setCreateOpen(false)}
-          workshops={workshopList}
-        />
-      )}
-
-      {editUser && (
-        <EditUserModal
-          user={editUser}
-          onClose={() => setEditUser(null)}
-          workshops={workshopList}
-        />
-      )}
-
-      {newPassword && (
-        <NewPasswordModal
-          newPassword={newPassword}
-          onClose={() => setNewPassword(null)}
-        />
-      )}
+      {createOpen && <CreateUserModal onClose={() => setCreateOpen(false)} workshops={workshopList} />}
+      {editUser && <EditUserModal user={editUser} onClose={() => setEditUser(null)} workshops={workshopList} />}
+      {newPassword && <NewPasswordModal newPassword={newPassword} onClose={() => setNewPassword(null)} />}
     </div>
   )
 }

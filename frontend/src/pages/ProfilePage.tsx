@@ -2,15 +2,28 @@ import React, { useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
-import { Camera, Plus, Trash2, Edit2 } from 'lucide-react'
+import {
+  Camera, Plus, Trash2, Edit2, Save, Lock,
+  MapPin, Phone, Mail, User as UserIcon, Send, ExternalLink,
+} from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useAuth } from '../hooks/useAuth'
-import { updateProfile } from '../api/auth'
+import { updateProfile, changePassword } from '../api/auth'
 import { getMyBuilds, deleteBuild } from '../api/builds'
 import BuildCard from '../components/BuildCard'
 
 interface ProfileFormValues {
   name: string
+  email: string
+  phone: string
+  city: string
+  gender: string
+}
+
+interface PasswordFormValues {
+  old_password: string
+  new_password: string
+  confirm_password: string
 }
 
 const ProfilePage: React.FC = () => {
@@ -20,15 +33,28 @@ const ProfilePage: React.FC = () => {
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null)
   const [uploadingAvatar, setUploadingAvatar] = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [showPasswordForm, setShowPasswordForm] = useState(false)
 
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting },
-    reset,
+    formState: { errors, isSubmitting, isDirty },
   } = useForm<ProfileFormValues>({
-    defaultValues: { name: user?.name || '' },
+    defaultValues: {
+      name: user?.name || '',
+      email: user?.email || '',
+      phone: user?.phone || '',
+      city: user?.city || '',
+      gender: user?.gender || '',
+    },
   })
+
+  const {
+    register: registerPwd,
+    handleSubmit: handleSubmitPwd,
+    formState: { errors: pwdErrors, isSubmitting: pwdSubmitting },
+    reset: resetPwd,
+  } = useForm<PasswordFormValues>()
 
   const { data: buildsData, isLoading: buildsLoading } = useQuery({
     queryKey: ['my-builds'],
@@ -69,13 +95,40 @@ const ProfilePage: React.FC = () => {
 
   const handleProfileUpdate = async (data: ProfileFormValues) => {
     try {
-      const formData = new FormData()
-      formData.append('name', data.name)
-      await updateProfile(formData)
+      const payload: Record<string, string | null> = {}
+      if (data.name !== user?.name) payload.name = data.name
+      if (data.email !== (user?.email || '')) payload.email = data.email || null
+      if (data.phone !== (user?.phone || '')) payload.phone = data.phone || null
+      if (data.city !== (user?.city || '')) payload.city = data.city || null
+      if (data.gender !== (user?.gender || '')) payload.gender = data.gender || null
+
+      if (Object.keys(payload).length === 0) {
+        toast('Нет изменений')
+        return
+      }
+
+      await updateProfile(payload)
       await refreshUser()
       toast.success('Профиль обновлён')
-    } catch {
-      toast.error('Ошибка обновления профиля')
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { detail?: string } } }
+      toast.error(error.response?.data?.detail || 'Ошибка обновления профиля')
+    }
+  }
+
+  const handlePasswordChange = async (data: PasswordFormValues) => {
+    if (data.new_password !== data.confirm_password) {
+      toast.error('Пароли не совпадают')
+      return
+    }
+    try {
+      await changePassword(data)
+      toast.success('Пароль изменён')
+      resetPwd()
+      setShowPasswordForm(false)
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { detail?: string } } }
+      toast.error(error.response?.data?.detail || 'Ошибка смены пароля')
     }
   }
 
@@ -96,12 +149,13 @@ const ProfilePage: React.FC = () => {
   if (!user) return null
 
   const currentAvatar = avatarPreview || user.avatar_url
+  const hasSocialAuth = !!user.telegram_username || !!user.vk_url
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
-      <h1 className="text-2xl font-bold text-white">Профиль</h1>
+      <h1 className="text-2xl font-bold text-white">Настройки профиля</h1>
 
-      {/* Profile Card */}
+      {/* Avatar + Info */}
       <div className="bg-[#111111] border border-[#2A2A2A] rounded-lg p-6">
         <div className="flex flex-col sm:flex-row items-start gap-6">
           {/* Avatar */}
@@ -111,11 +165,7 @@ const ProfilePage: React.FC = () => {
               onClick={() => fileInputRef.current?.click()}
             >
               {currentAvatar ? (
-                <img
-                  src={currentAvatar}
-                  alt={user.name}
-                  className="w-full h-full object-cover"
-                />
+                <img src={currentAvatar} alt={user.name} className="w-full h-full object-cover" />
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-3xl font-bold text-[#FF6B00]">
                   {user.name.charAt(0).toUpperCase()}
@@ -146,8 +196,8 @@ const ProfilePage: React.FC = () => {
             </button>
           </div>
 
-          {/* Info + Edit form */}
-          <div className="flex-1 w-full">
+          {/* Quick info */}
+          <div className="flex-1">
             <div className="flex items-center gap-3 mb-1">
               <h2 className="text-white font-semibold text-lg">{user.name}</h2>
               <span
@@ -161,46 +211,232 @@ const ProfilePage: React.FC = () => {
                     : 'bg-[#2A2A2A] text-[#AAAAAA]'
                 }`}
               >
-                {user.role === 'superadmin'
-                  ? 'Суперадмин'
-                  : user.role === 'admin'
-                  ? 'Администратор'
-                  : user.role === 'master'
-                  ? 'Мастер'
-                  : 'Пользователь'}
+                {user.role === 'superadmin' ? 'Суперадмин' : user.role === 'admin' ? 'Администратор' : user.role === 'master' ? 'Мастер' : 'Пользователь'}
               </span>
             </div>
-            {user.email && <p className="text-[#AAAAAA] text-sm mb-1">{user.email}</p>}
-            {user.workshop_name && (
-              <p className="text-[#AAAAAA] text-sm">Мастерская: {user.workshop_name}</p>
-            )}
-
-            {/* Edit form */}
-            <form onSubmit={handleSubmit(handleProfileUpdate)} className="mt-4 flex gap-3 max-w-sm">
-              <div className="flex-1">
-                <input
-                  {...register('name', {
-                    required: 'Введите имя',
-                    minLength: { value: 2, message: 'Минимум 2 символа' },
-                  })}
-                  className="input-field"
-                  placeholder="Ваше имя"
-                />
-                {errors.name && (
-                  <p className="text-red-400 text-xs mt-1">{errors.name.message}</p>
-                )}
-              </div>
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="flex items-center gap-1.5 bg-[#2A2A2A] hover:bg-[#3A3A3A] text-white px-3 py-2 rounded transition-colors text-sm disabled:opacity-50 shrink-0"
-              >
-                <Edit2 size={14} />
-                Сохранить
-              </button>
-            </form>
+            {user.email && <p className="text-[#AAAAAA] text-sm">{user.email}</p>}
+            {user.workshop_name && <p className="text-[#AAAAAA] text-sm">Мастерская: {user.workshop_name}</p>}
+            {user.city && <p className="text-[#AAAAAA] text-sm flex items-center gap-1"><MapPin size={12} /> {user.city}</p>}
           </div>
         </div>
+      </div>
+
+      {/* Edit Profile Form */}
+      <div className="bg-[#111111] border border-[#2A2A2A] rounded-lg p-6">
+        <h2 className="text-white font-semibold mb-4 flex items-center gap-2">
+          <UserIcon size={18} />
+          Личные данные
+        </h2>
+        <form onSubmit={handleSubmit(handleProfileUpdate)} className="space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm text-[#AAAAAA] mb-1.5">Имя</label>
+              <input
+                {...register('name', {
+                  required: 'Введите имя',
+                  minLength: { value: 2, message: 'Минимум 2 символа' },
+                })}
+                className="input-field"
+                placeholder="Ваше имя"
+              />
+              {errors.name && <p className="text-red-400 text-xs mt-1">{errors.name.message}</p>}
+            </div>
+            <div>
+              <label className="block text-sm text-[#AAAAAA] mb-1.5 flex items-center gap-1">
+                <Mail size={12} /> Email
+              </label>
+              <input
+                {...register('email')}
+                type="email"
+                className="input-field"
+                placeholder="email@example.com"
+              />
+            </div>
+            <div>
+              <label className="block text-sm text-[#AAAAAA] mb-1.5 flex items-center gap-1">
+                <Phone size={12} /> Телефон
+              </label>
+              <input
+                {...register('phone')}
+                className="input-field"
+                placeholder="+7 (999) 123-45-67"
+              />
+            </div>
+            <div>
+              <label className="block text-sm text-[#AAAAAA] mb-1.5 flex items-center gap-1">
+                <MapPin size={12} /> Город
+              </label>
+              <input
+                {...register('city')}
+                className="input-field"
+                placeholder="Москва"
+              />
+            </div>
+          </div>
+
+          {/* Gender */}
+          <div>
+            <label className="block text-sm text-[#AAAAAA] mb-2">Пол</label>
+            <div className="flex gap-3">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  {...register('gender')}
+                  type="radio"
+                  value="male"
+                  className="sr-only peer"
+                />
+                <div className="w-8 h-8 rounded-lg border border-[#2A2A2A] peer-checked:border-[#FF6B00] peer-checked:bg-[#FF6B00]/10 flex items-center justify-center text-sm font-medium text-[#AAAAAA] peer-checked:text-[#FF6B00] transition-all">
+                  М
+                </div>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  {...register('gender')}
+                  type="radio"
+                  value="female"
+                  className="sr-only peer"
+                />
+                <div className="w-8 h-8 rounded-lg border border-[#2A2A2A] peer-checked:border-[#FF6B00] peer-checked:bg-[#FF6B00]/10 flex items-center justify-center text-sm font-medium text-[#AAAAAA] peer-checked:text-[#FF6B00] transition-all">
+                  Ж
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <div className="flex justify-end pt-2">
+            <button
+              type="submit"
+              disabled={isSubmitting || !isDirty}
+              className="flex items-center gap-2 btn-primary px-5"
+            >
+              {isSubmitting ? (
+                <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <Save size={16} />
+              )}
+              Сохранить
+            </button>
+          </div>
+        </form>
+      </div>
+
+      {/* Social Links (read-only) */}
+      {hasSocialAuth && (
+        <div className="bg-[#111111] border border-[#2A2A2A] rounded-lg p-6">
+          <h2 className="text-white font-semibold mb-4 flex items-center gap-2">
+            <ExternalLink size={18} />
+            Привязанные аккаунты
+          </h2>
+          <div className="space-y-3">
+            {user.telegram_username && (
+              <div className="flex items-center gap-3 text-sm">
+                <Send size={16} className="text-[#2AABEE]" />
+                <span className="text-[#AAAAAA]">Telegram:</span>
+                <a
+                  href={`https://t.me/${user.telegram_username}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[#2AABEE] hover:underline"
+                >
+                  @{user.telegram_username}
+                </a>
+              </div>
+            )}
+            {user.vk_url && (
+              <div className="flex items-center gap-3 text-sm">
+                <span className="text-[#4C75A3] font-bold text-xs w-4 text-center">VK</span>
+                <span className="text-[#AAAAAA]">ВКонтакте:</span>
+                <a
+                  href={user.vk_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[#4C75A3] hover:underline"
+                >
+                  {user.vk_url.replace('https://vk.com/', '')}
+                </a>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Change Password */}
+      <div className="bg-[#111111] border border-[#2A2A2A] rounded-lg p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-white font-semibold flex items-center gap-2">
+            <Lock size={18} />
+            Пароль
+          </h2>
+          {!showPasswordForm && (
+            <button
+              onClick={() => setShowPasswordForm(true)}
+              className="text-sm text-[#FF6B00] hover:text-[#E05A00] transition-colors"
+            >
+              Изменить пароль
+            </button>
+          )}
+        </div>
+
+        {showPasswordForm ? (
+          <form onSubmit={handleSubmitPwd(handlePasswordChange)} className="space-y-4 max-w-sm">
+            <div>
+              <label className="block text-sm text-[#AAAAAA] mb-1.5">Текущий пароль</label>
+              <input
+                {...registerPwd('old_password', { required: 'Введите текущий пароль' })}
+                type="password"
+                className="input-field"
+                placeholder="Текущий пароль"
+              />
+              {pwdErrors.old_password && (
+                <p className="text-red-400 text-xs mt-1">{pwdErrors.old_password.message}</p>
+              )}
+            </div>
+            <div>
+              <label className="block text-sm text-[#AAAAAA] mb-1.5">Новый пароль</label>
+              <input
+                {...registerPwd('new_password', {
+                  required: 'Введите новый пароль',
+                  minLength: { value: 6, message: 'Минимум 6 символов' },
+                })}
+                type="password"
+                className="input-field"
+                placeholder="Минимум 6 символов"
+              />
+              {pwdErrors.new_password && (
+                <p className="text-red-400 text-xs mt-1">{pwdErrors.new_password.message}</p>
+              )}
+            </div>
+            <div>
+              <label className="block text-sm text-[#AAAAAA] mb-1.5">Подтвердите пароль</label>
+              <input
+                {...registerPwd('confirm_password', { required: 'Подтвердите пароль' })}
+                type="password"
+                className="input-field"
+                placeholder="Повторите новый пароль"
+              />
+              {pwdErrors.confirm_password && (
+                <p className="text-red-400 text-xs mt-1">{pwdErrors.confirm_password.message}</p>
+              )}
+            </div>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowPasswordForm(false)
+                  resetPwd()
+                }}
+                className="btn-secondary flex-1"
+              >
+                Отмена
+              </button>
+              <button type="submit" disabled={pwdSubmitting} className="btn-primary flex-1">
+                {pwdSubmitting ? 'Сохранение...' : 'Изменить пароль'}
+              </button>
+            </div>
+          </form>
+        ) : (
+          <p className="text-[#555555] text-sm">Рекомендуем использовать надёжный пароль длиной не менее 8 символов</p>
+        )}
       </div>
 
       {/* My Builds */}
@@ -219,10 +455,7 @@ const ProfilePage: React.FC = () => {
         {buildsLoading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {Array.from({ length: 3 }).map((_, i) => (
-              <div
-                key={i}
-                className="bg-[#111111] border border-[#2A2A2A] rounded-lg p-4 animate-pulse h-40"
-              />
+              <div key={i} className="bg-[#111111] border border-[#2A2A2A] rounded-lg p-4 animate-pulse h-40" />
             ))}
           </div>
         ) : builds && builds.length > 0 ? (
@@ -230,7 +463,6 @@ const ProfilePage: React.FC = () => {
             {builds.map((build) => (
               <div key={build.id} className="relative group">
                 <BuildCard build={build} />
-                {/* Edit/Delete overlay */}
                 <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                   <Link
                     to={`/builds/${build.id}/edit`}

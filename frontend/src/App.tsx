@@ -13,6 +13,7 @@ import DashboardPage from './pages/admin/DashboardPage'
 import UsersPage from './pages/admin/UsersPage'
 import WorkshopsPage from './pages/admin/WorkshopsPage'
 import SettingsPage from './pages/admin/SettingsPage'
+import BuildsPage from './pages/admin/BuildsPage'
 
 function App() {
   const { isLoading } = useAuth()
@@ -81,6 +82,7 @@ function App() {
         >
           <Route index element={<DashboardPage />} />
           <Route path="users" element={<UsersPage />} />
+          <Route path="builds" element={<BuildsPage />} />
           <Route path="workshops" element={<WorkshopsPage />} />
           <Route path="settings" element={<SettingsPage />} />
         </Route>
