@@ -19,6 +19,7 @@ services:
 
   backend:
     build: ./backend
+    shm_size: '2gb'
     environment:
       DATABASE_URL: postgresql+asyncpg://postgres:postgres@db:5432/happypc
       SECRET_KEY: dev-secret-key-change-in-production
@@ -28,6 +29,8 @@ services:
       VK_CLIENT_ID: ""
       VK_CLIENT_SECRET: ""
       VK_REDIRECT_URI: http://localhost:3000/auth/vk/callback
+      SCRAPER_PROXY: ""
+      ZENROWS_API_KEY: "8394de0fe03025032c02fa64a780d8a95b9c76e2"
     volumes:
       - ./backend:/app
       - uploads_data:/app/uploads
