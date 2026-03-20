@@ -213,13 +213,13 @@ function ItemRow({ fieldName, category, canDelete, canChangeCategory, onDelete, 
               )}
             </div>
           </div>
-          <div className="shrink-0 w-[130px] inline-flex items-center rounded-lg border-2 border-th-border">
+          <div className="shrink-0 flex items-center gap-1">
             <button
               type="button"
               onClick={() => { if (currentQty > 1) setValue(`${fieldName}.qty` as never, String(currentQty - 1) as never) }}
-              className="w-10 h-9 shrink-0 flex items-center justify-center bg-th-surface-2 text-th-text hover:text-[#FF6B00] hover:bg-[#FF6B00]/10 transition-colors border-r border-th-border rounded-l-md"
+              className="w-8 h-8 rounded bg-[#FF6B00] text-white flex items-center justify-center hover:bg-[#E05A00] transition-colors text-lg font-bold leading-none"
             >
-              <Minus size={16} strokeWidth={2.5} />
+              −
             </button>
             <input
               {...register(`${fieldName}.qty` as never)}
@@ -227,14 +227,14 @@ function ItemRow({ fieldName, category, canDelete, canChangeCategory, onDelete, 
               min="1"
               step="1"
               defaultValue="1"
-              className="flex-1 h-9 text-center text-sm font-semibold outline-none bg-th-surface-3 text-th-text"
+              className="w-10 h-8 text-center text-sm font-bold outline-none rounded bg-th-surface-3 border border-th-border text-th-text"
             />
             <button
               type="button"
               onClick={() => setValue(`${fieldName}.qty` as never, String(currentQty + 1) as never)}
-              className="w-10 h-9 shrink-0 flex items-center justify-center bg-th-surface-2 text-th-text hover:text-[#FF6B00] hover:bg-[#FF6B00]/10 transition-colors border-l border-th-border rounded-r-md"
+              className="w-8 h-8 rounded bg-[#FF6B00] text-white flex items-center justify-center hover:bg-[#E05A00] transition-colors text-lg font-bold leading-none"
             >
-              <Plus size={16} strokeWidth={2.5} />
+              +
             </button>
           </div>
           {canDelete && (
