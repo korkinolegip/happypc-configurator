@@ -345,7 +345,18 @@ const BuildPage: React.FC = () => {
             Скачать PDF
           </button>
           {isAuthenticated && (
-            <button onClick={() => window.print()}
+            <button
+              onClick={async () => {
+                try {
+                  const response = await fetch(`/api/public/${build.short_code}/pdf`, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } })
+                  const blob = await response.blob()
+                  const url = URL.createObjectURL(blob)
+                  const printWindow = window.open(url)
+                  if (printWindow) {
+                    printWindow.onload = () => { printWindow.print() }
+                  }
+                } catch { toast.error('Ошибка печати') }
+              }}
               className="flex items-center gap-1.5 bg-th-surface-2 hover:bg-th-border text-th-text px-3 py-2 rounded-lg text-sm transition-colors">
               <Printer size={14} />Печать
             </button>
