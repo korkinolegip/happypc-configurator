@@ -533,19 +533,19 @@ const ProfilePage: React.FC = () => {
       {/* Avatar Picker Modal */}
       {showAvatarPicker && availableAvatars && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4" onClick={() => setShowAvatarPicker(false)}>
-          <div className="bg-th-surface border border-th-border rounded-lg w-full max-w-lg max-h-[80vh] overflow-hidden" onClick={e => e.stopPropagation()}>
+          <div className="bg-th-surface border border-th-border rounded-lg w-full max-w-2xl max-h-[85vh] overflow-hidden" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between px-5 py-4 border-b border-th-border">
               <h2 className="text-th-text font-semibold">Выберите аватар</h2>
               <button onClick={() => setShowAvatarPicker(false)} className="text-th-text-2 hover:text-th-text">
                 <Plus size={18} className="rotate-45" />
               </button>
             </div>
-            <div className="p-5 overflow-y-auto max-h-[60vh]">
+            <div className="p-5 overflow-y-auto max-h-[70vh]">
               {/* Male */}
               {availableAvatars.male.length > 0 && (
-                <div className="mb-4">
+                <div className="mb-6">
                   <h3 className="text-th-text-2 text-xs font-medium uppercase tracking-wide mb-3">Мужские</h3>
-                  <div className="grid grid-cols-6 sm:grid-cols-8 gap-2">
+                  <div className="grid grid-cols-4 sm:grid-cols-5 gap-3">
                     {availableAvatars.male.map((url) => (
                       <button
                         key={url}
@@ -557,11 +557,11 @@ const ProfilePage: React.FC = () => {
                             toast.success('Аватар обновлён')
                           } catch { toast.error('Ошибка') }
                         }}
-                        className={`w-full aspect-square rounded-lg overflow-hidden border-2 transition-all hover:scale-105 ${
+                        className={`w-full aspect-square rounded-xl overflow-hidden border-2 transition-all hover:scale-105 ${
                           user.avatar_url === url ? 'border-[#FF6B00] ring-2 ring-[#FF6B00]/30' : 'border-th-border hover:border-[#FF6B00]/50'
                         }`}
                       >
-                        <img src={url} alt="" className="w-full h-full object-cover" />
+                        <img src={url} alt="" className="w-full h-full" />
                       </button>
                     ))}
                   </div>
@@ -571,7 +571,7 @@ const ProfilePage: React.FC = () => {
               {availableAvatars.female.length > 0 && (
                 <div>
                   <h3 className="text-th-text-2 text-xs font-medium uppercase tracking-wide mb-3">Женские</h3>
-                  <div className="grid grid-cols-6 sm:grid-cols-8 gap-2">
+                  <div className="grid grid-cols-4 sm:grid-cols-5 gap-3">
                     {availableAvatars.female.map((url) => (
                       <button
                         key={url}
@@ -583,11 +583,11 @@ const ProfilePage: React.FC = () => {
                             toast.success('Аватар обновлён')
                           } catch { toast.error('Ошибка') }
                         }}
-                        className={`w-full aspect-square rounded-lg overflow-hidden border-2 transition-all hover:scale-105 ${
+                        className={`w-full aspect-square rounded-xl overflow-hidden border-2 transition-all hover:scale-105 ${
                           user.avatar_url === url ? 'border-[#FF6B00] ring-2 ring-[#FF6B00]/30' : 'border-th-border hover:border-[#FF6B00]/50'
                         }`}
                       >
-                        <img src={url} alt="" className="w-full h-full object-cover" />
+                        <img src={url} alt="" className="w-full h-full" />
                       </button>
                     ))}
                   </div>
