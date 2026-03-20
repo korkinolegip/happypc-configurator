@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Plus, Search, Filter, Link2, Cpu, Zap, FileText, Users, MapPin, SlidersHorizontal, X, ChevronDown } from 'lucide-react'
 import BuildCard from '../components/BuildCard'
 import CitySelect from '../components/CitySelect'
-import { getBuilds, getPublicSettings, getPublicBuilds, getPublicBanners } from '../api/builds'
+import { getPublicSettings, getPublicBuilds, getPublicBanners } from '../api/builds'
 import { getWorkshops } from '../api/admin'
 import { useAuth } from '../hooks/useAuth'
 import type { BuildFilters, BannerItem } from '../api/builds'
@@ -67,7 +67,7 @@ const HomePage: React.FC = () => {
 
   const { data: buildsData, isLoading: buildsLoading } = useQuery({
     queryKey: ['builds', filters, isAuthenticated],
-    queryFn: () => isAuthenticated ? getBuilds(filters) : getPublicBuilds(filters),
+    queryFn: () => getPublicBuilds(filters),
     enabled: feedEnabled || isAuthenticated,
     retry: false,
   })

@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Menu, X, ChevronDown, User, LogOut, Shield, Plus, Cpu, Sun, Moon } from 'lucide-react'
+import { Menu, X, ChevronDown, User, LogOut, Shield, Cpu, Sun, Moon } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
 import { useTheme } from '../context/ThemeContext'
 import toast from 'react-hot-toast'
@@ -172,17 +172,6 @@ const Header: React.FC = () => {
             >
               Сборки
             </Link>
-            {isAuthenticated && (
-              <Link
-                to="/builds/create"
-                onClick={() => setMobileOpen(false)}
-                className="flex items-center gap-1.5 px-3 py-2 text-sm rounded transition-colors"
-                style={{ color: 'var(--text-2)' }}
-              >
-                <Plus size={15} />
-                Создать сборку
-              </Link>
-            )}
           </div>
         )}
       </div>
