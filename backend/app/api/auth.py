@@ -56,10 +56,18 @@ async def get_setting(db: AsyncSession, key: str, default: str = "") -> str:
 
 def _random_avatar(gender: str) -> str:
     """Pick a random cyberpunk avatar based on gender."""
+    import os
     import random
     folder = "male" if gender == "male" else "female"
-    num = random.randint(1, 15)
-    return f"/static/avatars/{folder}/{num}.svg"
+    avatar_dir = f"/app/static/avatars/{folder}"
+    try:
+        files = [f for f in os.listdir(avatar_dir) if f.endswith((".png", ".jpg", ".svg", ".webp"))]
+        if files:
+            chosen = random.choice(files)
+            return f"/static/avatars/{folder}/{chosen}"
+    except OSError:
+        pass
+    return f"/static/avatars/{folder}/1.png"
 
 
 @router.post("/register", response_model=Token, status_code=status.HTTP_201_CREATED)
