@@ -17,6 +17,7 @@ import BuildsPage from './pages/admin/BuildsPage'
 import BannersPage from './pages/admin/BannersPage'
 import CommentsPage from './pages/admin/CommentsPage'
 import BackupPage from './pages/admin/BackupPage'
+import PermissionsPage from './pages/admin/PermissionsPage'
 
 function App() {
   const { isLoading } = useAuth()
@@ -90,6 +91,7 @@ function App() {
           <Route path="banners" element={<BannersPage />} />
           <Route path="comments" element={<CommentsPage />} />
           <Route path="backup" element={<BackupPage />} />
+          <Route path="permissions" element={<PermissionsPage />} />
           <Route path="settings" element={<SettingsPage />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />

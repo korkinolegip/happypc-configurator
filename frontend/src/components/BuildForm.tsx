@@ -6,6 +6,7 @@ import {
 import CategoryIcon from './CategoryIcon'
 import type { Build } from '../types'
 import { parseProductUrl } from '../api/builds'
+import { usePermissions } from '../hooks/usePermissions'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -324,6 +325,7 @@ function fmt(n: number) {
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 const BuildForm: React.FC<BuildFormProps> = ({ initialData, onSubmit, isSubmitting, submitLabel = 'Сохранить' }) => {
+  const { can } = usePermissions()
   const [showPassword, setShowPassword] = useState(false)
 
   // Build default values
@@ -464,22 +466,27 @@ const BuildForm: React.FC<BuildFormProps> = ({ initialData, onSubmit, isSubmitti
 
         {/* Labor + Total */}
         <div className="bg-th-surface border border-th-border rounded-lg p-4">
-          <div className="grid grid-cols-2 gap-3 mb-4">
-            <div>
-              <label className="block text-xs text-th-text-2 mb-1">Стоимость работы (%)</label>
-              <input {...register('labor_percent', { min: 0, max: 100 })} type="number" min="0" max="100" step="0.5"
-                className="input-field text-sm" placeholder="7" />
-              <p className="text-th-muted text-[10px] mt-1">Клиент покупает сам, мы собираем</p>
+          {can('can_see_labor') && (
+            <div className="grid grid-cols-2 gap-3 mb-4">
+              <div>
+                <label className="block text-xs text-th-text-2 mb-1">Стоимость работы (%)</label>
+                <input {...register('labor_percent', { min: 0, max: 100 })} type="number" min="0" max="100" step="0.5"
+                  className="input-field text-sm" placeholder="7" />
+                <p className="text-th-muted text-[10px] mt-1">Клиент покупает сам, мы собираем</p>
+              </div>
+              {can('can_set_turnkey_price') && (
+                <div>
+                  <label className="block text-xs text-th-text-2 mb-1">Стоимость сборки «под ключ» (₽)</label>
+                  <input {...register('labor_price_manual', { min: 0 })} type="number" min="0" step="1"
+                    className="input-field text-sm" placeholder="Пусто" />
+                  <p className="text-th-muted text-[10px] mt-1">Полная цена от мастерской с гарантией</p>
+                </div>
+              )}
             </div>
-            <div>
-              <label className="block text-xs text-th-text-2 mb-1">Стоимость сборки «под ключ» (₽)</label>
-              <input {...register('labor_price_manual', { min: 0 })} type="number" min="0" step="1"
-                className="input-field text-sm" placeholder="Пусто" />
-              <p className="text-th-muted text-[10px] mt-1">Полная цена от мастерской с гарантией</p>
-            </div>
-          </div>
+          )}
 
           {/* OS toggle */}
+          {can('can_set_os') && (
           <label className="flex items-center gap-3 mb-4 cursor-pointer select-none">
             <div className="relative">
               <input type="checkbox" {...register('install_os')} className="sr-only peer" />
@@ -491,6 +498,7 @@ const BuildForm: React.FC<BuildFormProps> = ({ initialData, onSubmit, isSubmitti
               <span className="text-th-text-3 text-xs ml-2">+3 000 ₽</span>
             </div>
           </label>
+          )}
 
           {/* Pricing summary */}
           <div className="space-y-1">

@@ -12,6 +12,7 @@ import {
   Megaphone,
   MessageSquare,
   Database,
+  Shield,
 } from 'lucide-react'
 
 const navItems = [
@@ -21,6 +22,7 @@ const navItems = [
   { to: '/admin/banners', label: 'Баннеры', icon: Megaphone, end: false },
   { to: '/admin/comments', label: 'Комментарии', icon: MessageSquare, end: false },
   { to: '/admin/workshops', label: 'Мастерские', icon: Building2, end: false },
+  { to: '/admin/permissions', label: 'Разрешения', icon: Shield, end: false },
   { to: '/admin/backup', label: 'Бэкапы', icon: Database, end: false },
   { to: '/admin/settings', label: 'Настройки', icon: Settings, end: false },
 ]

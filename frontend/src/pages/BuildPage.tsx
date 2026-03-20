@@ -11,6 +11,7 @@ import { getPublicBuild, downloadPDF, copyBuild } from '../api/builds'
 import { getComments, createComment, editComment, deleteComment, getBuildStats, toggleLike, recordView, checkLiked } from '../api/social'
 import type { Comment } from '../api/social'
 import { useAuth } from '../hooks/useAuth'
+import { usePermissions } from '../hooks/usePermissions'
 import CategoryIcon from '../components/CategoryIcon'
 import PriceBlock from '../components/PriceBlock'
 import ShareModal from '../components/ShareModal'
@@ -98,6 +99,7 @@ const BuildPage: React.FC = () => {
   const { short_code } = useParams<{ short_code: string }>()
   const navigate = useNavigate()
   const { isAuthenticated, user } = useAuth()
+  const { can } = usePermissions()
   const [password, setPassword] = useState<string | undefined>(undefined)
   const [pdfLoading, setPdfLoading] = useState(false)
   const [copyingBuild, setCopyingBuild] = useState(false)
@@ -161,6 +163,7 @@ const BuildPage: React.FC = () => {
 
   const handleLike = async () => {
     if (!isAuthenticated) { toast.error('Войдите, чтобы поставить лайк'); return }
+    if (!can('can_like')) { toast.error('Недостаточно прав'); return }
     try {
       const result = await toggleLike(buildId!)
       setLiked(result.liked)
@@ -328,7 +331,7 @@ const BuildPage: React.FC = () => {
               <Edit size={14} />Редактировать
             </Link>
           )}
-          {isAuthenticated && (
+          {isAuthenticated && can('can_copy_build') && (
             <button onClick={handleCopyBuild} disabled={copyingBuild}
               className="flex items-center gap-1.5 bg-th-surface-2 hover:bg-th-border text-th-text px-3 py-2 rounded-lg text-sm transition-colors disabled:opacity-50">
               {copyingBuild ? <span className="w-3.5 h-3.5 border-2 border-th-text border-t-transparent rounded-full animate-spin" /> : <Copy size={14} />}
@@ -339,12 +342,14 @@ const BuildPage: React.FC = () => {
             className="flex items-center gap-1.5 bg-th-surface-2 hover:bg-th-border text-th-text px-3 py-2 rounded-lg text-sm transition-colors">
             <Share2 size={14} />Поделиться
           </button>
-          <button onClick={handleDownloadPDF} disabled={pdfLoading}
-            className="flex items-center gap-1.5 bg-[#FF6B00] hover:bg-[#E05A00] text-white px-3 py-2 rounded-lg text-sm transition-colors disabled:opacity-50">
-            {pdfLoading ? <span className="w-3.5 h-3.5 border-2 border-th-text border-t-transparent rounded-full animate-spin" /> : <Download size={14} />}
-            Скачать PDF
-          </button>
-          {isAuthenticated && (
+          {can('can_download_pdf') && (
+            <button onClick={handleDownloadPDF} disabled={pdfLoading}
+              className="flex items-center gap-1.5 bg-[#FF6B00] hover:bg-[#E05A00] text-white px-3 py-2 rounded-lg text-sm transition-colors disabled:opacity-50">
+              {pdfLoading ? <span className="w-3.5 h-3.5 border-2 border-th-text border-t-transparent rounded-full animate-spin" /> : <Download size={14} />}
+              Скачать PDF
+            </button>
+          )}
+          {isAuthenticated && can('can_print') && (
             <button
               onClick={async () => {
                 try {
