@@ -176,7 +176,7 @@ function ItemRow({ fieldName, category, canDelete, canChangeCategory, onDelete, 
             className="flex-1 min-w-0 bg-th-surface-3 border border-th-border rounded px-2.5 py-2 text-th-text text-sm placeholder-th-placeholder focus:outline-none focus:border-[#FF6B00] transition-colors"
             placeholder={`Введите название ${category.toLowerCase()}`}
           />
-          <div className="relative shrink-0 w-32">
+          <div className="relative shrink-0 w-[120px]">
             <input
               {...register(`${fieldName}.price` as never)}
               type="number"
@@ -213,11 +213,11 @@ function ItemRow({ fieldName, category, canDelete, canChangeCategory, onDelete, 
               )}
             </div>
           </div>
-          <div className="shrink-0 flex items-center gap-1">
+          <div className="shrink-0 w-[120px] flex items-center gap-1 justify-center">
             <button
               type="button"
               onClick={() => { if (currentQty > 1) setValue(`${fieldName}.qty` as never, String(currentQty - 1) as never) }}
-              className="w-8 h-8 rounded bg-[#FF6B00] text-white flex items-center justify-center hover:bg-[#E05A00] transition-colors text-lg font-bold leading-none"
+              className="w-9 h-9 rounded bg-[#FF6B00] text-white flex items-center justify-center hover:bg-[#E05A00] transition-colors text-lg font-bold leading-none shrink-0"
             >
               −
             </button>
@@ -227,12 +227,12 @@ function ItemRow({ fieldName, category, canDelete, canChangeCategory, onDelete, 
               min="1"
               step="1"
               defaultValue="1"
-              className="w-10 h-8 text-center text-sm font-bold outline-none rounded bg-th-surface-3 border border-th-border text-th-text"
+              className="w-10 h-9 text-center text-sm font-bold outline-none rounded bg-th-surface-3 border border-th-border text-th-text shrink-0"
             />
             <button
               type="button"
               onClick={() => setValue(`${fieldName}.qty` as never, String(currentQty + 1) as never)}
-              className="w-8 h-8 rounded bg-[#FF6B00] text-white flex items-center justify-center hover:bg-[#E05A00] transition-colors text-lg font-bold leading-none"
+              className="w-9 h-9 rounded bg-[#FF6B00] text-white flex items-center justify-center hover:bg-[#E05A00] transition-colors text-lg font-bold leading-none shrink-0"
             >
               +
             </button>
