@@ -213,11 +213,11 @@ function ItemRow({ fieldName, category, canDelete, canChangeCategory, onDelete, 
               )}
             </div>
           </div>
-          <div className="shrink-0 w-[120px] flex items-center gap-1 justify-center">
+          <div className="shrink-0 w-[120px] flex items-center gap-0.5 justify-center">
             <button
               type="button"
               onClick={() => { if (currentQty > 1) setValue(`${fieldName}.qty` as never, String(currentQty - 1) as never) }}
-              className="w-9 h-9 rounded bg-[#FF6B00] text-white flex items-center justify-center hover:bg-[#E05A00] transition-colors text-lg font-bold leading-none shrink-0"
+              className="w-7 h-7 rounded bg-th-surface-2 border border-th-border text-th-text-2 flex items-center justify-center hover:border-[#FF6B00] hover:text-[#FF6B00] transition-colors text-sm font-bold leading-none shrink-0"
             >
               −
             </button>
@@ -227,12 +227,12 @@ function ItemRow({ fieldName, category, canDelete, canChangeCategory, onDelete, 
               min="1"
               step="1"
               defaultValue="1"
-              className="w-10 h-9 text-center text-sm font-bold outline-none rounded bg-th-surface-3 border border-th-border text-th-text shrink-0"
+              className="w-9 h-7 text-center text-sm font-semibold outline-none bg-transparent text-th-text shrink-0"
             />
             <button
               type="button"
               onClick={() => setValue(`${fieldName}.qty` as never, String(currentQty + 1) as never)}
-              className="w-9 h-9 rounded bg-[#FF6B00] text-white flex items-center justify-center hover:bg-[#E05A00] transition-colors text-lg font-bold leading-none shrink-0"
+              className="w-7 h-7 rounded bg-th-surface-2 border border-th-border text-th-text-2 flex items-center justify-center hover:border-[#FF6B00] hover:text-[#FF6B00] transition-colors text-sm font-bold leading-none shrink-0"
             >
               +
             </button>
