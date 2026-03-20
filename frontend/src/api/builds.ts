@@ -130,6 +130,21 @@ export const parseProductUrl = async (url: string): Promise<ParsedUrlResult> => 
   return response.data
 }
 
+// Banners
+export interface BannerItem {
+  id: string
+  title: string
+  text: string | null
+  button_text: string | null
+  button_url: string | null
+  position: number
+}
+
+export const getPublicBanners = async (): Promise<BannerItem[]> => {
+  const response = await client.get<BannerItem[]>('/api/public/banners')
+  return response.data
+}
+
 export interface CityItem {
   name: string
   code?: string

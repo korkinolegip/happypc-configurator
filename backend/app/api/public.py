@@ -312,6 +312,24 @@ async def get_user_public_profile(
     }
 
 
+@router.get("/banners")
+async def get_active_banners(db: AsyncSession = Depends(get_db)):
+    """Return active banners for homepage."""
+    from app.models.banner import Banner
+    result = await db.execute(
+        select(Banner).where(Banner.is_active == True).order_by(Banner.position)  # noqa
+    )
+    banners = result.scalars().all()
+    return [
+        {
+            "id": str(b.id), "title": b.title, "text": b.text,
+            "button_text": b.button_text, "button_url": b.button_url,
+            "position": b.position,
+        }
+        for b in banners
+    ]
+
+
 @router.get("/cities")
 async def get_cities(
     with_builds: bool = Query(False),

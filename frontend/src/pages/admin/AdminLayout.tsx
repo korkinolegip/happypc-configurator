@@ -9,12 +9,14 @@ import {
   Menu,
   Cpu,
   Monitor,
+  Megaphone,
 } from 'lucide-react'
 
 const navItems = [
   { to: '/admin', label: 'Дашборд', icon: LayoutDashboard, end: true },
   { to: '/admin/users', label: 'Пользователи', icon: Users, end: false },
   { to: '/admin/builds', label: 'Сборки', icon: Monitor, end: false },
+  { to: '/admin/banners', label: 'Баннеры', icon: Megaphone, end: false },
   { to: '/admin/workshops', label: 'Мастерские', icon: Building2, end: false },
   { to: '/admin/settings', label: 'Настройки', icon: Settings, end: false },
 ]

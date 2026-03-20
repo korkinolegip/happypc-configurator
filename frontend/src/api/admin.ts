@@ -144,6 +144,37 @@ export const updateSettings = async (data: Partial<AppSettings>): Promise<AppSet
   return response.data.settings
 }
 
+// Banners
+export interface AdminBanner {
+  id: string
+  title: string
+  text: string | null
+  button_text: string | null
+  button_url: string | null
+  position: number
+  is_active: boolean
+  created_at?: string
+}
+
+export const getAdminBanners = async (): Promise<AdminBanner[]> => {
+  const response = await client.get<AdminBanner[]>('/api/admin/banners')
+  return response.data
+}
+
+export const createBanner = async (data: Partial<AdminBanner>): Promise<AdminBanner> => {
+  const response = await client.post<AdminBanner>('/api/admin/banners', data)
+  return response.data
+}
+
+export const updateBanner = async (id: string, data: Partial<AdminBanner>): Promise<AdminBanner> => {
+  const response = await client.put<AdminBanner>(`/api/admin/banners/${id}`, data)
+  return response.data
+}
+
+export const deleteBanner = async (id: string): Promise<void> => {
+  await client.delete(`/api/admin/banners/${id}`)
+}
+
 // Dashboard
 export const getDashboard = async (): Promise<DashboardStats> => {
   const response = await client.get<DashboardStats>('/api/admin/dashboard')

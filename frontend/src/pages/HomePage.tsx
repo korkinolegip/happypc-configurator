@@ -4,10 +4,10 @@ import { useQuery } from '@tanstack/react-query'
 import { Plus, Search, Filter, Link2, Cpu, Zap, FileText, Users, MessageCircle, MapPin, SlidersHorizontal, X, ChevronDown } from 'lucide-react'
 import BuildCard from '../components/BuildCard'
 import CitySelect from '../components/CitySelect'
-import { getBuilds, getPublicSettings, getPublicBuilds } from '../api/builds'
+import { getBuilds, getPublicSettings, getPublicBuilds, getPublicBanners } from '../api/builds'
 import { getWorkshops } from '../api/admin'
 import { useAuth } from '../hooks/useAuth'
-import type { BuildFilters } from '../api/builds'
+import type { BuildFilters, BannerItem } from '../api/builds'
 
 // Guest landing
 const GuestLanding: React.FC = () => (
@@ -62,6 +62,7 @@ const HomePage: React.FC = () => {
   const searchDebounce = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const { data: settings } = useQuery({ queryKey: ['settings-public'], queryFn: getPublicSettings, retry: false })
+  const { data: banners } = useQuery({ queryKey: ['public-banners'], queryFn: getPublicBanners, staleTime: 60_000 })
   const feedEnabled = settings?.public_feed_enabled !== 'false'
 
   const { data: buildsData, isLoading: buildsLoading } = useQuery({
@@ -122,8 +123,53 @@ const HomePage: React.FC = () => {
 
   if (!feedEnabled && !isAuthenticated) return <GuestLanding />
 
+  // Render a banner component
+  const renderBanner = (banner: BannerItem) => (
+    <div key={banner.id} className="bg-th-surface border border-th-border rounded-lg p-4">
+      <h3 className="text-th-text font-semibold text-sm">{banner.title}</h3>
+      {banner.text && <p className="text-th-text-2 text-xs mt-1">{banner.text}</p>}
+      {banner.button_text && banner.button_url && (
+        <a href={banner.button_url} target="_blank" rel="noopener noreferrer"
+          className="inline-block mt-2 px-3 py-1 bg-th-surface-2 border border-th-border text-th-text text-xs rounded hover:border-[#FF6B00] hover:text-[#FF6B00] transition-colors">
+          {banner.button_text}
+        </a>
+      )}
+    </div>
+  )
+
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-6 items-start">
+    <div>
+      {/* Contact block — horizontal bar above feed */}
+      {(settings?.contact_tg_url || settings?.contact_vk_url) && (
+        <div className="bg-th-surface border border-th-border rounded-lg p-4 mb-5">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+            <p className="text-th-text-2 text-sm flex-1">
+              {settings?.contact_block_text || 'В наших чатах VK и Telegram обсуждайте любые вопросы о сборках ПК'}
+            </p>
+            <div className="flex flex-col gap-2 shrink-0 w-full sm:w-auto">
+              {settings?.contact_tg_url && (
+                <a href={settings.contact_tg_url} target="_blank" rel="noopener noreferrer"
+                   className="flex items-center justify-center gap-2 py-2 px-4 rounded-lg text-sm text-white font-medium transition-opacity hover:opacity-90"
+                   style={{ background: '#2ca5e0' }}>
+                  <MessageCircle size={15} />{settings?.contact_tg_label || 'Чат в Telegram'}
+                </a>
+              )}
+              {settings?.contact_vk_url && (
+                <a href={settings.contact_vk_url} target="_blank" rel="noopener noreferrer"
+                   className="flex items-center justify-center gap-2 py-2 px-4 rounded-lg text-sm text-white font-medium transition-opacity hover:opacity-90"
+                   style={{ background: '#0077ff' }}>
+                  <MessageCircle size={15} />{settings?.contact_vk_label || 'Чат в VK'}
+                </a>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* First banner (position 0) — above builds, full width */}
+      {banners && banners.filter(b => b.position === 0).map(renderBanner)}
+
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-6 items-start mt-4">
 
       {/* ── LEFT: builds list ── */}
       <div>
@@ -224,7 +270,15 @@ const HomePage: React.FC = () => {
         ) : buildsData && buildsData.items.length > 0 ? (
           <>
             <div className="space-y-3">
-              {buildsData.items.map(build => <BuildCard key={build.id} build={build} />)}
+              {buildsData.items.map((build, idx) => (
+                <React.Fragment key={build.id}>
+                  <BuildCard build={build} />
+                  {/* Insert banners between builds (after 2nd, 5th, etc.) */}
+                  {banners && banners
+                    .filter(b => b.position > 0 && b.position === idx + 1)
+                    .map(renderBanner)}
+                </React.Fragment>
+              ))}
             </div>
             {totalPages > 1 && (
               <div className="flex items-center justify-center gap-2 mt-6">
@@ -281,40 +335,15 @@ const HomePage: React.FC = () => {
           <Plus size={18} />Создать сборку
         </Link>
 
-        {/* Contact block — reads from settings */}
-        <div className="bg-th-surface border border-th-border rounded-lg p-4">
-          <p className="text-th-text-2 text-xs mb-3">
-            {settings?.contact_block_text || 'В наших чатах VK и Telegram обсуждайте любые вопросы о сборках ПК, комплектующих, разгоне и программах'}
-          </p>
-          <div className="flex gap-2">
-            {(settings?.contact_tg_url || settings?.telegram_bot_name) && (
-              <a href={settings?.contact_tg_url || `https://t.me/${settings?.telegram_bot_name}`}
-                 target="_blank" rel="noopener noreferrer"
-                 className="flex items-center gap-1.5 flex-1 py-2 px-3 rounded-lg text-sm text-white font-medium transition-opacity hover:opacity-90"
-                 style={{ background: '#2ca5e0' }}>
-                <MessageCircle size={14} />{settings?.contact_tg_label || 'Чат в Telegram'}
-              </a>
-            )}
-            {settings?.contact_vk_url && (
-              <a href={settings.contact_vk_url}
-                 target="_blank" rel="noopener noreferrer"
-                 className="flex items-center gap-1.5 flex-1 py-2 px-3 rounded-lg text-sm text-white font-medium transition-opacity hover:opacity-90"
-                 style={{ background: '#0077ff' }}>
-                <MessageCircle size={14} />{settings?.contact_vk_label || 'Чат в VK'}
-              </a>
-            )}
-          </div>
-        </div>
-
         {/* Help block */}
         {settings?.help_block_text && (
           <div className="bg-th-surface border border-th-border rounded-lg p-4">
             <p className="text-th-text-2 text-sm mb-2">{settings.help_block_text}</p>
             {settings?.help_block_url && (
-              <Link to={settings.help_block_url}
-                className="text-[#FF6B00] hover:text-[#E05A00] text-sm font-medium transition-colors">
+              <a href={settings.help_block_url} target="_blank" rel="noopener noreferrer"
+                className="inline-block mt-1 px-3 py-1.5 bg-th-surface-2 border border-th-border text-th-text text-xs rounded hover:border-[#FF6B00] hover:text-[#FF6B00] transition-colors">
                 {settings?.help_block_label || 'Задать вопрос →'}
-              </Link>
+              </a>
             )}
           </div>
         )}
@@ -349,6 +378,7 @@ const HomePage: React.FC = () => {
           </div>
         )}
       </div>
+    </div>
     </div>
   )
 }

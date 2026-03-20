@@ -798,3 +798,97 @@ async def get_activity(
 
     activity_list.sort(key=lambda x: x.builds_count, reverse=True)
     return activity_list
+
+
+# ============================================================
+# BANNERS (info blocks on homepage)
+# ============================================================
+
+@router.get("/banners")
+async def list_banners(
+    current_user: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    from app.models.banner import Banner
+    result = await db.execute(select(Banner).order_by(Banner.position, Banner.created_at.desc()))
+    banners = result.scalars().all()
+    return [
+        {
+            "id": str(b.id), "title": b.title, "text": b.text,
+            "button_text": b.button_text, "button_url": b.button_url,
+            "position": b.position, "is_active": b.is_active,
+            "created_at": b.created_at.isoformat(),
+        }
+        for b in banners
+    ]
+
+
+@router.post("/banners", status_code=status.HTTP_201_CREATED)
+async def create_banner(
+    data: dict,
+    current_user: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    from app.models.banner import Banner
+    banner = Banner(
+        title=data.get("title", ""),
+        text=data.get("text"),
+        button_text=data.get("button_text"),
+        button_url=data.get("button_url"),
+        position=data.get("position", 0),
+        is_active=data.get("is_active", True),
+    )
+    db.add(banner)
+    await db.flush()
+    await db.refresh(banner)
+    return {
+        "id": str(banner.id), "title": banner.title, "text": banner.text,
+        "button_text": banner.button_text, "button_url": banner.button_url,
+        "position": banner.position, "is_active": banner.is_active,
+    }
+
+
+@router.put("/banners/{banner_id}")
+async def update_banner(
+    banner_id: uuid.UUID,
+    data: dict,
+    current_user: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    from app.models.banner import Banner
+    result = await db.execute(select(Banner).where(Banner.id == banner_id))
+    banner = result.scalar_one_or_none()
+    if not banner:
+        raise HTTPException(status_code=404, detail="Баннер не найден")
+    if "title" in data:
+        banner.title = data["title"]
+    if "text" in data:
+        banner.text = data["text"]
+    if "button_text" in data:
+        banner.button_text = data["button_text"]
+    if "button_url" in data:
+        banner.button_url = data["button_url"]
+    if "position" in data:
+        banner.position = data["position"]
+    if "is_active" in data:
+        banner.is_active = data["is_active"]
+    await db.flush()
+    return {
+        "id": str(banner.id), "title": banner.title, "text": banner.text,
+        "button_text": banner.button_text, "button_url": banner.button_url,
+        "position": banner.position, "is_active": banner.is_active,
+    }
+
+
+@router.delete("/banners/{banner_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_banner(
+    banner_id: uuid.UUID,
+    current_user: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    from app.models.banner import Banner
+    result = await db.execute(select(Banner).where(Banner.id == banner_id))
+    banner = result.scalar_one_or_none()
+    if not banner:
+        raise HTTPException(status_code=404, detail="Баннер не найден")
+    await db.delete(banner)
