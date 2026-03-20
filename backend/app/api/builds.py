@@ -34,6 +34,8 @@ def build_to_response(build: Build) -> BuildResponse:
         labor_cost=totals["labor_cost"],
         labor_percent=build.labor_percent,
         labor_price_manual=build.labor_price_manual,
+        tags=build.tags,
+        install_os=getattr(build, 'install_os', False),
         created_at=build.created_at,
         updated_at=build.updated_at,
     )
