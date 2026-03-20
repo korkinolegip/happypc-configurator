@@ -277,7 +277,7 @@ const BuildPage: React.FC = () => {
             <button onClick={handleCopyBuild} disabled={copyingBuild}
               className="flex items-center gap-1.5 bg-th-surface-2 hover:bg-th-border text-th-text px-3 py-2 rounded-lg text-sm transition-colors disabled:opacity-50">
               {copyingBuild ? <span className="w-3.5 h-3.5 border-2 border-th-text border-t-transparent rounded-full animate-spin" /> : <Copy size={14} />}
-              Собрать свой ПК
+              Копировать сборку
             </button>
           )}
           <button onClick={() => setShowShare(true)}
@@ -322,24 +322,12 @@ const BuildPage: React.FC = () => {
             <p className="text-[#FF6B00] font-bold text-3xl">{formatPrice(build.total_price)}</p>
           </div>
 
-          {/* Action buttons row */}
-          <div className="flex flex-col sm:flex-row gap-3 mb-6">
+          {/* Back to builds */}
+          <div className="mb-6">
             <Link to="/"
-              className="flex-1 text-center py-2.5 px-4 bg-th-surface-2 border border-th-border hover:border-[#FF6B00] text-th-text-2 hover:text-th-text rounded-lg text-sm transition-colors">
-              Посмотреть другие сборки ПК
+              className="text-th-text-2 hover:text-[#FF6B00] text-sm transition-colors">
+              ← Все сборки
             </Link>
-            {isAuthenticated ? (
-              <button onClick={handleCopyBuild} disabled={copyingBuild}
-                className="flex-1 py-2.5 px-4 bg-[#FF6B00] hover:bg-[#E05A00] text-white font-semibold rounded-lg text-sm transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
-                {copyingBuild ? <span className="w-4 h-4 border-2 border-th-text border-t-transparent rounded-full animate-spin" /> : <Copy size={16} />}
-                Собрать свой ПК
-              </button>
-            ) : (
-              <Link to="/login"
-                className="flex-1 text-center py-2.5 px-4 bg-[#FF6B00] hover:bg-[#E05A00] text-white font-semibold rounded-lg text-sm transition-colors">
-                Собрать свой ПК
-              </Link>
-            )}
           </div>
 
           {/* Comments section */}
