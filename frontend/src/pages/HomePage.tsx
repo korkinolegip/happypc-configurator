@@ -48,9 +48,7 @@ const GuestLanding: React.FC = () => (
   </div>
 )
 
-const FALLBACK_TAGS = [
-  'игровой', 'офисный', 'бюджетный', 'мощный', 'AMD', 'Intel', 'RTX', 'RX',
-]
+// No fallback tags — only show tags that actually exist in DB
 
 const HomePage: React.FC = () => {
   const { isAuthenticated, user } = useAuth()
@@ -347,25 +345,24 @@ const HomePage: React.FC = () => {
           </div>
         )}
 
-        {/* Popular tags from DB */}
-        <div className="bg-th-surface border border-th-border rounded-lg p-4">
-          <h3 className="text-th-text font-semibold text-sm mb-3">Популярные теги</h3>
-          <div className="flex flex-wrap gap-1.5">
-            {(popularTags && popularTags.length > 0
-              ? popularTags.map(t => t.name)
-              : FALLBACK_TAGS
-            ).map(tag => (
-              <span key={tag} onClick={() => handleTagClick(tag)}
-                className={`px-2 py-0.5 border text-xs rounded-full cursor-pointer transition-colors ${
-                  filters.tag === tag
-                    ? 'bg-[#FF6B00]/20 border-[#FF6B00] text-[#FF6B00]'
-                    : 'bg-th-surface-2 border-th-border text-th-text-3 hover:border-[#FF6B00] hover:text-[#FF6B00]'
-                }`}>
-                {tag}
-              </span>
-            ))}
+        {/* Popular tags from DB — only real tags */}
+        {popularTags && popularTags.length > 0 && (
+          <div className="bg-th-surface border border-th-border rounded-lg p-4">
+            <h3 className="text-th-text font-semibold text-sm mb-3">Популярные теги</h3>
+            <div className="flex flex-wrap gap-1.5">
+              {popularTags.map(t => (
+                <span key={t.name} onClick={() => handleTagClick(t.name)}
+                  className={`px-2 py-0.5 border text-xs rounded-full cursor-pointer transition-colors ${
+                    filters.tag === t.name
+                      ? 'bg-[#FF6B00]/20 border-[#FF6B00] text-[#FF6B00]'
+                      : 'bg-th-surface-2 border-th-border text-th-text-3 hover:border-[#FF6B00] hover:text-[#FF6B00]'
+                  }`}>
+                  {t.name} <span className="text-th-muted">{t.count}</span>
+                </span>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Recent comments */}
         {recentComments && recentComments.length > 0 && (
