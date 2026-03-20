@@ -10,6 +10,8 @@ import {
   Cpu,
   Monitor,
   Megaphone,
+  MessageSquare,
+  Database,
 } from 'lucide-react'
 
 const navItems = [
@@ -17,7 +19,9 @@ const navItems = [
   { to: '/admin/users', label: 'Пользователи', icon: Users, end: false },
   { to: '/admin/builds', label: 'Сборки', icon: Monitor, end: false },
   { to: '/admin/banners', label: 'Баннеры', icon: Megaphone, end: false },
+  { to: '/admin/comments', label: 'Комментарии', icon: MessageSquare, end: false },
   { to: '/admin/workshops', label: 'Мастерские', icon: Building2, end: false },
+  { to: '/admin/backup', label: 'Бэкапы', icon: Database, end: false },
   { to: '/admin/settings', label: 'Настройки', icon: Settings, end: false },
 ]
 

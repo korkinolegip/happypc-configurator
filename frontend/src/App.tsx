@@ -15,6 +15,8 @@ import WorkshopsPage from './pages/admin/WorkshopsPage'
 import SettingsPage from './pages/admin/SettingsPage'
 import BuildsPage from './pages/admin/BuildsPage'
 import BannersPage from './pages/admin/BannersPage'
+import CommentsPage from './pages/admin/CommentsPage'
+import BackupPage from './pages/admin/BackupPage'
 
 function App() {
   const { isLoading } = useAuth()
@@ -86,6 +88,8 @@ function App() {
           <Route path="builds" element={<BuildsPage />} />
           <Route path="workshops" element={<WorkshopsPage />} />
           <Route path="banners" element={<BannersPage />} />
+          <Route path="comments" element={<CommentsPage />} />
+          <Route path="backup" element={<BackupPage />} />
           <Route path="settings" element={<SettingsPage />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />

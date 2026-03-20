@@ -907,3 +907,182 @@ async def delete_banner(
     if not banner:
         raise HTTPException(status_code=404, detail="Баннер не найден")
     await db.delete(banner)
+
+
+# ============================================================
+# COMMENTS MODERATION
+# ============================================================
+
+@router.get("/comments")
+async def list_comments(
+    page: int = Query(1, ge=1),
+    per_page: int = Query(20, ge=1, le=100),
+    current_user: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    from app.models.social import BuildComment
+    from sqlalchemy.orm import selectinload as si
+
+    count_result = await db.execute(select(func.count()).select_from(BuildComment))
+    total = count_result.scalar() or 0
+
+    result = await db.execute(
+        select(BuildComment)
+        .options(si(BuildComment.user))
+        .order_by(desc(BuildComment.created_at))
+        .offset((page - 1) * per_page)
+        .limit(per_page)
+    )
+    comments = result.scalars().all()
+
+    items = []
+    for c in comments:
+        build_r = await db.execute(select(Build.short_code, Build.title).where(Build.id == c.build_id))
+        build_row = build_r.first()
+        items.append({
+            "id": str(c.id),
+            "text": c.text,
+            "user_name": c.user.name if c.user else "Удалён",
+            "user_avatar": c.user.avatar_url if c.user else None,
+            "build_code": build_row[0] if build_row else "",
+            "build_title": build_row[1] if build_row else "",
+            "is_hidden": c.is_hidden,
+            "parent_id": str(c.parent_id) if c.parent_id else None,
+            "created_at": c.created_at.isoformat(),
+        })
+
+    return {"items": items, "total": total, "page": page, "per_page": per_page}
+
+
+@router.post("/comments/{comment_id}/toggle-hide")
+async def toggle_hide_comment(
+    comment_id: uuid.UUID,
+    current_user: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    from app.models.social import BuildComment
+    result = await db.execute(select(BuildComment).where(BuildComment.id == comment_id))
+    comment = result.scalar_one_or_none()
+    if not comment:
+        raise HTTPException(status_code=404, detail="Комментарий не найден")
+    comment.is_hidden = not comment.is_hidden
+    await db.flush()
+    return {"is_hidden": comment.is_hidden}
+
+
+@router.delete("/comments/{comment_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_comment(
+    comment_id: uuid.UUID,
+    current_user: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    from app.models.social import BuildComment
+    result = await db.execute(select(BuildComment).where(BuildComment.id == comment_id))
+    comment = result.scalar_one_or_none()
+    if not comment:
+        raise HTTPException(status_code=404, detail="Комментарий не найден")
+    await db.delete(comment)
+
+
+# ============================================================
+# DB BACKUP
+# ============================================================
+
+@router.get("/db/backups")
+async def list_backups(
+    current_user: User = Depends(require_admin),
+):
+    """List available DB backups."""
+    import os
+    backup_dir = "/app/backups"
+    os.makedirs(backup_dir, exist_ok=True)
+    files = []
+    for f in sorted(os.listdir(backup_dir), reverse=True):
+        if f.endswith(".sql") or f.endswith(".sql.gz"):
+            path = os.path.join(backup_dir, f)
+            stat = os.stat(path)
+            files.append({
+                "name": f,
+                "size": stat.st_size,
+                "created_at": datetime.fromtimestamp(stat.st_mtime).isoformat(),
+            })
+    return files
+
+
+@router.post("/db/backup")
+async def create_backup(
+    current_user: User = Depends(require_admin),
+):
+    """Create a pg_dump backup."""
+    import asyncio
+    backup_dir = "/app/backups"
+    os.makedirs(backup_dir, exist_ok=True)
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    filename = f"happypc_{timestamp}.sql.gz"
+    filepath = os.path.join(backup_dir, filename)
+
+    proc = await asyncio.create_subprocess_exec(
+        "bash", "-c",
+        f'PGPASSWORD=happypc2024 pg_dump -h 127.0.0.1 -U happypc happypc | gzip > {filepath}',
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE,
+    )
+    _, stderr = await proc.communicate()
+
+    if proc.returncode != 0:
+        raise HTTPException(status_code=500, detail=f"Ошибка создания бэкапа: {stderr.decode()}")
+
+    stat = os.stat(filepath)
+    return {
+        "name": filename,
+        "size": stat.st_size,
+        "created_at": datetime.now().isoformat(),
+        "message": "Бэкап создан успешно",
+    }
+
+
+@router.get("/db/backup/{filename}")
+async def download_backup(
+    filename: str,
+    current_user: User = Depends(require_admin),
+):
+    """Download a backup file."""
+    filepath = os.path.join("/app/backups", filename)
+    if not os.path.isfile(filepath):
+        raise HTTPException(status_code=404, detail="Файл не найден")
+
+    from starlette.responses import FileResponse
+    return FileResponse(filepath, filename=filename)
+
+
+@router.post("/db/restore/{filename}")
+async def restore_backup(
+    filename: str,
+    current_user: User = Depends(require_admin),
+):
+    """Restore from a backup file. DANGEROUS — overwrites current DB."""
+    import asyncio
+    filepath = os.path.join("/app/backups", filename)
+    if not os.path.isfile(filepath):
+        raise HTTPException(status_code=404, detail="Файл не найден")
+
+    # First create a safety backup
+    safety = f"/app/backups/pre_restore_{datetime.now().strftime('%Y%m%d_%H%M%S')}.sql.gz"
+    await asyncio.create_subprocess_exec(
+        "bash", "-c",
+        f'PGPASSWORD=happypc2024 pg_dump -h 127.0.0.1 -U happypc happypc | gzip > {safety}',
+    )
+
+    cmd = f'gunzip -c {filepath} | PGPASSWORD=happypc2024 psql -h 127.0.0.1 -U happypc happypc' if filepath.endswith('.gz') else f'PGPASSWORD=happypc2024 psql -h 127.0.0.1 -U happypc happypc < {filepath}'
+
+    proc = await asyncio.create_subprocess_exec(
+        "bash", "-c", cmd,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE,
+    )
+    _, stderr = await proc.communicate()
+
+    if proc.returncode != 0:
+        return {"status": "error", "detail": stderr.decode()[:500]}
+
+    return {"status": "restored", "safety_backup": os.path.basename(safety)}

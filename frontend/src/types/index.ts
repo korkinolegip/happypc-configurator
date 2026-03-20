@@ -56,6 +56,9 @@ export interface BuildListItem {
   items_count: number
   components?: { category: string; name: string }[]
   tags: string[]
+  views_count?: number
+  likes_count?: number
+  comments_count?: number
   created_at: string
 }
 

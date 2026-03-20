@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy import select
 
-from app.api import auth, builds, public, profile, admin
+from app.api import auth, builds, public, profile, admin, social
 from app.database import engine
 from app import models
 from app.database import AsyncSessionLocal
@@ -39,6 +39,7 @@ app.include_router(builds.router, prefix="/api/builds", tags=["builds"])
 app.include_router(public.router, prefix="/api/public", tags=["public"])
 app.include_router(profile.router, prefix="/api/profile", tags=["profile"])
 app.include_router(admin.router, prefix="/api/admin", tags=["admin"])
+app.include_router(social.router, prefix="/api/social", tags=["social"])
 
 
 DEFAULT_SETTINGS = [

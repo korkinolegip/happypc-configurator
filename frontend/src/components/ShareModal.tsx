@@ -9,7 +9,19 @@ interface ShareModalProps {
 const ShareModal: React.FC<ShareModalProps> = ({ url, onClose }) => {
   const [copied, setCopied] = useState(false)
   const handleCopy = async () => {
-    await navigator.clipboard.writeText(url)
+    try {
+      await navigator.clipboard.writeText(url)
+    } catch {
+      // Fallback for HTTP (non-secure context)
+      const textarea = document.createElement('textarea')
+      textarea.value = url
+      textarea.style.position = 'fixed'
+      textarea.style.opacity = '0'
+      document.body.appendChild(textarea)
+      textarea.select()
+      document.execCommand('copy')
+      document.body.removeChild(textarea)
+    }
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
   }

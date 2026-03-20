@@ -3,6 +3,9 @@ import { Link } from 'react-router-dom'
 import { ThumbsUp, MessageSquare, Eye, Share2 } from 'lucide-react'
 import CategoryIcon from './CategoryIcon'
 import ShareModal from './ShareModal'
+import { toggleLike } from '../api/social'
+import { useAuth } from '../hooks/useAuth'
+import toast from 'react-hot-toast'
 import type { BuildListItem } from '../types'
 
 interface BuildCardProps {
@@ -19,12 +22,31 @@ const formatDateTime = (dateStr: string) =>
   })
 
 const BuildCard: React.FC<BuildCardProps> = ({ build }) => {
+  const { isAuthenticated } = useAuth()
   const [showShare, setShowShare] = useState(false)
+  const [likesCount, setLikesCount] = useState(build.likes_count ?? 0)
+  const [liked, setLiked] = useState(false)
 
   const handleShare = (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
     setShowShare(true)
+  }
+
+  const handleLike = async (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (!isAuthenticated) {
+      toast.error('Войдите, чтобы поставить лайк')
+      return
+    }
+    try {
+      const result = await toggleLike(build.id)
+      setLiked(result.liked)
+      setLikesCount(result.count)
+    } catch {
+      toast.error('Ошибка')
+    }
   }
 
   const buildUrl = `${window.location.origin}/b/${build.short_code}`
@@ -36,7 +58,7 @@ const BuildCard: React.FC<BuildCardProps> = ({ build }) => {
         to={`/b/${build.short_code}`}
         className="block bg-th-surface border border-th-border rounded-lg hover:border-[#FF6B00]/50 transition-all hover:shadow-th-lg"
       >
-        {/* Header: title + date + price on one line */}
+        {/* Header: title + date + price */}
         <div className="px-5 pt-4 pb-2">
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1 min-w-0">
@@ -47,7 +69,6 @@ const BuildCard: React.FC<BuildCardProps> = ({ build }) => {
                 {formatDateTime(build.created_at)}
               </div>
             </div>
-
             <div className="flex items-baseline gap-2 shrink-0 pl-2 whitespace-nowrap">
               <span className="text-th-text-2 font-semibold text-base">Сумма:</span>
               <span className="text-[#FF6B00] font-bold text-xl">{formatPrice(build.total_price)} ₽</span>
@@ -92,19 +113,21 @@ const BuildCard: React.FC<BuildCardProps> = ({ build }) => {
           </div>
 
           <div className="flex items-center gap-1 bg-th-surface-2 rounded-lg px-1 py-0.5">
-            <div onClick={(e) => e.preventDefault()}
-              className="flex items-center gap-1.5 px-2.5 py-2 rounded-md text-th-text-2 hover:text-[#FF6B00] hover:bg-[#FF6B00]/10 transition-colors cursor-pointer">
-              <ThumbsUp size={18} /><span className="text-sm font-medium">0</span>
+            <div onClick={handleLike}
+              className={`flex items-center gap-1.5 px-2.5 py-2 rounded-md transition-colors cursor-pointer ${
+                liked ? 'text-[#FF6B00] bg-[#FF6B00]/10' : 'text-th-text-2 hover:text-[#FF6B00] hover:bg-[#FF6B00]/10'
+              }`}>
+              <ThumbsUp size={18} /><span className="text-sm font-medium">{likesCount}</span>
             </div>
             <div className="w-px h-5 bg-th-border" />
             <div onClick={(e) => e.preventDefault()}
               className="flex items-center gap-1.5 px-2.5 py-2 rounded-md text-th-text-2 hover:text-[#FF6B00] hover:bg-[#FF6B00]/10 transition-colors cursor-pointer">
-              <MessageSquare size={18} /><span className="text-sm font-medium">0</span>
+              <MessageSquare size={18} /><span className="text-sm font-medium">{build.comments_count ?? 0}</span>
             </div>
             <div className="w-px h-5 bg-th-border" />
             <div onClick={(e) => e.preventDefault()}
               className="flex items-center gap-1.5 px-2.5 py-2 rounded-md text-th-text-2 hover:text-[#FF6B00] hover:bg-[#FF6B00]/10 transition-colors cursor-pointer">
-              <Eye size={18} /><span className="text-sm font-medium">0</span>
+              <Eye size={18} /><span className="text-sm font-medium">{build.views_count ?? 0}</span>
             </div>
             <div className="w-px h-5 bg-th-border" />
             <div onClick={handleShare}

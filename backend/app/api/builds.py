@@ -132,6 +132,11 @@ async def create_build(
         city_name = current_user.workshop.city if hasattr(current_user.workshop, 'city') else None
     short_code = await generate_short_code(db, city_name)
 
+    # Sync tags
+    if build_data.tags:
+        from app.api.social import sync_build_tags
+        await sync_build_tags(db, build_data.tags)
+
     build = Build(
         short_code=short_code,
         title=build_data.title,
@@ -140,6 +145,7 @@ async def create_build(
         workshop_id=current_user.workshop_id,
         is_public=build_data.is_public,
         password_hash=hash_password(build_data.password) if build_data.password else None,
+        tags=build_data.tags,
         labor_percent=build_data.labor_percent,
         labor_price_manual=build_data.labor_price_manual,
     )

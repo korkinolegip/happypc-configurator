@@ -10,7 +10,7 @@ import toast from 'react-hot-toast'
 import { useAuth } from '../hooks/useAuth'
 import { updateProfile, changePassword } from '../api/auth'
 import { getMyBuilds, deleteBuild } from '../api/builds'
-import BuildCard from '../components/BuildCard'
+const formatPrice = (n: number) => new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 0 }).format(n)
 import CitySelect from '../components/CitySelect'
 
 interface ProfileFormValues {
@@ -456,38 +456,41 @@ const ProfilePage: React.FC = () => {
         </div>
 
         {buildsLoading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="space-y-3">
             {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="bg-th-surface border border-th-border rounded-lg p-4 animate-pulse h-40" />
+              <div key={i} className="bg-th-surface border border-th-border rounded-lg p-4 animate-pulse h-20" />
             ))}
           </div>
         ) : builds && builds.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="space-y-3">
             {builds.map((build) => (
-              <div key={build.id} className="relative group">
-                <BuildCard build={build} />
-                <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+              <div key={build.id} className="bg-th-surface border border-th-border rounded-lg p-4 flex items-center justify-between gap-4 hover:border-[#FF6B00]/40 transition-colors">
+                <Link to={`/b/${build.short_code}`} className="flex-1 min-w-0">
+                  <h3 className="text-th-text font-semibold text-sm truncate">{build.title}</h3>
+                  <div className="flex items-center gap-3 mt-1">
+                    <span className="text-[#FF6B00] font-bold text-sm">{formatPrice(build.total_price)} ₽</span>
+                    <span className="text-th-text-3 text-xs">{build.items_count} компонентов</span>
+                    <span className="text-th-muted text-xs">{new Date(build.created_at).toLocaleDateString('ru-RU')}</span>
+                  </div>
+                </Link>
+                <div className="flex items-center gap-1 shrink-0">
                   <Link
                     to={`/builds/${build.id}/edit`}
-                    className="w-7 h-7 bg-th-surface-2 hover:bg-th-border rounded flex items-center justify-center text-th-text-2 hover:text-th-text transition-colors"
+                    className="p-2 text-th-text-2 hover:text-th-text hover:bg-th-surface-2 rounded transition-colors"
                     title="Редактировать"
-                    onClick={(e) => e.stopPropagation()}
                   >
-                    <Edit2 size={13} />
+                    <Edit2 size={15} />
                   </Link>
                   <button
-                    onClick={(e) => {
-                      e.preventDefault()
-                      handleDeleteBuild(build.id, build.title)
-                    }}
+                    onClick={() => handleDeleteBuild(build.id, build.title)}
                     disabled={deletingId === build.id}
-                    className="w-7 h-7 bg-red-900/80 hover:bg-red-800 rounded flex items-center justify-center text-red-300 hover:text-white transition-colors disabled:opacity-50"
+                    className="p-2 text-th-text-2 hover:text-red-400 hover:bg-red-900/20 rounded transition-colors disabled:opacity-50"
                     title="Удалить"
                   >
                     {deletingId === build.id ? (
-                      <span className="w-3 h-3 border border-white border-t-transparent rounded-full animate-spin" />
+                      <span className="w-3.5 h-3.5 border border-current border-t-transparent rounded-full animate-spin block" />
                     ) : (
-                      <Trash2 size={13} />
+                      <Trash2 size={15} />
                     )}
                   </button>
                 </div>

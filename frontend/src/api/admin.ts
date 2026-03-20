@@ -189,3 +189,54 @@ export const getActivity = async (): Promise<DashboardStats['masters_activity']>
   const response = await client.get<DashboardStats['masters_activity']>('/api/admin/activity')
   return response.data
 }
+
+// Comments
+export interface AdminComment {
+  id: string
+  text: string
+  author_name: string
+  author_avatar: string | null
+  build_code: string
+  build_title: string | null
+  is_hidden: boolean
+  created_at: string
+}
+
+export const getAdminComments = async (
+  page: number,
+  perPage: number
+): Promise<{ items: AdminComment[]; total: number; page: number; per_page: number }> => {
+  const response = await client.get('/api/admin/comments', {
+    params: { page, per_page: perPage },
+  })
+  return response.data
+}
+
+export const toggleHideComment = async (id: string): Promise<void> => {
+  await client.post(`/api/admin/comments/${id}/toggle-hide`)
+}
+
+export const deleteAdminComment = async (id: string): Promise<void> => {
+  await client.delete(`/api/admin/comments/${id}`)
+}
+
+// Backups
+export interface BackupItem {
+  name: string
+  size: number
+  created_at: string
+}
+
+export const getBackups = async (): Promise<BackupItem[]> => {
+  const response = await client.get<BackupItem[]>('/api/admin/db/backups')
+  return response.data
+}
+
+export const createBackup = async (): Promise<{ filename: string }> => {
+  const response = await client.post<{ filename: string }>('/api/admin/db/backup')
+  return response.data
+}
+
+export const restoreBackup = async (filename: string): Promise<void> => {
+  await client.post(`/api/admin/db/restore/${filename}`)
+}

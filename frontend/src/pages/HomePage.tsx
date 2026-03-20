@@ -5,6 +5,7 @@ import { Plus, Search, Filter, Link2, Cpu, Zap, FileText, Users, MapPin, Sliders
 import BuildCard from '../components/BuildCard'
 import CitySelect from '../components/CitySelect'
 import { getPublicSettings, getPublicBuilds, getPublicBanners } from '../api/builds'
+import { getPopularTags, getRecentComments } from '../api/social'
 import { getWorkshops } from '../api/admin'
 import { useAuth } from '../hooks/useAuth'
 import type { BuildFilters, BannerItem } from '../api/builds'
@@ -47,9 +48,8 @@ const GuestLanding: React.FC = () => (
   </div>
 )
 
-const POPULAR_TAGS = [
+const FALLBACK_TAGS = [
   'игровой', 'офисный', 'бюджетный', 'мощный', 'AMD', 'Intel', 'RTX', 'RX',
-  'бесшумный', 'мини-ITX', 'рабочая станция', 'видеомонтаж', 'стриминг',
 ]
 
 const HomePage: React.FC = () => {
@@ -63,6 +63,8 @@ const HomePage: React.FC = () => {
 
   const { data: settings } = useQuery({ queryKey: ['settings-public'], queryFn: getPublicSettings, retry: false })
   const { data: banners } = useQuery({ queryKey: ['public-banners'], queryFn: getPublicBanners, staleTime: 60_000 })
+  const { data: popularTags } = useQuery({ queryKey: ['popular-tags'], queryFn: () => getPopularTags(20), staleTime: 60_000 })
+  const { data: recentComments } = useQuery({ queryKey: ['recent-comments'], queryFn: () => getRecentComments(5), staleTime: 30_000 })
   const feedEnabled = settings?.public_feed_enabled !== 'false'
 
   const { data: buildsData, isLoading: buildsLoading } = useQuery({
@@ -345,11 +347,14 @@ const HomePage: React.FC = () => {
           </div>
         )}
 
-        {/* Popular tags */}
+        {/* Popular tags from DB */}
         <div className="bg-th-surface border border-th-border rounded-lg p-4">
-          <h3 className="text-th-text font-semibold text-sm mb-3">Популярные теги сборки</h3>
+          <h3 className="text-th-text font-semibold text-sm mb-3">Популярные теги</h3>
           <div className="flex flex-wrap gap-1.5">
-            {POPULAR_TAGS.map(tag => (
+            {(popularTags && popularTags.length > 0
+              ? popularTags.map(t => t.name)
+              : FALLBACK_TAGS
+            ).map(tag => (
               <span key={tag} onClick={() => handleTagClick(tag)}
                 className={`px-2 py-0.5 border text-xs rounded-full cursor-pointer transition-colors ${
                   filters.tag === tag
@@ -361,6 +366,37 @@ const HomePage: React.FC = () => {
             ))}
           </div>
         </div>
+
+        {/* Recent comments */}
+        {recentComments && recentComments.length > 0 && (
+          <div className="bg-th-surface border border-th-border rounded-lg p-4">
+            <h3 className="text-th-text font-semibold text-sm mb-3">Последние комментарии</h3>
+            <div className="space-y-3">
+              {recentComments.map(c => (
+                <Link key={c.id} to={`/b/${c.build_code}`} className="block group">
+                  <div className="flex items-start gap-2">
+                    {c.user_avatar ? (
+                      <img src={c.user_avatar} alt="" className="w-6 h-6 rounded-full object-cover shrink-0 mt-0.5" />
+                    ) : (
+                      <div className="w-6 h-6 rounded-full bg-[#FF6B00]/20 flex items-center justify-center text-[9px] font-bold text-[#FF6B00] shrink-0 mt-0.5">
+                        {c.user_name.charAt(0).toUpperCase()}
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-th-text text-xs font-medium">{c.user_name}</span>
+                        <span className="text-th-muted text-[10px]">
+                          {new Date(c.created_at).toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' })}
+                        </span>
+                      </div>
+                      <p className="text-th-text-2 text-xs mt-0.5 line-clamp-2 group-hover:text-[#FF6B00] transition-colors">{c.text}</p>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Stats */}
         {buildsData && buildsData.total > 0 && (

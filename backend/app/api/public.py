@@ -213,6 +213,18 @@ async def get_public_builds(
             if item.name and item.name.strip()
         ]
 
+        # Stats
+        from app.models.social import BuildView, BuildLike, BuildComment
+        views_count = (await db.execute(
+            select(sa_func.count()).where(BuildView.build_id == b.id)
+        )).scalar() or 0
+        likes_count = (await db.execute(
+            select(sa_func.count()).where(BuildLike.build_id == b.id)
+        )).scalar() or 0
+        comments_count = (await db.execute(
+            select(sa_func.count()).where(BuildComment.build_id == b.id, BuildComment.is_hidden == False)  # noqa
+        )).scalar() or 0
+
         items_out.append({
             "id": str(b.id),
             "short_code": b.short_code,
@@ -226,6 +238,9 @@ async def get_public_builds(
             "items_count": len(b.items),
             "components": components,
             "tags": b.tags or [],
+            "views_count": views_count,
+            "likes_count": likes_count,
+            "comments_count": comments_count,
             "created_at": b.created_at.isoformat(),
         })
 

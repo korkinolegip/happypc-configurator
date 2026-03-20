@@ -31,6 +31,7 @@ class BuildCreate(BaseModel):
     password: str | None = None
     labor_percent: float = 7.0
     labor_price_manual: float | None = None
+    tags: list[str] | None = None
 
 
 class BuildUpdate(BaseModel):

@@ -21,6 +21,7 @@ export interface SectionItem {
 export interface BuildFormValues {
   title: string
   description: string
+  tags: string
   pc_items: SectionItem[]
   extra_items: SectionItem[]
   peri_items: SectionItem[]
@@ -149,10 +150,10 @@ function ItemRow({ fieldName, category, canDelete, canChangeCategory, onDelete, 
   const currentQty = parseInt((watch(`${fieldName}.qty` as never) as unknown as string) || '1', 10) || 1
 
   return (
-    <div className="flex gap-0 last:border-b-0" style={{ borderBottom: '1px solid var(--border)' }}>
+    <div className="flex gap-0 last:border-b-0" style={{ borderBottom: '1px solid var(--border)', marginBottom: '2px' }}>
       {/* Left: icon + label */}
-      <div className="w-[80px] shrink-0 flex flex-col items-center justify-center py-2 px-1" style={{ borderRight: '1px solid var(--border)' }}>
-        <CategoryIcon category={category} size={36} />
+      <div className="w-[88px] shrink-0 flex flex-col items-center justify-center py-3 px-1" style={{ borderRight: '1px solid var(--border)' }}>
+        <CategoryIcon category={category} size={42} />
         {canChangeCategory ? (
           <select
             value={category}
@@ -193,7 +194,7 @@ function ItemRow({ fieldName, category, canDelete, canChangeCategory, onDelete, 
             <input
               value={currentUrl}
               onChange={handleUrlChange}
-              className="w-full bg-th-surface-3 border border-th-border rounded px-2 py-1.5 text-th-text text-sm placeholder-th-placeholder focus:outline-none focus:border-[#FF6B00] transition-colors"
+              className="w-full bg-th-surface-3 border border-th-border rounded px-2 py-1.5 text-th-text text-sm placeholder-th-placeholder focus:outline-none focus:border-[#FF6B00] transition-colors url-glow"
               style={{ paddingRight: detectedStore ? '7rem' : '1.75rem' }}
               placeholder="Вставьте ссылку на товар"
               type="url"
@@ -333,6 +334,7 @@ const BuildForm: React.FC<BuildFormProps> = ({ initialData, onSubmit, isSubmitti
       return {
         title: '',
         description: '',
+        tags: '',
         pc_items: PC_SLOTS.map(makeEmpty),
         extra_items: [],
         peri_items: PERI_SLOTS.map(makeEmpty),
@@ -358,6 +360,7 @@ const BuildForm: React.FC<BuildFormProps> = ({ initialData, onSubmit, isSubmitti
     return {
       title: initialData.title,
       description: initialData.description || '',
+      tags: (initialData as unknown as { tags?: string[] }).tags?.join(', ') || '',
       pc_items: PC_SLOTS.map(cat => pcMap[cat] || makeEmpty(cat)),
       extra_items: extras,
       peri_items: PERI_SLOTS.map(cat => periMap[cat] || makeEmpty(cat)),
@@ -517,6 +520,12 @@ const BuildForm: React.FC<BuildFormProps> = ({ initialData, onSubmit, isSubmitti
               <label className="block text-xs text-th-text-2 mb-1">Публичный комментарий</label>
               <textarea {...register('description')}
                 className="input-field text-sm resize-none h-20" placeholder="Описание, особенности, назначение..." />
+            </div>
+            <div>
+              <label className="block text-xs text-th-text-2 mb-1">Теги (через запятую)</label>
+              <input {...register('tags')}
+                className="input-field text-sm" placeholder="игровой, мощный, AMD, RTX" />
+              <p className="text-th-muted text-[10px] mt-1">Помогают в поиске сборки</p>
             </div>
 
             {/* Grand total preview */}
