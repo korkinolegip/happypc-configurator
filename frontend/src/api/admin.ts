@@ -33,6 +33,7 @@ export interface UpdateUserData {
   name?: string
   role?: string
   workshop_id?: string | null
+  avatar_url?: string
   is_active?: boolean
   password?: string
   city?: string

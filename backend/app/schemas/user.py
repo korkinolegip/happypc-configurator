@@ -75,3 +75,4 @@ class UserAdminUpdate(BaseModel):
     city: str | None = None
     phone: str | None = None
     gender: str | None = None
+    avatar_url: str | None = None

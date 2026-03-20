@@ -193,6 +193,8 @@ async def update_user(
         user.phone = user_data.phone or None
     if user_data.gender is not None:
         user.gender = user_data.gender or None
+    if user_data.avatar_url is not None:
+        user.avatar_url = user_data.avatar_url
 
     await db.flush()
 

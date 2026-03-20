@@ -149,6 +149,29 @@ interface EditModalProps {
 
 const EditUserModal: React.FC<EditModalProps> = ({ user, onClose, workshops }) => {
   const queryClient = useQueryClient()
+  const [showAvatars, setShowAvatars] = useState(false)
+  const [avatars, setAvatars] = useState<{ male: string[]; female: string[] } | null>(null)
+  const [currentAvatar, setCurrentAvatar] = useState(user.avatar_url)
+
+  const loadAvatars = async () => {
+    if (!avatars) {
+      try {
+        const resp = await fetch('/api/public/avatars')
+        setAvatars(await resp.json())
+      } catch {}
+    }
+    setShowAvatars(true)
+  }
+
+  const selectAvatar = async (url: string) => {
+    try {
+      await updateUser(user.id, { avatar_url: url } as UpdateUserData)
+      setCurrentAvatar(url)
+      setShowAvatars(false)
+      toast.success('Аватар обновлён')
+    } catch { toast.error('Ошибка') }
+  }
+
   const { register, handleSubmit, formState: { errors, isSubmitting }, watch, setValue } = useForm<UpdateUserData>({
     defaultValues: {
       name: user.name,
@@ -231,6 +254,35 @@ const EditUserModal: React.FC<EditModalProps> = ({ user, onClose, workshops }) =
               <option value="">Без мастерской</option>
               {workshops.map((ws) => <option key={ws.id} value={ws.id}>{ws.name}</option>)}
             </select>
+          </div>
+          {/* Avatar */}
+          <div>
+            <label className="block text-sm text-th-text-2 mb-1.5">Аватар</label>
+            <div className="flex items-center gap-3">
+              {currentAvatar ? (
+                <img src={currentAvatar} alt="" className="w-12 h-12 rounded-full object-cover border border-th-border" />
+              ) : (
+                <div className="w-12 h-12 rounded-full bg-[#FF6B00]/20 flex items-center justify-center text-sm font-bold text-[#FF6B00]">
+                  {user.name.charAt(0).toUpperCase()}
+                </div>
+              )}
+              <button type="button" onClick={loadAvatars}
+                className="text-xs text-[#FF6B00] hover:text-[#E05A00] transition-colors">
+                Выбрать из галереи
+              </button>
+            </div>
+            {showAvatars && avatars && (
+              <div className="mt-3 bg-th-surface-2 border border-th-border rounded-lg p-3 max-h-40 overflow-y-auto">
+                <div className="grid grid-cols-8 gap-1.5">
+                  {[...avatars.male, ...avatars.female].map((url) => (
+                    <button key={url} type="button" onClick={() => selectAvatar(url)}
+                      className={`aspect-square rounded overflow-hidden border-2 transition-all hover:scale-105 ${currentAvatar === url ? 'border-[#FF6B00]' : 'border-transparent hover:border-[#FF6B00]/50'}`}>
+                      <img src={url} alt="" className="w-full h-full object-cover" />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
           <div>
             <label className="block text-sm text-th-text-2 mb-1.5">Новый пароль (оставьте пустым, чтобы не менять)</label>
