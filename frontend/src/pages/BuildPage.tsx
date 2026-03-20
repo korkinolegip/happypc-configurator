@@ -1,12 +1,15 @@
 import React, { useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
 import {
   Download, Share2, Copy, Lock, ExternalLink, Edit, ChevronDown, ChevronUp, X,
+  ThumbsUp, MessageSquare, Eye, Send, Reply,
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { getPublicBuild, downloadPDF, copyBuild } from '../api/builds'
+import { getComments, createComment, getBuildStats, toggleLike, recordView, checkLiked } from '../api/social'
+import type { Comment } from '../api/social'
 import { useAuth } from '../hooks/useAuth'
 import CategoryIcon from '../components/CategoryIcon'
 import PriceBlock from '../components/PriceBlock'
@@ -102,12 +105,71 @@ const BuildPage: React.FC = () => {
 
   const { register, handleSubmit, formState: { errors } } = useForm<PasswordForm>()
 
+  const queryClient = useQueryClient()
+
   const { data: build, isLoading, error, refetch } = useQuery({
     queryKey: ['public-build', short_code, password],
     queryFn: () => getPublicBuild(short_code!, password),
     enabled: !!short_code,
     retry: false,
   })
+
+  const buildId = build?.id
+  const { data: comments, refetch: refetchComments } = useQuery({
+    queryKey: ['build-comments', buildId],
+    queryFn: () => getComments(buildId!),
+    enabled: !!buildId,
+  })
+  const { data: stats } = useQuery({
+    queryKey: ['build-stats', buildId],
+    queryFn: () => getBuildStats(buildId!),
+    enabled: !!buildId,
+  })
+  const { data: isLiked } = useQuery({
+    queryKey: ['build-liked', buildId],
+    queryFn: () => checkLiked(buildId!),
+    enabled: !!buildId && isAuthenticated,
+  })
+
+  const [liked, setLiked] = useState(false)
+  const [likesCount, setLikesCount] = useState(0)
+  const [commentText, setCommentText] = useState('')
+  const [replyTo, setReplyTo] = useState<{ id: string; name: string } | null>(null)
+  const [submittingComment, setSubmittingComment] = useState(false)
+
+  // Sync liked state
+  React.useEffect(() => {
+    if (isLiked !== undefined) setLiked(isLiked)
+  }, [isLiked])
+  React.useEffect(() => {
+    if (stats) setLikesCount(stats.likes)
+  }, [stats])
+  // Record view
+  React.useEffect(() => {
+    if (buildId) recordView(buildId)
+  }, [buildId])
+
+  const handleLike = async () => {
+    if (!isAuthenticated) { toast.error('Войдите, чтобы поставить лайк'); return }
+    try {
+      const result = await toggleLike(buildId!)
+      setLiked(result.liked)
+      setLikesCount(result.count)
+    } catch { toast.error('Ошибка') }
+  }
+
+  const handleComment = async () => {
+    if (!commentText.trim()) return
+    setSubmittingComment(true)
+    try {
+      await createComment(buildId!, commentText.trim(), replyTo?.id)
+      setCommentText('')
+      setReplyTo(null)
+      await refetchComments()
+      toast.success('Комментарий добавлен')
+    } catch { toast.error('Ошибка') }
+    finally { setSubmittingComment(false) }
+  }
 
   const handlePasswordSubmit = (data: PasswordForm) => {
     setPassword(data.password)
@@ -281,22 +343,118 @@ const BuildPage: React.FC = () => {
           </div>
 
           {/* Comments section */}
-          <div className="bg-th-surface border border-th-border rounded-lg p-5">
-            <h3 className="text-th-text font-semibold mb-4">Комментарии</h3>
-            <p className="text-th-muted text-sm">Ещё никто не написал. Вы можете быть первым!</p>
+          <div className="bg-th-surface border border-th-border rounded-lg p-5" id="comments">
+            <h3 className="text-th-text font-semibold mb-4 flex items-center gap-2">
+              <MessageSquare size={18} />
+              Комментарии
+              {stats && stats.comments > 0 && (
+                <span className="text-th-text-3 text-sm font-normal">({stats.comments})</span>
+              )}
+            </h3>
+
+            {/* Comment form */}
             {isAuthenticated ? (
-              <div className="mt-4">
-                <textarea
-                  className="input-field resize-none h-20 text-sm w-full"
-                  placeholder="Написать комментарий..."
-                  disabled
-                />
-                <p className="text-th-muted text-xs mt-1">Функция комментариев в разработке</p>
+              <div className="mb-5">
+                {replyTo && (
+                  <div className="flex items-center gap-2 mb-2 text-xs text-th-text-2 bg-th-surface-2 rounded px-3 py-1.5">
+                    <Reply size={12} />
+                    <span>Ответ для <strong>{replyTo.name}</strong></span>
+                    <button onClick={() => setReplyTo(null)} className="text-th-muted hover:text-th-text ml-auto">
+                      <X size={12} />
+                    </button>
+                  </div>
+                )}
+                <div className="flex gap-2">
+                  <textarea
+                    value={commentText}
+                    onChange={e => setCommentText(e.target.value)}
+                    className="input-field resize-none h-16 text-sm flex-1"
+                    placeholder={replyTo ? `Ответить ${replyTo.name}...` : 'Написать комментарий...'}
+                    maxLength={2000}
+                  />
+                  <button
+                    onClick={handleComment}
+                    disabled={submittingComment || !commentText.trim()}
+                    className="shrink-0 bg-[#FF6B00] hover:bg-[#E05A00] text-white px-4 rounded-lg transition-colors disabled:opacity-50 self-end"
+                  >
+                    {submittingComment
+                      ? <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin block" />
+                      : <Send size={16} />
+                    }
+                  </button>
+                </div>
               </div>
             ) : (
-              <Link to="/login" className="mt-3 inline-block text-[#FF6B00] text-sm hover:underline">
-                Войдите, чтобы оставить комментарий
-              </Link>
+              <div className="mb-5">
+                <Link to="/login" className="text-[#FF6B00] text-sm hover:underline">
+                  Войдите, чтобы оставить комментарий
+                </Link>
+              </div>
+            )}
+
+            {/* Comments list */}
+            {comments && comments.length > 0 ? (
+              <div className="space-y-4">
+                {comments.map(c => (
+                  <div key={c.id}>
+                    {/* Main comment */}
+                    <div className="flex gap-3">
+                      {c.user_avatar ? (
+                        <img src={c.user_avatar} alt="" className="w-8 h-8 rounded-full object-cover shrink-0 mt-0.5" />
+                      ) : (
+                        <div className="w-8 h-8 rounded-full bg-[#FF6B00]/20 flex items-center justify-center text-xs font-bold text-[#FF6B00] shrink-0 mt-0.5">
+                          {c.user_name.charAt(0).toUpperCase()}
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="text-th-text text-sm font-medium">{c.user_name}</span>
+                          <span className="text-th-muted text-xs">
+                            {new Date(c.created_at).toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                        </div>
+                        <p className="text-th-text-2 text-sm mt-1">{c.text}</p>
+                        {isAuthenticated && (
+                          <button
+                            onClick={() => setReplyTo({ id: c.id, name: c.user_name })}
+                            className="text-th-muted hover:text-[#FF6B00] text-xs mt-1 flex items-center gap-1 transition-colors"
+                          >
+                            <Reply size={11} /> Ответить
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Replies */}
+                    {c.replies && c.replies.length > 0 && (
+                      <div className="ml-11 mt-3 space-y-3 pl-3 border-l-2 border-th-border">
+                        {c.replies.map(r => (
+                          <div key={r.id} className="flex gap-2.5">
+                            {r.user_avatar ? (
+                              <img src={r.user_avatar} alt="" className="w-6 h-6 rounded-full object-cover shrink-0 mt-0.5" />
+                            ) : (
+                              <div className="w-6 h-6 rounded-full bg-[#FF6B00]/20 flex items-center justify-center text-[9px] font-bold text-[#FF6B00] shrink-0 mt-0.5">
+                                {r.user_name.charAt(0).toUpperCase()}
+                              </div>
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2">
+                                <span className="text-th-text text-xs font-medium">{r.user_name}</span>
+                                <span className="text-th-muted text-[10px]">
+                                  {new Date(r.created_at).toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                                </span>
+                              </div>
+                              <p className="text-th-text-2 text-xs mt-0.5">{r.text}</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-th-muted text-sm">Комментариев пока нет. Будьте первым!</p>
             )}
           </div>
         </div>
