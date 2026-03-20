@@ -472,7 +472,7 @@ const BuildForm: React.FC<BuildFormProps> = ({ initialData, onSubmit, isSubmitti
             </div>
           </div>
           <div className="space-y-1">
-            <div className="flex justify-between text-sm"><span className="text-th-text-2">Железо</span><span className="text-th-text">{fmt(hardware)} ₽</span></div>
+            <div className="flex justify-between text-sm"><span className="text-th-text-2">Комплектующие</span><span className="text-th-text">{fmt(hardware)} ₽</span></div>
             <div className="flex justify-between text-sm"><span className="text-th-text-2">Работа {laborManual > 0 ? '(фикс.)' : `(${laborPercent}%)`}</span><span className="text-th-text">{fmt(laborCost)} ₽</span></div>
           </div>
           <div className={`mt-3 pt-3 border-t border-th-border flex justify-between items-center`}>

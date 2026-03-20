@@ -23,7 +23,7 @@ const PriceBlock: React.FC<PriceBlockProps> = ({
   return (
     <div className="bg-th-surface border border-th-border rounded-lg overflow-hidden">
       <div className="px-4 py-3 flex items-center justify-between border-b border-th-border">
-        <span className="text-th-text-2 text-sm">Стоимость железа</span>
+        <span className="text-th-text-2 text-sm">Стоимость комплектующих</span>
         <span className="text-th-text font-medium">{fmt(hardwareTotal)}</span>
       </div>
 

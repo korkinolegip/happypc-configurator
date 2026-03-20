@@ -374,7 +374,6 @@
                         {% if store %}
                         <span class="store-badge" style="background: {{ store[1] }}22; color: {{ store[1] }}; border: 1px solid {{ store[1] }}44;">{{ store[0] }}</span>
                         {% endif %}
-                        <a class="item-link" href="{{ item.url }}">{{ item.url }}</a>
                         {% endif %}
                     </td>
                     <td class="price-col">
@@ -402,7 +401,7 @@
                 <div class="price-card-title">Итоговая стоимость</div>
 
                 <div class="price-line">
-                    <span class="label">Стоимость железа:</span>
+                    <span class="label">Стоимость комплектующих:</span>
                     <span class="value">{{ hardware_total | format_price }}</span>
                 </div>
 
