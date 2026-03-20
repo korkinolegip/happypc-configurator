@@ -566,21 +566,21 @@ const BuildForm: React.FC<BuildFormProps> = ({ initialData, onSubmit, isSubmitti
                 className="input-field text-sm resize-none h-20" placeholder="Описание, особенности, назначение..." />
             </div>
             <div>
-              <label className="block text-xs text-th-text-2 mb-1">Цвет корпуса</label>
-              <div className="flex gap-2">
-                <label className={`flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer transition-colors ${
-                  watch('tags') === 'черный' ? 'border-[#FF6B00] bg-[#FF6B00]/10' : 'border-th-border'
+              <label className="block text-xs text-th-text-2 mb-1">Цвет сборки</label>
+              <div className="flex gap-1.5">
+                <label className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded cursor-pointer transition-colors text-xs ${
+                  watch('tags') === 'черный' ? 'bg-[#222] text-white' : 'bg-th-surface-2 text-th-text-2 hover:bg-th-surface-3'
                 }`}>
                   <input type="radio" value="черный" {...register('tags')} className="hidden" />
-                  <span className="w-5 h-5 rounded-full bg-[#222] border border-th-border" />
-                  <span className="text-th-text text-sm">Чёрная сборка</span>
+                  <span className="w-3 h-3 rounded-full bg-[#222] border border-[#444]" />
+                  Чёрная
                 </label>
-                <label className={`flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer transition-colors ${
-                  watch('tags') === 'белый' ? 'border-[#FF6B00] bg-[#FF6B00]/10' : 'border-th-border'
+                <label className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded cursor-pointer transition-colors text-xs ${
+                  watch('tags') === 'белый' ? 'bg-white text-[#222] border border-[#ccc]' : 'bg-th-surface-2 text-th-text-2 hover:bg-th-surface-3'
                 }`}>
                   <input type="radio" value="белый" {...register('tags')} className="hidden" />
-                  <span className="w-5 h-5 rounded-full bg-white border border-th-border" />
-                  <span className="text-th-text text-sm">Белая сборка</span>
+                  <span className="w-3 h-3 rounded-full bg-white border border-[#ccc]" />
+                  Белая
                 </label>
               </div>
             </div>
