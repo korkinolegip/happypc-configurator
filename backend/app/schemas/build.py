@@ -42,6 +42,7 @@ class BuildUpdate(BaseModel):
     password: str | None = None
     labor_percent: float | None = None
     labor_price_manual: float | None = None
+    tags: list[str] | None = None
 
 
 class AuthorInfo(BaseModel):

@@ -260,6 +260,8 @@ async def update_build(
         build.labor_percent = build_data.labor_percent
     if build_data.labor_price_manual is not None:
         build.labor_price_manual = build_data.labor_price_manual
+    if build_data.tags is not None:
+        build.tags = build_data.tags
     if build_data.password is not None:
         build.password_hash = hash_password(build_data.password) if build_data.password else None
 

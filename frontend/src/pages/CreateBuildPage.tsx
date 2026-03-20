@@ -43,6 +43,7 @@ const CreateBuildPage: React.FC = () => {
           data.labor_price_manual && parseFloat(data.labor_price_manual) > 0
             ? parseFloat(data.labor_price_manual)
             : null,
+        tags: data.tags ? [data.tags] : undefined,
         items: flattenItems(data),
       }
       const build = await createBuild(payload)
