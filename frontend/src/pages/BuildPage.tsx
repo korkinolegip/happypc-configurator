@@ -352,22 +352,24 @@ const BuildPage: React.FC = () => {
                     </button>
                   </div>
                 )}
-                <div className="flex gap-2">
-                  <textarea
+                <div className="flex gap-2 items-center">
+                  <input
+                    type="text"
                     value={commentText}
                     onChange={e => setCommentText(e.target.value)}
-                    className="input-field resize-none h-16 text-sm flex-1"
+                    onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleComment() } }}
+                    className="input-field text-sm flex-1"
                     placeholder={replyTo ? `Ответить ${replyTo.name}...` : 'Написать комментарий...'}
                     maxLength={2000}
                   />
                   <button
                     onClick={handleComment}
                     disabled={submittingComment || !commentText.trim()}
-                    className="shrink-0 bg-[#FF6B00] hover:bg-[#E05A00] text-white px-4 rounded-lg transition-colors disabled:opacity-50 self-end"
+                    className="shrink-0 bg-[#FF6B00] hover:bg-[#E05A00] text-white px-4 py-2.5 rounded-lg transition-colors disabled:opacity-50 flex items-center gap-2"
                   >
                     {submittingComment
-                      ? <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin block" />
-                      : <Send size={16} />
+                      ? <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      : <><Send size={16} /><span className="hidden sm:inline text-sm">Отправить</span></>
                     }
                   </button>
                 </div>
