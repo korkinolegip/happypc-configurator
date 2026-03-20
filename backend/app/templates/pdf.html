@@ -347,9 +347,9 @@
                 {% endif %}
                 <span><strong>Дата сборки:</strong> {{ created_at.strftime('%d.%m.%Y') }}</span>
                 {% if case_color %}
-                <span style="display:inline-flex; align-items:center; gap:4px; margin-left:8px; padding:2px 8px; border:1px solid #cccccc; border-radius:10px; font-size:10px;">
-                    <span style="display:inline-block; width:10px; height:10px; border-radius:50%; {% if case_color == 'белый' %}background:#ffffff; border:1.5px solid #999999;{% else %}background:#222222; border:1.5px solid #444444;{% endif %}"></span>
-                    <strong>{{ case_color | capitalize }} корпус</strong>
+                <span style="margin-left:8px; font-size:10px;">
+                    <span style="display:inline-block; width:8px; height:8px; border-radius:50%; vertical-align:middle; margin-right:3px; {% if case_color == 'белый' %}background:#ffffff; border:1px solid #999;{% else %}background:#222; border:1px solid #444;{% endif %}"></span>
+                    <strong>{% if case_color == 'белый' %}Белая{% else %}Чёрная{% endif %} сборка</strong>
                 </span>
                 {% endif %}
             </div>

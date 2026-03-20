@@ -573,14 +573,14 @@ const BuildForm: React.FC<BuildFormProps> = ({ initialData, onSubmit, isSubmitti
                 }`}>
                   <input type="radio" value="черный" {...register('tags')} className="hidden" />
                   <span className="w-5 h-5 rounded-full bg-[#222] border border-th-border" />
-                  <span className="text-th-text text-sm">Чёрный</span>
+                  <span className="text-th-text text-sm">Чёрная сборка</span>
                 </label>
                 <label className={`flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer transition-colors ${
                   watch('tags') === 'белый' ? 'border-[#FF6B00] bg-[#FF6B00]/10' : 'border-th-border'
                 }`}>
                   <input type="radio" value="белый" {...register('tags')} className="hidden" />
                   <span className="w-5 h-5 rounded-full bg-white border border-th-border" />
-                  <span className="text-th-text text-sm">Белый</span>
+                  <span className="text-th-text text-sm">Белая сборка</span>
                 </label>
               </div>
             </div>

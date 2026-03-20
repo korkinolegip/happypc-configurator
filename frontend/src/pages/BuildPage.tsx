@@ -318,7 +318,7 @@ const BuildPage: React.FC = () => {
                     border: build.tags.includes('белый') ? '1.5px solid #ccc' : '1.5px solid #444',
                   }}
                 />
-                <span className="text-th-text-2">{build.tags.includes('белый') ? 'Белый корпус' : 'Чёрный корпус'}</span>
+                <span className="text-th-text-2">{build.tags.includes('белый') ? 'Белая сборка' : 'Чёрная сборка'}</span>
               </span>
             )}
           </div>

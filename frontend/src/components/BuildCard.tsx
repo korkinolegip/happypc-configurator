@@ -73,7 +73,7 @@ const BuildCard: React.FC<BuildCardProps> = ({ build }) => {
                       className="w-3 h-3 rounded-full shrink-0 border border-th-border"
                       style={{ background: build.tags.includes('белый') ? '#ffffff' : '#222222' }}
                     />
-                    <span className="text-th-text-2">{build.tags.includes('белый') ? 'Белый' : 'Чёрный'}</span>
+                    <span className="text-th-text-2">{build.tags.includes('белый') ? 'Белая сборка' : 'Чёрная сборка'}</span>
                   </span>
                 )}
               </div>
