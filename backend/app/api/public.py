@@ -339,7 +339,7 @@ async def get_available_avatars():
                 [f for f in os.listdir(avatar_dir) if f.endswith(".svg")],
                 key=lambda x: int(x.replace(".svg", "")) if x.replace(".svg", "").isdigit() else 0,
             )
-            avatars[gender] = [f"/static/avatars/{gender}/{f}" for f in files]
+            avatars[gender] = [f"/static/avatars/{gender}/{f}?v=2" for f in files]
     return avatars
 
 
