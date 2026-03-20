@@ -120,9 +120,13 @@ const BuildCard: React.FC<BuildCardProps> = ({ build }) => {
               <ThumbsUp size={18} /><span className="text-sm font-medium">{likesCount}</span>
             </div>
             <div className="w-px h-5 bg-th-border" />
-            <div className="flex items-center gap-1.5 px-2.5 py-2 rounded-md text-th-text-2 hover:text-[#FF6B00] hover:bg-[#FF6B00]/10 transition-colors cursor-pointer">
+            <a
+              href={`/b/${build.short_code}#comments`}
+              onClick={(e) => e.stopPropagation()}
+              className="flex items-center gap-1.5 px-2.5 py-2 rounded-md text-th-text-2 hover:text-[#FF6B00] hover:bg-[#FF6B00]/10 transition-colors cursor-pointer"
+            >
               <MessageSquare size={18} /><span className="text-sm font-medium">{build.comments_count ?? 0}</span>
-            </div>
+            </a>
             <div className="w-px h-5 bg-th-border" />
             <div className="flex items-center gap-1.5 px-2.5 py-2 rounded-md text-th-text-2 hover:text-[#FF6B00] hover:bg-[#FF6B00]/10 transition-colors cursor-pointer">
               <Eye size={18} /><span className="text-sm font-medium">{build.views_count ?? 0}</span>

@@ -149,6 +149,15 @@ const BuildPage: React.FC = () => {
     if (buildId) recordView(buildId)
   }, [buildId])
 
+  // Scroll to #comments if hash present
+  React.useEffect(() => {
+    if (build && window.location.hash === '#comments') {
+      setTimeout(() => {
+        document.getElementById('comments')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }, 300)
+    }
+  }, [build])
+
   const handleLike = async () => {
     if (!isAuthenticated) { toast.error('Войдите, чтобы поставить лайк'); return }
     try {
