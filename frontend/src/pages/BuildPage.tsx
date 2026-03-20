@@ -397,7 +397,7 @@ const BuildPage: React.FC = () => {
           {/* Grand total big */}
           <div className="text-right my-4">
             <p className="text-th-text-2 text-sm">ИТОГО СБОРКИ:</p>
-            <p className="text-[#FF6B00] font-bold text-3xl">{formatPrice(build.total_price)}</p>
+            <p className="text-[#FF6B00] font-bold text-3xl">{formatPrice(build.total_price + (build.install_os ? 3000 : 0))}</p>
           </div>
 
           {/* Back to builds */}

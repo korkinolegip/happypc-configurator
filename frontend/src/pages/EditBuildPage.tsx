@@ -53,7 +53,7 @@ const EditBuildPage: React.FC = () => {
           data.labor_price_manual && parseFloat(data.labor_price_manual) > 0
             ? parseFloat(data.labor_price_manual)
             : null,
-        tags: data.tags ? [data.tags] : [],
+        tags: data.tags && data.tags.trim() ? [data.tags.trim()] : [],
         install_os: data.install_os || false,
         items: flattenItems(data),
       }
