@@ -110,6 +110,7 @@ class BuildPublicResponse(BaseModel):
     labor_cost: float
     labor_percent: float
     labor_price_manual: float | None
+    tags: list[str] | None = None
     created_at: datetime
     updated_at: datetime
 

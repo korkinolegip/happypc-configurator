@@ -463,6 +463,7 @@ async def get_public_build(
         labor_cost=totals["labor_cost"],
         labor_percent=build.labor_percent,
         labor_price_manual=build.labor_price_manual,
+        tags=build.tags,
         created_at=build.created_at,
         updated_at=build.updated_at,
     )

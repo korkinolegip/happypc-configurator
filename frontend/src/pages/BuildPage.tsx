@@ -304,7 +304,21 @@ const BuildPage: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 mb-4">
         <div>
           <h1 className="text-2xl font-bold text-th-text">{build.title}</h1>
-          <p className="text-th-muted text-xs mt-1">Обновлено: {formatDate(build.updated_at)}</p>
+          <div className="flex items-center gap-3 mt-1">
+            <p className="text-th-muted text-xs">Обновлено: {formatDate(build.updated_at)}</p>
+            {build.tags && build.tags.length > 0 && (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium border border-th-border">
+                <span
+                  className="w-3.5 h-3.5 rounded-full shrink-0"
+                  style={{
+                    background: build.tags.includes('белый') ? '#ffffff' : '#222222',
+                    border: build.tags.includes('белый') ? '1.5px solid #ccc' : '1.5px solid #444',
+                  }}
+                />
+                <span className="text-th-text-2">{build.tags.includes('белый') ? 'Белый корпус' : 'Чёрный корпус'}</span>
+              </span>
+            )}
+          </div>
         </div>
         {/* Action buttons */}
         <div className="flex flex-wrap gap-2 shrink-0">

@@ -39,6 +39,7 @@ export interface Build {
   labor_cost?: number
   labor_percent: number
   labor_price_manual: number | null
+  tags?: string[]
   created_at: string
   updated_at: string
 }
