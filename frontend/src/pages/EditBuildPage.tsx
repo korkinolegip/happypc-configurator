@@ -54,6 +54,7 @@ const EditBuildPage: React.FC = () => {
             ? parseFloat(data.labor_price_manual)
             : null,
         tags: data.tags ? [data.tags] : [],
+        install_os: data.install_os || false,
         items: flattenItems(data),
       }
       const updated = await updateBuild(id, payload)

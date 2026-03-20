@@ -32,6 +32,7 @@ class BuildCreate(BaseModel):
     labor_percent: float = 7.0
     labor_price_manual: float | None = None
     tags: list[str] | None = None
+    install_os: bool = False
 
 
 class BuildUpdate(BaseModel):
@@ -43,6 +44,7 @@ class BuildUpdate(BaseModel):
     labor_percent: float | None = None
     labor_price_manual: float | None = None
     tags: list[str] | None = None
+    install_os: bool | None = None
 
 
 class AuthorInfo(BaseModel):
@@ -112,6 +114,7 @@ class BuildPublicResponse(BaseModel):
     labor_percent: float
     labor_price_manual: float | None
     tags: list[str] | None = None
+    install_os: bool = False
     created_at: datetime
     updated_at: datetime
 

@@ -416,9 +416,16 @@
                     <span class="value">{{ labor_cost | format_price }}</span>
                 </div>
 
+                {% if install_os %}
+                <div class="price-line">
+                    <span class="label">Операционная система:</span>
+                    <span class="value">3 000 ₽</span>
+                </div>
+                {% endif %}
+
                 <div class="price-line total-line">
                     <span class="label">Итоговая стоимость:</span>
-                    <span class="value">{{ total_with_labor | format_price }}</span>
+                    <span class="value">{{ (total_with_labor + (3000 if install_os else 0)) | format_price }}</span>
                 </div>
 
                 {% if labor_price_manual is not none and labor_price_manual > 0 %}

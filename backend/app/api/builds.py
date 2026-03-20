@@ -146,6 +146,7 @@ async def create_build(
         is_public=build_data.is_public,
         password_hash=hash_password(build_data.password) if build_data.password else None,
         tags=build_data.tags,
+        install_os=build_data.install_os,
         labor_percent=build_data.labor_percent,
         labor_price_manual=build_data.labor_price_manual,
     )
@@ -262,6 +263,8 @@ async def update_build(
         build.labor_price_manual = build_data.labor_price_manual
     if build_data.tags is not None:
         build.tags = build_data.tags
+    if build_data.install_os is not None:
+        build.install_os = build_data.install_os
     if build_data.password is not None:
         build.password_hash = hash_password(build_data.password) if build_data.password else None
 

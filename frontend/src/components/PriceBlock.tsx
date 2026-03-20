@@ -6,6 +6,7 @@ interface PriceBlockProps {
   laborCost: number
   laborPercent: number
   laborPriceManual?: number | null
+  installOS?: boolean
 }
 
 const fmt = (price: number) =>
@@ -17,8 +18,11 @@ const PriceBlock: React.FC<PriceBlockProps> = ({
   laborCost,
   laborPercent,
   laborPriceManual,
+  installOS,
 }) => {
   const hasTurnkey = laborPriceManual != null && laborPriceManual > 0
+  const osCost = installOS ? 3000 : 0
+  const totalWithOS = totalPrice + osCost
 
   return (
     <div className="bg-th-surface border border-th-border rounded-lg overflow-hidden">
@@ -34,9 +38,16 @@ const PriceBlock: React.FC<PriceBlockProps> = ({
         <span className="text-th-text font-medium">{fmt(laborCost)}</span>
       </div>
 
+      {installOS && (
+        <div className="px-4 py-3 flex items-center justify-between border-b border-th-border">
+          <span className="text-th-text-2 text-sm">Операционная система</span>
+          <span className="text-th-text font-medium">{fmt(osCost)}</span>
+        </div>
+      )}
+
       <div className="px-4 py-3 flex items-center justify-between bg-th-surface-2 border-b border-th-border">
         <span className="text-th-text font-semibold text-sm">Итоговая стоимость:</span>
-        <span className="text-th-text font-bold text-lg">{fmt(totalPrice)}</span>
+        <span className="text-th-text font-bold text-lg">{fmt(totalWithOS)}</span>
       </div>
 
       {/* Turnkey — от мастерской */}

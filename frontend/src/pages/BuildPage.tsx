@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
 import {
   Download, Share2, Copy, Lock, ExternalLink, Edit, ChevronDown, ChevronUp, X,
-  ThumbsUp, MessageSquare, Eye, Send, Reply, Edit2, Trash2, Pencil,
+  ThumbsUp, MessageSquare, Eye, Send, Reply, Edit2, Trash2, Pencil, Printer,
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { getPublicBuild, downloadPDF, copyBuild } from '../api/builds'
@@ -344,6 +344,12 @@ const BuildPage: React.FC = () => {
             {pdfLoading ? <span className="w-3.5 h-3.5 border-2 border-th-text border-t-transparent rounded-full animate-spin" /> : <Download size={14} />}
             Скачать PDF
           </button>
+          {isAuthenticated && (
+            <button onClick={() => window.print()}
+              className="flex items-center gap-1.5 bg-th-surface-2 hover:bg-th-border text-th-text px-3 py-2 rounded-lg text-sm transition-colors">
+              <Printer size={14} />Печать
+            </button>
+          )}
         </div>
       </div>
 
@@ -369,6 +375,7 @@ const BuildPage: React.FC = () => {
             laborCost={build.labor_cost ?? 0}
             laborPercent={build.labor_percent}
             laborPriceManual={build.labor_price_manual}
+            installOS={build.install_os}
           />
 
           {/* Grand total big */}

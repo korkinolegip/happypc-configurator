@@ -44,6 +44,7 @@ const CreateBuildPage: React.FC = () => {
             ? parseFloat(data.labor_price_manual)
             : null,
         tags: data.tags ? [data.tags] : undefined,
+        install_os: data.install_os || false,
         items: flattenItems(data),
       }
       const build = await createBuild(payload)

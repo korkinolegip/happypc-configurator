@@ -40,6 +40,7 @@ export interface Build {
   labor_percent: number
   labor_price_manual: number | null
   tags?: string[]
+  install_os?: boolean
   created_at: string
   updated_at: string
 }

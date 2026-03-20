@@ -98,6 +98,7 @@ async def generate_build_pdf(build, author_name: str, workshop_name: str | None)
         "detect_store": detect_store,
         "format_price": format_price,
         "tags": build.tags or [],
+        "install_os": getattr(build, 'install_os', False),
         "case_color": "белый" if build.tags and "белый" in build.tags else ("чёрный" if build.tags and "черный" in (build.tags or []) else None),
     }
 

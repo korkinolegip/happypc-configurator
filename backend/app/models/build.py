@@ -29,6 +29,7 @@ class Build(Base):
     labor_percent: Mapped[float] = mapped_column(Float, default=7.0, nullable=False)
     labor_price_manual: Mapped[float | None] = mapped_column(Float, nullable=True)
     tags: Mapped[list[str] | None] = mapped_column(ARRAY(String), nullable=True)
+    install_os: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
