@@ -352,26 +352,36 @@ const BuildPage: React.FC = () => {
                     </button>
                   </div>
                 )}
-                <div className="flex gap-2 items-center">
-                  <input
-                    type="text"
+                <div className="flex flex-col gap-2">
+                  <textarea
                     value={commentText}
-                    onChange={e => setCommentText(e.target.value)}
+                    onChange={e => {
+                      setCommentText(e.target.value)
+                      // Auto-resize: min 2 rows, max 6 rows
+                      const el = e.target
+                      el.style.height = 'auto'
+                      el.style.height = Math.min(el.scrollHeight, 144) + 'px'
+                    }}
                     onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleComment() } }}
-                    className="input-field text-sm flex-1"
+                    className="input-field text-sm w-full resize-none overflow-hidden"
+                    style={{ minHeight: '52px', maxHeight: '144px' }}
                     placeholder={replyTo ? `Ответить ${replyTo.name}...` : 'Написать комментарий...'}
                     maxLength={2000}
+                    rows={2}
                   />
-                  <button
-                    onClick={handleComment}
-                    disabled={submittingComment || !commentText.trim()}
-                    className="shrink-0 bg-[#FF6B00] hover:bg-[#E05A00] text-white px-4 py-2.5 rounded-lg transition-colors disabled:opacity-50 flex items-center gap-2"
-                  >
-                    {submittingComment
-                      ? <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      : <><Send size={16} /><span className="hidden sm:inline text-sm">Отправить</span></>
-                    }
-                  </button>
+                  <div className="flex items-center justify-between">
+                    <span className="text-th-muted text-[10px]">{commentText.length}/2000</span>
+                    <button
+                      onClick={handleComment}
+                      disabled={submittingComment || !commentText.trim()}
+                      className="bg-[#FF6B00] hover:bg-[#E05A00] text-white px-5 py-2 rounded-lg transition-colors disabled:opacity-50 flex items-center gap-2 text-sm font-medium"
+                    >
+                      {submittingComment
+                        ? <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        : <><Send size={15} />Отправить</>
+                      }
+                    </button>
+                  </div>
                 </div>
               </div>
             ) : (
