@@ -361,7 +361,7 @@ const BuildForm: React.FC<BuildFormProps> = ({ initialData, onSubmit, isSubmitti
     return {
       title: initialData.title,
       description: initialData.description || '',
-      tags: (initialData as unknown as { tags?: string[] }).tags?.join(', ') || '',
+      tags: initialData.tags?.[0] || '',
       pc_items: PC_SLOTS.map(cat => pcMap[cat] || makeEmpty(cat)),
       extra_items: extras,
       peri_items: PERI_SLOTS.map(cat => periMap[cat] || makeEmpty(cat)),
@@ -369,7 +369,7 @@ const BuildForm: React.FC<BuildFormProps> = ({ initialData, onSubmit, isSubmitti
       password: '',
       labor_percent: String(initialData.labor_percent),
       labor_price_manual: initialData.labor_price_manual != null ? String(initialData.labor_price_manual) : '',
-      install_os: (initialData as unknown as { install_os?: boolean }).install_os ?? false,
+      install_os: initialData.install_os ?? false,
       budget: '',
     }
   }

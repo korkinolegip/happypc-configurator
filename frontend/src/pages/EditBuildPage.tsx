@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
 import BuildForm from '../components/BuildForm'
 import type { BuildFormValues } from '../components/BuildForm'
@@ -27,6 +27,7 @@ function flattenItems(data: BuildFormValues) {
 const EditBuildPage: React.FC = () => {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const { data: build, isLoading, error } = useQuery({
@@ -58,6 +59,8 @@ const EditBuildPage: React.FC = () => {
         items: flattenItems(data),
       }
       const updated = await updateBuild(id, payload)
+      await queryClient.invalidateQueries({ queryKey: ['public-build'] })
+      await queryClient.invalidateQueries({ queryKey: ['build'] })
       toast.success('Сборка обновлена!')
       navigate(`/b/${updated.short_code}`)
     } catch (err: unknown) {
