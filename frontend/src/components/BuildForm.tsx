@@ -213,11 +213,11 @@ function ItemRow({ fieldName, category, canDelete, canChangeCategory, onDelete, 
               )}
             </div>
           </div>
-          <div className="shrink-0 w-32 flex items-center gap-0 rounded-lg overflow-hidden border-2 border-th-border">
+          <div className="shrink-0 w-[130px] inline-flex items-center rounded-lg border-2 border-th-border">
             <button
               type="button"
               onClick={() => { if (currentQty > 1) setValue(`${fieldName}.qty` as never, String(currentQty - 1) as never) }}
-              className="w-10 h-9 flex items-center justify-center bg-th-surface-2 text-th-text hover:text-[#FF6B00] hover:bg-[#FF6B00]/10 transition-colors border-r border-th-border"
+              className="w-10 h-9 shrink-0 flex items-center justify-center bg-th-surface-2 text-th-text hover:text-[#FF6B00] hover:bg-[#FF6B00]/10 transition-colors border-r border-th-border rounded-l-md"
             >
               <Minus size={16} strokeWidth={2.5} />
             </button>
@@ -232,7 +232,7 @@ function ItemRow({ fieldName, category, canDelete, canChangeCategory, onDelete, 
             <button
               type="button"
               onClick={() => setValue(`${fieldName}.qty` as never, String(currentQty + 1) as never)}
-              className="w-10 h-9 flex items-center justify-center bg-th-surface-2 text-th-text hover:text-[#FF6B00] hover:bg-[#FF6B00]/10 transition-colors border-l border-th-border"
+              className="w-10 h-9 shrink-0 flex items-center justify-center bg-th-surface-2 text-th-text hover:text-[#FF6B00] hover:bg-[#FF6B00]/10 transition-colors border-l border-th-border rounded-r-md"
             >
               <Plus size={16} strokeWidth={2.5} />
             </button>
