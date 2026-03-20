@@ -156,17 +156,29 @@ async def get_comments(
     comments = result.scalars().all()
 
     def serialize(c: BuildComment) -> dict:
+        if c.is_deleted:
+            return {
+                "id": str(c.id),
+                "is_deleted": True,
+                "deleted_at": c.deleted_at.isoformat() if c.deleted_at else None,
+                "user_name": c.user.name if c.user else "Удалённый",
+                "created_at": c.created_at.isoformat(),
+                "replies": [serialize(r) for r in (c.replies or []) if not r.is_hidden],
+            }
         return {
             "id": str(c.id),
             "text": c.text,
             "user_id": str(c.user_id),
             "user_name": c.user.name if c.user else "Удалённый",
             "user_avatar": c.user.avatar_url if c.user else None,
+            "is_deleted": False,
+            "is_edited": c.edited_at is not None,
+            "edited_at": c.edited_at.isoformat() if c.edited_at else None,
             "created_at": c.created_at.isoformat(),
             "replies": [serialize(r) for r in (c.replies or []) if not r.is_hidden],
         }
 
-    return [serialize(c) for c in comments]
+    return [serialize(c) for c in comments if not c.is_hidden]
 
 
 @router.post("/{build_id}/comments")
@@ -198,6 +210,81 @@ async def create_comment(
         "user_avatar": current_user.avatar_url,
         "created_at": comment.created_at.isoformat(),
     }
+
+
+class CommentEdit(BaseModel):
+    text: str
+
+
+@router.put("/comments/{comment_id}")
+async def edit_comment(
+    comment_id: uuid.UUID,
+    data: CommentEdit,
+    current_user: User = Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Edit own comment within 2 minutes of creation."""
+    from datetime import datetime, timedelta, timezone
+
+    result = await db.execute(select(BuildComment).where(BuildComment.id == comment_id))
+    comment = result.scalar_one_or_none()
+    if not comment:
+        raise HTTPException(status_code=404, detail="Комментарий не найден")
+    if comment.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Можно редактировать только свои комментарии")
+    if comment.is_deleted:
+        raise HTTPException(status_code=400, detail="Комментарий удалён")
+
+    # Check 2-minute window
+    now = datetime.now(timezone.utc)
+    created = comment.created_at.replace(tzinfo=timezone.utc) if comment.created_at.tzinfo is None else comment.created_at
+    if (now - created).total_seconds() > 120:
+        raise HTTPException(status_code=400, detail="Редактирование возможно только в первые 2 минуты")
+
+    if not data.text.strip():
+        raise HTTPException(status_code=400, detail="Комментарий не может быть пустым")
+
+    comment.text = data.text.strip()
+    comment.edited_at = now
+    await db.flush()
+
+    return {"id": str(comment.id), "text": comment.text, "edited_at": comment.edited_at.isoformat()}
+
+
+@router.delete("/comments/{comment_id}")
+async def delete_own_comment(
+    comment_id: uuid.UUID,
+    current_user: User = Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Delete own comment.
+    - Within 30 min: hard delete (disappears completely)
+    - After 30 min: soft delete (shows "автор удалил комментарий")
+    """
+    from datetime import datetime, timedelta, timezone
+
+    result = await db.execute(select(BuildComment).where(BuildComment.id == comment_id))
+    comment = result.scalar_one_or_none()
+    if not comment:
+        raise HTTPException(status_code=404, detail="Комментарий не найден")
+    if comment.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Можно удалять только свои комментарии")
+
+    now = datetime.now(timezone.utc)
+    created = comment.created_at.replace(tzinfo=timezone.utc) if comment.created_at.tzinfo is None else comment.created_at
+
+    if (now - created).total_seconds() <= 1800:
+        # Within 30 min — hard delete
+        await db.delete(comment)
+        return {"status": "deleted"}
+    else:
+        # After 30 min — soft delete
+        comment.is_deleted = True
+        comment.deleted_at = now
+        comment.text = ""
+        await db.flush()
+        return {"status": "soft_deleted"}
 
 
 # ── Recent comments (for sidebar) ───────────────────────────────────────────

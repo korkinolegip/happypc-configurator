@@ -30,10 +30,14 @@ export const checkLiked = async (buildId: string): Promise<boolean> => {
 // Comments
 export interface Comment {
   id: string
-  text: string
-  user_id: string
+  text?: string
+  user_id?: string
   user_name: string
-  user_avatar: string | null
+  user_avatar?: string | null
+  is_deleted?: boolean
+  deleted_at?: string | null
+  is_edited?: boolean
+  edited_at?: string | null
   created_at: string
   replies: Comment[]
 }
@@ -48,6 +52,15 @@ export const createComment = async (buildId: string, text: string, parentId?: st
     text,
     parent_id: parentId || null,
   })
+  return response.data
+}
+
+export const editComment = async (commentId: string, text: string): Promise<void> => {
+  await client.put(`/api/social/comments/${commentId}`, { text })
+}
+
+export const deleteComment = async (commentId: string): Promise<{ status: string }> => {
+  const response = await client.delete<{ status: string }>(`/api/social/comments/${commentId}`)
   return response.data
 }
 

@@ -4,11 +4,11 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
 import {
   Download, Share2, Copy, Lock, ExternalLink, Edit, ChevronDown, ChevronUp, X,
-  ThumbsUp, MessageSquare, Eye, Send, Reply,
+  ThumbsUp, MessageSquare, Eye, Send, Reply, Edit2, Trash2, Pencil,
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { getPublicBuild, downloadPDF, copyBuild } from '../api/builds'
-import { getComments, createComment, getBuildStats, toggleLike, recordView, checkLiked } from '../api/social'
+import { getComments, createComment, editComment, deleteComment, getBuildStats, toggleLike, recordView, checkLiked } from '../api/social'
 import type { Comment } from '../api/social'
 import { useAuth } from '../hooks/useAuth'
 import CategoryIcon from '../components/CategoryIcon'
@@ -136,6 +136,7 @@ const BuildPage: React.FC = () => {
   const [commentText, setCommentText] = useState('')
   const [replyTo, setReplyTo] = useState<{ id: string; name: string } | null>(null)
   const [submittingComment, setSubmittingComment] = useState(false)
+  const [editingComment, setEditingComment] = useState<{ id: string; text: string } | null>(null)
 
   // Sync liked state
   React.useEffect(() => {
@@ -178,6 +179,37 @@ const BuildPage: React.FC = () => {
       toast.success('Комментарий добавлен')
     } catch { toast.error('Ошибка') }
     finally { setSubmittingComment(false) }
+  }
+
+  const handleEditComment = async () => {
+    if (!editingComment || !editingComment.text.trim()) return
+    try {
+      await editComment(editingComment.id, editingComment.text.trim())
+      setEditingComment(null)
+      await refetchComments()
+      toast.success('Комментарий обновлён')
+    } catch (err: unknown) {
+      const e = err as { response?: { data?: { detail?: string } } }
+      toast.error(e.response?.data?.detail || 'Ошибка редактирования')
+    }
+  }
+
+  const handleDeleteComment = async (commentId: string) => {
+    if (!confirm('Удалить комментарий?')) return
+    try {
+      await deleteComment(commentId)
+      await refetchComments()
+      toast.success('Комментарий удалён')
+    } catch (err: unknown) {
+      const e = err as { response?: { data?: { detail?: string } } }
+      toast.error(e.response?.data?.detail || 'Ошибка')
+    }
+  }
+
+  const canEdit = (c: Comment) => {
+    if (c.user_id !== user?.id) return false
+    const diff = (Date.now() - new Date(c.created_at).getTime()) / 1000
+    return diff <= 120 // 2 minutes
   }
 
   const handlePasswordSubmit = (data: PasswordForm) => {
@@ -407,54 +439,121 @@ const BuildPage: React.FC = () => {
                 {comments.map(c => (
                   <div key={c.id}>
                     {/* Main comment */}
-                    <div className="flex gap-3">
-                      {c.user_avatar ? (
-                        <img src={c.user_avatar} alt="" className="w-8 h-8 rounded-full object-cover shrink-0 mt-0.5" />
-                      ) : (
-                        <div className="w-8 h-8 rounded-full bg-[#FF6B00]/20 flex items-center justify-center text-xs font-bold text-[#FF6B00] shrink-0 mt-0.5">
-                          {c.user_name.charAt(0).toUpperCase()}
+                    {c.is_deleted ? (
+                      <div className="flex gap-3 opacity-60">
+                        <div className="w-8 h-8 rounded-full bg-th-surface-2 shrink-0 mt-0.5" />
+                        <div className="flex-1">
+                          <p className="text-th-muted text-sm italic">
+                            {c.user_name} удалил(а) свой комментарий
+                            {c.deleted_at && <span className="text-xs ml-1">({new Date(c.created_at).toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' })})</span>}
+                          </p>
                         </div>
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="text-th-text text-sm font-medium">{c.user_name}</span>
-                          <span className="text-th-muted text-xs">
-                            {new Date(c.created_at).toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                          </span>
-                        </div>
-                        <p className="text-th-text-2 text-sm mt-1">{c.text}</p>
-                        {isAuthenticated && (
-                          <button
-                            onClick={() => setReplyTo({ id: c.id, name: c.user_name })}
-                            className="text-th-muted hover:text-[#FF6B00] text-xs mt-1 flex items-center gap-1 transition-colors"
-                          >
-                            <Reply size={11} /> Ответить
-                          </button>
-                        )}
                       </div>
-                    </div>
+                    ) : (
+                      <div className="flex gap-3">
+                        {c.user_avatar ? (
+                          <img src={c.user_avatar} alt="" className="w-8 h-8 rounded-full object-cover shrink-0 mt-0.5" />
+                        ) : (
+                          <div className="w-8 h-8 rounded-full bg-[#FF6B00]/20 flex items-center justify-center text-xs font-bold text-[#FF6B00] shrink-0 mt-0.5">
+                            {c.user_name.charAt(0).toUpperCase()}
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-th-text text-sm font-medium">{c.user_name}</span>
+                            <span className="text-th-muted text-xs">
+                              {new Date(c.created_at).toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                            {c.is_edited && <span className="text-th-muted text-[10px] italic">(изменён)</span>}
+                          </div>
+
+                          {/* Edit mode */}
+                          {editingComment?.id === c.id ? (
+                            <div className="mt-1 flex gap-2">
+                              <input
+                                type="text"
+                                value={editingComment.text}
+                                onChange={e => setEditingComment({ ...editingComment, text: e.target.value })}
+                                onKeyDown={e => e.key === 'Enter' && handleEditComment()}
+                                className="input-field text-sm flex-1"
+                                autoFocus
+                              />
+                              <button onClick={handleEditComment} className="text-[#FF6B00] hover:text-[#E05A00] text-xs font-medium">Сохранить</button>
+                              <button onClick={() => setEditingComment(null)} className="text-th-muted hover:text-th-text text-xs">Отмена</button>
+                            </div>
+                          ) : (
+                            <p className="text-th-text-2 text-sm mt-1">{c.text}</p>
+                          )}
+
+                          {/* Actions */}
+                          <div className="flex items-center gap-3 mt-1">
+                            {isAuthenticated && (
+                              <button
+                                onClick={() => setReplyTo({ id: c.id, name: c.user_name })}
+                                className="text-th-muted hover:text-[#FF6B00] text-xs flex items-center gap-1 transition-colors"
+                              >
+                                <Reply size={11} /> Ответить
+                              </button>
+                            )}
+                            {c.user_id === user?.id && canEdit(c) && (
+                              <button
+                                onClick={() => setEditingComment({ id: c.id, text: c.text || '' })}
+                                className="text-th-muted hover:text-[#FF6B00] text-xs flex items-center gap-1 transition-colors"
+                              >
+                                <Pencil size={10} /> Изменить
+                              </button>
+                            )}
+                            {c.user_id === user?.id && (
+                              <button
+                                onClick={() => handleDeleteComment(c.id)}
+                                className="text-th-muted hover:text-red-400 text-xs flex items-center gap-1 transition-colors"
+                              >
+                                <Trash2 size={10} /> Удалить
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    )}
 
                     {/* Replies */}
                     {c.replies && c.replies.length > 0 && (
                       <div className="ml-11 mt-3 space-y-3 pl-3 border-l-2 border-th-border">
                         {c.replies.map(r => (
-                          <div key={r.id} className="flex gap-2.5">
-                            {r.user_avatar ? (
-                              <img src={r.user_avatar} alt="" className="w-6 h-6 rounded-full object-cover shrink-0 mt-0.5" />
+                          <div key={r.id}>
+                            {r.is_deleted ? (
+                              <p className="text-th-muted text-xs italic opacity-60">
+                                {r.user_name} удалил(а) ответ
+                              </p>
                             ) : (
-                              <div className="w-6 h-6 rounded-full bg-[#FF6B00]/20 flex items-center justify-center text-[9px] font-bold text-[#FF6B00] shrink-0 mt-0.5">
-                                {r.user_name.charAt(0).toUpperCase()}
+                              <div className="flex gap-2.5">
+                                {r.user_avatar ? (
+                                  <img src={r.user_avatar} alt="" className="w-6 h-6 rounded-full object-cover shrink-0 mt-0.5" />
+                                ) : (
+                                  <div className="w-6 h-6 rounded-full bg-[#FF6B00]/20 flex items-center justify-center text-[9px] font-bold text-[#FF6B00] shrink-0 mt-0.5">
+                                    {r.user_name.charAt(0).toUpperCase()}
+                                  </div>
+                                )}
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-th-text text-xs font-medium">{r.user_name}</span>
+                                    <span className="text-th-muted text-[10px]">
+                                      {new Date(r.created_at).toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                                    </span>
+                                    {r.is_edited && <span className="text-th-muted text-[10px] italic">(изм.)</span>}
+                                  </div>
+                                  <p className="text-th-text-2 text-xs mt-0.5">{r.text}</p>
+                                  {r.user_id === user?.id && (
+                                    <button
+                                      onClick={() => handleDeleteComment(r.id)}
+                                      className="text-th-muted hover:text-red-400 text-[10px] flex items-center gap-1 mt-0.5 transition-colors"
+                                    >
+                                      <Trash2 size={9} /> Удалить
+                                    </button>
+                                  )}
+                                </div>
                               </div>
                             )}
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2">
-                                <span className="text-th-text text-xs font-medium">{r.user_name}</span>
-                                <span className="text-th-muted text-[10px]">
-                                  {new Date(r.created_at).toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
-                                </span>
-                              </div>
-                              <p className="text-th-text-2 text-xs mt-0.5">{r.text}</p>
-                            </div>
                           </div>
                         ))}
                       </div>

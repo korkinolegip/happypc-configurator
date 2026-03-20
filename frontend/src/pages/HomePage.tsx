@@ -326,9 +326,9 @@ const HomePage: React.FC = () => {
       {/* ── RIGHT: sidebar ── */}
       <div className="space-y-4 lg:sticky lg:top-4">
 
-        {/* Create CTA */}
+        {/* Create CTA — hidden on mobile (shown at top instead) */}
         <Link to={isAuthenticated ? "/builds/create" : "/login"}
-          className="flex items-center justify-center gap-2 w-full bg-[#FF6B00] hover:bg-[#E05A00] text-white font-semibold py-3 rounded-lg transition-colors">
+          className="hidden lg:flex items-center justify-center gap-2 w-full bg-[#FF6B00] hover:bg-[#E05A00] text-white font-semibold py-3 rounded-lg transition-colors">
           <Plus size={18} />Создать сборку
         </Link>
 
