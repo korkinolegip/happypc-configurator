@@ -240,3 +240,7 @@ export const createBackup = async (): Promise<{ filename: string }> => {
 export const restoreBackup = async (filename: string): Promise<void> => {
   await client.post(`/api/admin/db/restore/${filename}`)
 }
+
+export const deleteBackup = async (filename: string): Promise<void> => {
+  await client.delete(`/api/admin/db/backup/${filename}`)
+}

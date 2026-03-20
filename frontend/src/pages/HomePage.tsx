@@ -261,14 +261,14 @@ const HomePage: React.FC = () => {
 
         {/* Build list */}
         {buildsLoading ? (
-          <div className="space-y-3">
+          <div className="space-y-4">
             {Array.from({ length: 5 }).map((_, i) => (
               <div key={i} className="bg-th-surface border border-th-border rounded-lg p-4 animate-pulse h-28" />
             ))}
           </div>
         ) : buildsData && buildsData.items.length > 0 ? (
           <>
-            <div className="space-y-3">
+            <div className="space-y-4">
               {buildsData.items.map((build, idx) => (
                 <React.Fragment key={build.id}>
                   <BuildCard build={build} />
@@ -371,7 +371,7 @@ const HomePage: React.FC = () => {
         {recentComments && recentComments.length > 0 && (
           <div className="bg-th-surface border border-th-border rounded-lg p-4">
             <h3 className="text-th-text font-semibold text-sm mb-3">Последние комментарии</h3>
-            <div className="space-y-3">
+            <div className="space-y-4">
               {recentComments.map(c => (
                 <Link key={c.id} to={`/b/${c.build_code}`} className="block group">
                   <div className="flex items-start gap-2">

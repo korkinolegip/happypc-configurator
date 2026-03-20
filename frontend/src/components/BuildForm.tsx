@@ -150,7 +150,7 @@ function ItemRow({ fieldName, category, canDelete, canChangeCategory, onDelete, 
   const currentQty = parseInt((watch(`${fieldName}.qty` as never) as unknown as string) || '1', 10) || 1
 
   return (
-    <div className="flex gap-0 last:border-b-0" style={{ borderBottom: '1px solid var(--border)', marginBottom: '2px' }}>
+    <div className="flex gap-0" style={{ borderBottom: '4px solid var(--bg)', marginBottom: '0' }}>
       {/* Left: icon + label */}
       <div className="w-[88px] shrink-0 flex flex-col items-center justify-center py-3 px-1" style={{ borderRight: '1px solid var(--border)' }}>
         <CategoryIcon category={category} size={42} />
@@ -167,29 +167,29 @@ function ItemRow({ fieldName, category, canDelete, canChangeCategory, onDelete, 
         )}
       </div>
 
-      {/* Right: two rows */}
-      <div className="flex-1 min-w-0 py-1.5 px-2">
+      {/* Right: two rows — aligned widths */}
+      <div className="flex-1 min-w-0 py-2 px-3">
         {/* Row 1: name + price */}
-        <div className="flex gap-1.5 mb-1">
+        <div className="flex gap-2 mb-2">
           <input
             {...register(`${fieldName}.name` as never)}
-            className="flex-1 min-w-0 bg-th-surface-3 border border-th-border rounded px-2 py-1.5 text-th-text text-sm placeholder-th-placeholder focus:outline-none focus:border-[#FF6B00] transition-colors"
+            className="flex-1 min-w-0 bg-th-surface-3 border border-th-border rounded px-2.5 py-2 text-th-text text-sm placeholder-th-placeholder focus:outline-none focus:border-[#FF6B00] transition-colors"
             placeholder={`Введите название ${category.toLowerCase()}`}
           />
-          <div className="relative shrink-0 w-28">
+          <div className="relative shrink-0 w-32">
             <input
               {...register(`${fieldName}.price` as never)}
               type="number"
               min="0"
               step="1"
-              className="w-full bg-th-surface-3 border border-th-border rounded pl-2 pr-6 py-1.5 text-th-text text-sm placeholder-th-placeholder focus:outline-none focus:border-[#FF6B00] transition-colors"
+              className="w-full bg-th-surface-3 border border-th-border rounded pl-2.5 pr-6 py-2 text-th-text text-sm placeholder-th-placeholder focus:outline-none focus:border-[#FF6B00] transition-colors"
               placeholder="0"
             />
             <span className="absolute right-2 top-1/2 -translate-y-1/2 text-th-muted text-xs pointer-events-none">₽</span>
           </div>
         </div>
-        {/* Row 2: URL + qty */}
-        <div className="flex gap-1.5 items-center">
+        {/* Row 2: URL + qty — same proportions as row 1 */}
+        <div className="flex gap-2 items-center">
           <div className="relative flex-1 min-w-0">
             <input
               value={currentUrl}
@@ -213,14 +213,14 @@ function ItemRow({ fieldName, category, canDelete, canChangeCategory, onDelete, 
               )}
             </div>
           </div>
-          <div className="shrink-0 flex items-center gap-0 rounded overflow-hidden" style={{ border: '1px solid var(--border)' }}>
+          <div className="shrink-0 w-32 flex items-center justify-center gap-0 rounded overflow-hidden" style={{ border: '1px solid var(--border)' }}>
             <button
               type="button"
               onClick={() => { if (currentQty > 1) setValue(`${fieldName}.qty` as never, String(currentQty - 1) as never) }}
-              className="w-7 h-[30px] flex items-center justify-center transition-colors hover:text-[#FF6B00]"
+              className="w-9 h-[34px] flex items-center justify-center transition-colors hover:text-[#FF6B00]"
               style={{ backgroundColor: 'var(--surface-2)', color: 'var(--text-2)' }}
             >
-              <Minus size={12} />
+              <Minus size={14} />
             </button>
             <input
               {...register(`${fieldName}.qty` as never)}
@@ -228,16 +228,16 @@ function ItemRow({ fieldName, category, canDelete, canChangeCategory, onDelete, 
               min="1"
               step="1"
               defaultValue="1"
-              className="w-8 h-[30px] text-center text-sm outline-none border-x"
+              className="flex-1 h-[34px] text-center text-sm outline-none border-x"
               style={{ backgroundColor: 'var(--input-bg)', color: 'var(--text)', borderColor: 'var(--border)' }}
             />
             <button
               type="button"
               onClick={() => setValue(`${fieldName}.qty` as never, String(currentQty + 1) as never)}
-              className="w-7 h-[30px] flex items-center justify-center transition-colors hover:text-[#FF6B00]"
+              className="w-9 h-[34px] flex items-center justify-center transition-colors hover:text-[#FF6B00]"
               style={{ backgroundColor: 'var(--surface-2)', color: 'var(--text-2)' }}
             >
-              <Plus size={12} />
+              <Plus size={14} />
             </button>
           </div>
           {canDelete && (

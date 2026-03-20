@@ -1086,3 +1086,31 @@ async def restore_backup(
         return {"status": "error", "detail": stderr.decode()[:500]}
 
     return {"status": "restored", "safety_backup": os.path.basename(safety)}
+
+
+@router.delete("/db/backup/{filename}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_backup(
+    filename: str,
+    current_user: User = Depends(require_admin),
+):
+    """Delete a backup file. Cannot delete the last 3 backups."""
+    backup_dir = "/app/backups"
+    filepath = os.path.join(backup_dir, filename)
+    if not os.path.isfile(filepath):
+        raise HTTPException(status_code=404, detail="Файл не найден")
+
+    # Get all backups sorted by date (newest first)
+    all_files = sorted(
+        [f for f in os.listdir(backup_dir) if f.endswith(".sql") or f.endswith(".sql.gz")],
+        key=lambda f: os.path.getmtime(os.path.join(backup_dir, f)),
+        reverse=True,
+    )
+
+    # Protect last 3
+    if filename in all_files[:3]:
+        raise HTTPException(
+            status_code=400,
+            detail="Нельзя удалить один из последних 3 бэкапов",
+        )
+
+    os.remove(filepath)

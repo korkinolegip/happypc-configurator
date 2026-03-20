@@ -1,10 +1,10 @@
 import React, { useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
-  Download, RotateCcw, Plus, Database, HardDrive,
+  Download, RotateCcw, Plus, Database, HardDrive, Trash2,
 } from 'lucide-react'
 import toast from 'react-hot-toast'
-import { getBackups, createBackup, restoreBackup } from '../../api/admin'
+import { getBackups, createBackup, restoreBackup, deleteBackup } from '../../api/admin'
 import { client } from '../../api/client'
 
 const BackupPage: React.FC = () => {
@@ -53,6 +53,18 @@ const BackupPage: React.FC = () => {
       toast.error('Ошибка при восстановлении')
     } finally {
       setRestoringFile(null)
+    }
+  }
+
+  const handleDelete = async (filename: string) => {
+    if (!confirm(`Удалить бэкап «${filename}»?`)) return
+    try {
+      await deleteBackup(filename)
+      await queryClient.invalidateQueries({ queryKey: ['admin-backups'] })
+      toast.success('Бэкап удалён')
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { detail?: string } } }
+      toast.error(error.response?.data?.detail || 'Ошибка удаления')
     }
   }
 
@@ -154,6 +166,16 @@ const BackupPage: React.FC = () => {
                             <RotateCcw size={14} />
                           )}
                         </button>
+                        {/* Delete — disabled for last 3 */}
+                        {backups && backups.indexOf(backup) >= 3 && (
+                          <button
+                            onClick={() => handleDelete(backup.name)}
+                            className="p-1.5 text-th-text-2 hover:text-red-400 hover:bg-red-900/20 rounded transition-colors"
+                            title="Удалить"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
