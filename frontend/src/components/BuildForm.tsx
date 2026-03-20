@@ -29,6 +29,7 @@ export interface BuildFormValues {
   password: string
   labor_percent: string
   labor_price_manual: string
+  install_os: boolean
   budget: string
 }
 
@@ -339,6 +340,7 @@ const BuildForm: React.FC<BuildFormProps> = ({ initialData, onSubmit, isSubmitti
         password: '',
         labor_percent: '7',
         labor_price_manual: '',
+        install_os: false,
         budget: '',
       }
     }
@@ -365,6 +367,7 @@ const BuildForm: React.FC<BuildFormProps> = ({ initialData, onSubmit, isSubmitti
       password: '',
       labor_percent: String(initialData.labor_percent),
       labor_price_manual: initialData.labor_price_manual != null ? String(initialData.labor_price_manual) : '',
+      install_os: (initialData as unknown as { install_os?: boolean }).install_os ?? false,
       budget: '',
     }
   }
@@ -380,16 +383,18 @@ const BuildForm: React.FC<BuildFormProps> = ({ initialData, onSubmit, isSubmitti
   const watchedLM    = watch('labor_price_manual')
   const watchedBudget = watch('budget')
   const isPrivate    = watch('is_private')
+  const installOS    = watch('install_os')
 
   const pcTotal    = sectionTotal(watchedPc)
   const extraTotal = sectionTotal(watchedExtra)
   const periTotal  = sectionTotal(watchedPeri)
   const hardware   = pcTotal + extraTotal + periTotal
+  const osCost     = installOS ? 3000 : 0
 
   const laborPercent = parseFloat(watchedLP) || 0
   const laborManual  = parseFloat(watchedLM) || 0
-  const laborCost    = laborManual > 0 ? laborManual : Math.round(hardware * (laborPercent / 100))
-  const grandTotal   = hardware + laborCost
+  const laborCost    = Math.round(hardware * (laborPercent / 100))
+  const grandTotal   = hardware + laborCost + osCost
 
   const budgetVal = parseFloat(watchedBudget) || 0
   const overBudget = budgetVal > 0 && grandTotal > budgetVal
@@ -464,21 +469,55 @@ const BuildForm: React.FC<BuildFormProps> = ({ initialData, onSubmit, isSubmitti
               <label className="block text-xs text-th-text-2 mb-1">Стоимость работы (%)</label>
               <input {...register('labor_percent', { min: 0, max: 100 })} type="number" min="0" max="100" step="0.5"
                 className="input-field text-sm" placeholder="7" />
+              <p className="text-th-muted text-[10px] mt-1">Клиент покупает сам, мы собираем</p>
             </div>
             <div>
-              <label className="block text-xs text-th-text-2 mb-1">Фикс. стоимость (₽) <span className="text-th-muted">(заменяет %)</span></label>
+              <label className="block text-xs text-th-text-2 mb-1">Стоимость сборки «под ключ» (₽)</label>
               <input {...register('labor_price_manual', { min: 0 })} type="number" min="0" step="1"
                 className="input-field text-sm" placeholder="Пусто" />
+              <p className="text-th-muted text-[10px] mt-1">Полная цена от мастерской с гарантией</p>
             </div>
           </div>
+
+          {/* OS toggle */}
+          <label className="flex items-center gap-3 mb-4 cursor-pointer select-none">
+            <div className="relative">
+              <input type="checkbox" {...register('install_os')} className="sr-only peer" />
+              <div className="w-9 h-5 bg-th-surface-2 peer-checked:bg-[#FF6B00] rounded-full transition-colors" />
+              <div className="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform peer-checked:translate-x-4 shadow" />
+            </div>
+            <div>
+              <span className="text-th-text text-sm">Установка Windows</span>
+              <span className="text-th-text-3 text-xs ml-2">+3 000 ₽</span>
+            </div>
+          </label>
+
+          {/* Pricing summary */}
           <div className="space-y-1">
             <div className="flex justify-between text-sm"><span className="text-th-text-2">Комплектующие</span><span className="text-th-text">{fmt(hardware)} ₽</span></div>
-            <div className="flex justify-between text-sm"><span className="text-th-text-2">Работа {laborManual > 0 ? '(фикс.)' : `(${laborPercent}%)`}</span><span className="text-th-text">{fmt(laborCost)} ₽</span></div>
+            <div className="flex justify-between text-sm"><span className="text-th-text-2">Работа ({laborPercent}%)</span><span className="text-th-text">{fmt(laborCost)} ₽</span></div>
+            {installOS && (
+              <div className="flex justify-between text-sm"><span className="text-th-text-2">Операционная система</span><span className="text-th-text">{fmt(osCost)} ₽</span></div>
+            )}
           </div>
-          <div className={`mt-3 pt-3 border-t border-th-border flex justify-between items-center`}>
-            <span className="text-th-text font-semibold">ИТОГО СБОРКИ:</span>
-            <span className={`font-bold text-xl ${overBudget ? 'text-red-400' : 'text-[#FF6B00]'}`}>{fmt(grandTotal)} ₽</span>
+          <div className="mt-3 pt-3 border-t border-th-border flex justify-between items-center">
+            <span className="text-th-text font-semibold text-sm">Итоговая стоимость:</span>
+            <span className={`font-bold text-lg ${overBudget ? 'text-red-400' : 'text-th-text'}`}>{fmt(grandTotal)} ₽</span>
           </div>
+
+          {/* Turnkey — от мастерской */}
+          {laborManual > 0 && (
+            <div className="mt-3">
+              <div className="bg-[#FF6B00]/10 border border-[#FF6B00]/30 rounded-lg px-4 py-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-[#FF6B00] font-bold text-sm">От мастерской HappyPC</span>
+                  <span className="text-[#FF6B00] font-bold text-xl">{fmt(laborManual)} ₽</span>
+                </div>
+                <p className="text-th-text-3 text-[10px] mt-1">Собранный и настроенный ПК с ОС и гарантией 1 год</p>
+              </div>
+            </div>
+          )}
+
           {overBudget && (
             <p className="text-red-400 text-xs mt-1 text-right">Превышает бюджет на {fmt(grandTotal - budgetVal)} ₽</p>
           )}
@@ -519,10 +558,23 @@ const BuildForm: React.FC<BuildFormProps> = ({ initialData, onSubmit, isSubmitti
                 className="input-field text-sm resize-none h-20" placeholder="Описание, особенности, назначение..." />
             </div>
             <div>
-              <label className="block text-xs text-th-text-2 mb-1">Теги (через запятую)</label>
-              <input {...register('tags')}
-                className="input-field text-sm" placeholder="игровой, мощный, AMD, RTX" />
-              <p className="text-th-muted text-[10px] mt-1">Помогают в поиске сборки</p>
+              <label className="block text-xs text-th-text-2 mb-1">Цвет корпуса</label>
+              <div className="flex gap-2">
+                <label className={`flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer transition-colors ${
+                  watch('tags') === 'черный' ? 'border-[#FF6B00] bg-[#FF6B00]/10' : 'border-th-border'
+                }`}>
+                  <input type="radio" value="черный" {...register('tags')} className="hidden" />
+                  <span className="w-5 h-5 rounded-full bg-[#222] border border-th-border" />
+                  <span className="text-th-text text-sm">Чёрный</span>
+                </label>
+                <label className={`flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer transition-colors ${
+                  watch('tags') === 'белый' ? 'border-[#FF6B00] bg-[#FF6B00]/10' : 'border-th-border'
+                }`}>
+                  <input type="radio" value="белый" {...register('tags')} className="hidden" />
+                  <span className="w-5 h-5 rounded-full bg-white border border-th-border" />
+                  <span className="text-th-text text-sm">Белый</span>
+                </label>
+              </div>
             </div>
 
             {/* Grand total preview */}

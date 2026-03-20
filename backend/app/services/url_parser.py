@@ -367,26 +367,35 @@ async def _fetch_ozon(url: str) -> dict:
 
 # ─── DNS-shop ────────────────────────────────────────────────────────────────
 
+def _is_valid_dns_name(name: str | None) -> bool:
+    """Check if DNS returned a real product name, not an error/stub."""
+    if not name:
+        return False
+    stubs = ["извините", "отсутствует", "не найден", "ошибка", "404", "access denied"]
+    lower = name.lower()
+    return not any(s in lower for s in stubs) and len(name) > 5
+
+
 async def _fetch_dns(url: str) -> dict:
     # 1) iMac scraper (home IP, bypasses Qrator)
     result = await _imac_scrape(url)
-    if result.get("name"):
+    if _is_valid_dns_name(result.get("name")):
         name = re.sub(r"\s*[—–|-]\s*(?:DNS|купить).*$", "", result["name"], flags=re.IGNORECASE).strip()
         return {"name": name, "price": result.get("price"), "store": "dns"}
 
-    # 2) Camoufox local (works on home IP server)
-    html = await _camoufox_fetch(url, wait_seconds=10)
-    if html:
-        result = _extract_from_html(html)
-        if result.get("name"):
-            name = re.sub(r"\s*[—–|-]\s*(?:DNS|купить).*$", "", result["name"], flags=re.IGNORECASE).strip()
-            return {"name": name, "price": result.get("price"), "store": "dns"}
-
-    # 3) ZenRows fallback (paid)
+    # 2) ZenRows (paid, reliable)
     html = await _zenrows_fetch(url, wait="12000")
     if html:
         result = _extract_from_html(html)
-        if result.get("name"):
+        if _is_valid_dns_name(result.get("name")):
+            name = re.sub(r"\s*[—–|-]\s*(?:DNS|купить).*$", "", result["name"], flags=re.IGNORECASE).strip()
+            return {"name": name, "price": result.get("price"), "store": "dns"}
+
+    # 3) Camoufox local (last resort)
+    html = await _camoufox_fetch(url, wait_seconds=10)
+    if html:
+        result = _extract_from_html(html)
+        if _is_valid_dns_name(result.get("name")):
             name = re.sub(r"\s*[—–|-]\s*(?:DNS|купить).*$", "", result["name"], flags=re.IGNORECASE).strip()
             return {"name": name, "price": result.get("price"), "store": "dns"}
 

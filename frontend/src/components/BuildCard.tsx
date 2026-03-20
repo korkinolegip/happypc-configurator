@@ -62,7 +62,14 @@ const BuildCard: React.FC<BuildCardProps> = ({ build }) => {
         <div className="px-5 pt-4 pb-2">
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1 min-w-0">
-              <h3 className="text-th-text font-bold text-[17px] leading-snug line-clamp-2">
+              <h3 className="text-th-text font-bold text-[17px] leading-snug line-clamp-2 flex items-center gap-2">
+                {build.tags && build.tags.length > 0 && (
+                  <span
+                    className="w-4 h-4 rounded-full shrink-0 border border-th-border"
+                    style={{ background: build.tags.includes('белый') ? '#fff' : '#222' }}
+                    title={build.tags.includes('белый') ? 'Белый корпус' : 'Чёрный корпус'}
+                  />
+                )}
                 {build.title || `Сборка ${build.short_code}`}
               </h3>
               <div className="text-th-text-3 text-xs mt-1.5">

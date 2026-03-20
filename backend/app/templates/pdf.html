@@ -411,14 +411,19 @@
                 </div>
 
                 <div class="price-line total-line">
-                    <span class="label">Итого (работа отдельно):</span>
+                    <span class="label">Итоговая стоимость:</span>
                     <span class="value">{{ total_with_labor | format_price }}</span>
                 </div>
 
-                {% if total_turnkey is not none %}
-                <div class="price-line turnkey-line" style="margin-top:6px; padding-top:6px; border-top: 1px dashed #dddddd;">
-                    <span class="label" style="color:#16a085; font-weight:600;">Цена «под ключ»:</span>
-                    <span class="value">{{ total_turnkey | format_price }}</span>
+                {% if labor_price_manual is not none and labor_price_manual > 0 %}
+                <div style="margin-top:10px; padding:12px 14px; border: 2px solid #FF6B00; background: #FFF5EB; border-radius: 6px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <span style="color:#FF6B00; font-weight:700; font-size:12px;">Стоимость компьютера от мастерской HappyPC</span>
+                        <span style="color:#FF6B00; font-weight:700; font-size:16px;">{{ labor_price_manual | format_price }}</span>
+                    </div>
+                    <div style="color:#888; font-size:9px; margin-top:4px;">
+                        Полностью собранный и настроенный ПК с установленной операционной системой и общей гарантией 1 год
+                    </div>
                 </div>
                 {% endif %}
             </div>
