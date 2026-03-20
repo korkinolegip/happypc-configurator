@@ -62,18 +62,20 @@ const BuildCard: React.FC<BuildCardProps> = ({ build }) => {
         <div className="px-5 pt-4 pb-2">
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1 min-w-0">
-              <h3 className="text-th-text font-bold text-[17px] leading-snug line-clamp-2 flex items-center gap-2">
-                {build.tags && build.tags.length > 0 && (
-                  <span
-                    className="w-4 h-4 rounded-full shrink-0 border border-th-border"
-                    style={{ background: build.tags.includes('белый') ? '#fff' : '#222' }}
-                    title={build.tags.includes('белый') ? 'Белый корпус' : 'Чёрный корпус'}
-                  />
-                )}
+              <h3 className="text-th-text font-bold text-[17px] leading-snug line-clamp-2">
                 {build.title || `Сборка ${build.short_code}`}
               </h3>
-              <div className="text-th-text-3 text-xs mt-1.5">
-                {formatDateTime(build.created_at)}
+              <div className="flex items-center gap-3 mt-1.5">
+                <span className="text-th-text-3 text-xs">{formatDateTime(build.created_at)}</span>
+                {build.tags && build.tags.length > 0 && (
+                  <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium border border-th-border">
+                    <span
+                      className="w-3 h-3 rounded-full shrink-0 border border-th-border"
+                      style={{ background: build.tags.includes('белый') ? '#ffffff' : '#222222' }}
+                    />
+                    <span className="text-th-text-2">{build.tags.includes('белый') ? 'Белый' : 'Чёрный'}</span>
+                  </span>
+                )}
               </div>
             </div>
             <div className="flex items-baseline gap-2 shrink-0 pl-2 whitespace-nowrap">
