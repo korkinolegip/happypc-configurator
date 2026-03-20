@@ -65,15 +65,6 @@ const Header: React.FC = () => {
             >
               Сборки
             </Link>
-            {isAuthenticated && (
-              <Link
-                to="/builds/create"
-                className="flex items-center gap-1.5 bg-[#FF6B00] hover:bg-[#E05A00] text-white px-3 py-1.5 rounded text-sm font-medium transition-colors"
-              >
-                <Plus size={15} />
-                Создать
-              </Link>
-            )}
           </nav>
 
           {/* Right side */}
