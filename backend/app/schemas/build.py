@@ -78,6 +78,8 @@ class BuildResponse(BaseModel):
     labor_cost: float
     labor_percent: float
     labor_price_manual: float | None
+    tags: list[str] | None = None
+    install_os: bool = False
     created_at: datetime
     updated_at: datetime
 
