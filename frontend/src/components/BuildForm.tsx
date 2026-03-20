@@ -181,7 +181,7 @@ function ItemRow({ fieldName, category, canDelete, canChangeCategory, onDelete, 
               type="number"
               min="0"
               step="1"
-              className="w-full border rounded pl-2 pr-6 py-1.5 text-th-text text-sm placeholder-th-placeholder focus:outline-none focus:border-[#FF6B00] transition-colors"
+              className="w-full bg-th-surface-3 border border-th-border rounded pl-2 pr-6 py-1.5 text-th-text text-sm placeholder-th-placeholder focus:outline-none focus:border-[#FF6B00] transition-colors"
               placeholder="0"
             />
             <span className="absolute right-2 top-1/2 -translate-y-1/2 text-th-muted text-xs pointer-events-none">₽</span>
@@ -521,7 +521,7 @@ const BuildForm: React.FC<BuildFormProps> = ({ initialData, onSubmit, isSubmitti
 
             {/* Grand total preview */}
             {grandTotal > 0 && (
-              <div className="border rounded px-3 py-2 flex justify-between">
+              <div className="bg-th-surface-3 border border-th-border rounded px-3 py-2 flex justify-between">
                 <span className="text-th-text-2 text-xs">Итого</span>
                 <span className={`text-sm font-bold ${overBudget ? 'text-red-400' : 'text-[#FF6B00]'}`}>{fmt(grandTotal)} ₽</span>
               </div>
