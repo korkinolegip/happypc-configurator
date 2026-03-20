@@ -347,8 +347,8 @@
                 {% endif %}
                 <span><strong>Дата сборки:</strong> {{ created_at.strftime('%d.%m.%Y') }}</span>
                 {% if case_color %}
-                <span style="margin-left:8px; font-size:10px;">
-                    <span style="display:inline-block; width:8px; height:8px; border-radius:50%; vertical-align:middle; margin-right:3px; {% if case_color == 'белый' %}background:#ffffff; border:1px solid #999;{% else %}background:#222; border:1px solid #444;{% endif %}"></span>
+                <span style="margin-left:10px; font-size:10px; padding:2px 8px; border:1px solid #dddddd; border-radius:8px; display:inline-flex; align-items:center; gap:4px;">
+                    <span style="display:inline-block; width:8px; height:8px; border-radius:50%; {% if case_color == 'белый' %}background:#ffffff; border:1px solid #bbbbbb;{% else %}background:#222222; border:1px solid #555555;{% endif %}"></span>
                     <strong>{% if case_color == 'белый' %}Белая{% else %}Чёрная{% endif %} сборка</strong>
                 </span>
                 {% endif %}
