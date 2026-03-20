@@ -16,8 +16,15 @@ class Banner(Base):
     )
     title: Mapped[str] = mapped_column(String(255), nullable=False)
     text: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # Button 1
     button_text: Mapped[str | None] = mapped_column(String(128), nullable=True)
     button_url: Mapped[str | None] = mapped_column(String(512), nullable=True)
+    button_color: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    # Button 2
+    button2_text: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    button2_url: Mapped[str | None] = mapped_column(String(512), nullable=True)
+    button2_color: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    #
     position: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     created_at: Mapped[datetime] = mapped_column(

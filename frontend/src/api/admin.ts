@@ -151,6 +151,10 @@ export interface AdminBanner {
   text: string | null
   button_text: string | null
   button_url: string | null
+  button_color: string | null
+  button2_text: string | null
+  button2_url: string | null
+  button2_color: string | null
   position: number
   is_active: boolean
   created_at?: string

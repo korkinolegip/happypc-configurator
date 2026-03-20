@@ -323,7 +323,8 @@ async def get_active_banners(db: AsyncSession = Depends(get_db)):
     return [
         {
             "id": str(b.id), "title": b.title, "text": b.text,
-            "button_text": b.button_text, "button_url": b.button_url,
+            "button_text": b.button_text, "button_url": b.button_url, "button_color": b.button_color,
+            "button2_text": b.button2_text, "button2_url": b.button2_url, "button2_color": b.button2_color,
             "position": b.position,
         }
         for b in banners

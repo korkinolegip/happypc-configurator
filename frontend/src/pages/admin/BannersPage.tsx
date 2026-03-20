@@ -13,6 +13,10 @@ interface BannerFormData {
   text: string
   button_text: string
   button_url: string
+  button_color: string
+  button2_text: string
+  button2_url: string
+  button2_color: string
   position: string
   is_active: boolean
 }
@@ -27,8 +31,8 @@ const BannerModal: React.FC<ModalProps> = ({ banner, onClose }) => {
   const isEdit = !!banner
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<BannerFormData>({
     defaultValues: banner
-      ? { title: banner.title, text: banner.text || '', button_text: banner.button_text || '', button_url: banner.button_url || '', position: String(banner.position), is_active: banner.is_active }
-      : { title: '', text: '', button_text: '', button_url: '', position: '0', is_active: true },
+      ? { title: banner.title, text: banner.text || '', button_text: banner.button_text || '', button_url: banner.button_url || '', button_color: banner.button_color || '', button2_text: banner.button2_text || '', button2_url: banner.button2_url || '', button2_color: banner.button2_color || '', position: String(banner.position), is_active: banner.is_active }
+      : { title: '', text: '', button_text: '', button_url: '', button_color: '', button2_text: '', button2_url: '', button2_color: '', position: '0', is_active: true },
   })
 
   const onSubmit = async (data: BannerFormData) => {
@@ -65,14 +69,34 @@ const BannerModal: React.FC<ModalProps> = ({ banner, onClose }) => {
             <label className="block text-sm text-th-text-2 mb-1.5">Текст (описание)</label>
             <textarea {...register('text')} className="input-field resize-none h-20 text-sm" placeholder="Подробное описание..." />
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <p className="text-th-text-3 text-xs font-medium uppercase tracking-wide mt-2">Кнопка 1</p>
+          <div className="grid grid-cols-3 gap-3">
             <div>
-              <label className="block text-sm text-th-text-2 mb-1.5">Текст кнопки</label>
-              <input {...register('button_text')} className="input-field" placeholder="Подробнее тут!" />
+              <label className="block text-sm text-th-text-2 mb-1.5">Текст</label>
+              <input {...register('button_text')} className="input-field" placeholder="Чат в Telegram" />
             </div>
             <div>
-              <label className="block text-sm text-th-text-2 mb-1.5">Ссылка кнопки</label>
-              <input {...register('button_url')} className="input-field" placeholder="https://..." />
+              <label className="block text-sm text-th-text-2 mb-1.5">Ссылка</label>
+              <input {...register('button_url')} className="input-field" placeholder="https://t.me/..." />
+            </div>
+            <div>
+              <label className="block text-sm text-th-text-2 mb-1.5">Цвет</label>
+              <input {...register('button_color')} className="input-field" placeholder="#2ca5e0" />
+            </div>
+          </div>
+          <p className="text-th-text-3 text-xs font-medium uppercase tracking-wide mt-2">Кнопка 2 (необязательно)</p>
+          <div className="grid grid-cols-3 gap-3">
+            <div>
+              <label className="block text-sm text-th-text-2 mb-1.5">Текст</label>
+              <input {...register('button2_text')} className="input-field" placeholder="Чат в VK" />
+            </div>
+            <div>
+              <label className="block text-sm text-th-text-2 mb-1.5">Ссылка</label>
+              <input {...register('button2_url')} className="input-field" placeholder="https://vk.com/..." />
+            </div>
+            <div>
+              <label className="block text-sm text-th-text-2 mb-1.5">Цвет</label>
+              <input {...register('button2_color')} className="input-field" placeholder="#0077ff" />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">

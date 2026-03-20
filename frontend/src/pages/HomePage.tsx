@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { Plus, Search, Filter, Link2, Cpu, Zap, FileText, Users, MessageCircle, MapPin, SlidersHorizontal, X, ChevronDown } from 'lucide-react'
+import { Plus, Search, Filter, Link2, Cpu, Zap, FileText, Users, MapPin, SlidersHorizontal, X, ChevronDown } from 'lucide-react'
 import BuildCard from '../components/BuildCard'
 import CitySelect from '../components/CitySelect'
 import { getBuilds, getPublicSettings, getPublicBuilds, getPublicBanners } from '../api/builds'
@@ -123,50 +123,39 @@ const HomePage: React.FC = () => {
 
   if (!feedEnabled && !isAuthenticated) return <GuestLanding />
 
-  // Render a banner component
+  // Render a banner component with 1 or 2 buttons
   const renderBanner = (banner: BannerItem) => (
-    <div key={banner.id} className="bg-th-surface border border-th-border rounded-lg p-4">
-      <h3 className="text-th-text font-semibold text-sm">{banner.title}</h3>
-      {banner.text && <p className="text-th-text-2 text-xs mt-1">{banner.text}</p>}
-      {banner.button_text && banner.button_url && (
-        <a href={banner.button_url} target="_blank" rel="noopener noreferrer"
-          className="inline-block mt-2 px-3 py-1 bg-th-surface-2 border border-th-border text-th-text text-xs rounded hover:border-[#FF6B00] hover:text-[#FF6B00] transition-colors">
-          {banner.button_text}
-        </a>
-      )}
+    <div key={banner.id} className="bg-th-surface border border-th-border rounded-lg p-4 mb-3">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+        <div className="flex-1 min-w-0">
+          {banner.title && <h3 className="text-th-text font-semibold text-sm">{banner.title}</h3>}
+          {banner.text && <p className="text-th-text-2 text-xs mt-1 leading-relaxed">{banner.text}</p>}
+        </div>
+        {(banner.button_text || banner.button2_text) && (
+          <div className="flex flex-col gap-2 shrink-0 w-full sm:w-auto">
+            {banner.button_text && banner.button_url && (
+              <a href={banner.button_url} target="_blank" rel="noopener noreferrer"
+                className="flex items-center justify-center gap-2 py-2 px-4 rounded-lg text-sm text-white font-medium transition-opacity hover:opacity-90"
+                style={{ background: banner.button_color || '#FF6B00' }}>
+                {banner.button_text}
+              </a>
+            )}
+            {banner.button2_text && banner.button2_url && (
+              <a href={banner.button2_url} target="_blank" rel="noopener noreferrer"
+                className="flex items-center justify-center gap-2 py-2 px-4 rounded-lg text-sm text-white font-medium transition-opacity hover:opacity-90"
+                style={{ background: banner.button2_color || '#0077ff' }}>
+                {banner.button2_text}
+              </a>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   )
 
   return (
     <div>
-      {/* Contact block — horizontal bar above feed */}
-      {(settings?.contact_tg_url || settings?.contact_vk_url) && (
-        <div className="bg-th-surface border border-th-border rounded-lg p-4 mb-5">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-            <p className="text-th-text-2 text-sm flex-1">
-              {settings?.contact_block_text || 'В наших чатах VK и Telegram обсуждайте любые вопросы о сборках ПК'}
-            </p>
-            <div className="flex flex-col gap-2 shrink-0 w-full sm:w-auto">
-              {settings?.contact_tg_url && (
-                <a href={settings.contact_tg_url} target="_blank" rel="noopener noreferrer"
-                   className="flex items-center justify-center gap-2 py-2 px-4 rounded-lg text-sm text-white font-medium transition-opacity hover:opacity-90"
-                   style={{ background: '#2ca5e0' }}>
-                  <MessageCircle size={15} />{settings?.contact_tg_label || 'Чат в Telegram'}
-                </a>
-              )}
-              {settings?.contact_vk_url && (
-                <a href={settings.contact_vk_url} target="_blank" rel="noopener noreferrer"
-                   className="flex items-center justify-center gap-2 py-2 px-4 rounded-lg text-sm text-white font-medium transition-opacity hover:opacity-90"
-                   style={{ background: '#0077ff' }}>
-                  <MessageCircle size={15} />{settings?.contact_vk_label || 'Чат в VK'}
-                </a>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* First banner (position 0) — above builds, full width */}
+      {/* Banners at position 0 — above the feed, full width */}
       {banners && banners.filter(b => b.position === 0).map(renderBanner)}
 
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-6 items-start mt-4">

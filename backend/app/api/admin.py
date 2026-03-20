@@ -815,7 +815,8 @@ async def list_banners(
     return [
         {
             "id": str(b.id), "title": b.title, "text": b.text,
-            "button_text": b.button_text, "button_url": b.button_url,
+            "button_text": b.button_text, "button_url": b.button_url, "button_color": b.button_color,
+            "button2_text": b.button2_text, "button2_url": b.button2_url, "button2_color": b.button2_color,
             "position": b.position, "is_active": b.is_active,
             "created_at": b.created_at.isoformat(),
         }
@@ -835,6 +836,10 @@ async def create_banner(
         text=data.get("text"),
         button_text=data.get("button_text"),
         button_url=data.get("button_url"),
+        button_color=data.get("button_color"),
+        button2_text=data.get("button2_text"),
+        button2_url=data.get("button2_url"),
+        button2_color=data.get("button2_color"),
         position=data.get("position", 0),
         is_active=data.get("is_active", True),
     )
@@ -843,7 +848,8 @@ async def create_banner(
     await db.refresh(banner)
     return {
         "id": str(banner.id), "title": banner.title, "text": banner.text,
-        "button_text": banner.button_text, "button_url": banner.button_url,
+        "button_text": banner.button_text, "button_url": banner.button_url, "button_color": banner.button_color,
+        "button2_text": banner.button2_text, "button2_url": banner.button2_url, "button2_color": banner.button2_color,
         "position": banner.position, "is_active": banner.is_active,
     }
 
@@ -868,6 +874,14 @@ async def update_banner(
         banner.button_text = data["button_text"]
     if "button_url" in data:
         banner.button_url = data["button_url"]
+    if "button_color" in data:
+        banner.button_color = data["button_color"]
+    if "button2_text" in data:
+        banner.button2_text = data["button2_text"]
+    if "button2_url" in data:
+        banner.button2_url = data["button2_url"]
+    if "button2_color" in data:
+        banner.button2_color = data["button2_color"]
     if "position" in data:
         banner.position = data["position"]
     if "is_active" in data:
@@ -875,7 +889,8 @@ async def update_banner(
     await db.flush()
     return {
         "id": str(banner.id), "title": banner.title, "text": banner.text,
-        "button_text": banner.button_text, "button_url": banner.button_url,
+        "button_text": banner.button_text, "button_url": banner.button_url, "button_color": banner.button_color,
+        "button2_text": banner.button2_text, "button2_url": banner.button2_url, "button2_color": banner.button2_color,
         "position": banner.position, "is_active": banner.is_active,
     }
 
