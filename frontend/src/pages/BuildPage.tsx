@@ -273,7 +273,7 @@ const BuildPage: React.FC = () => {
               <Edit size={14} />Редактировать
             </Link>
           )}
-          {isAuthenticated && !isOwner && (
+          {isAuthenticated && (
             <button onClick={handleCopyBuild} disabled={copyingBuild}
               className="flex items-center gap-1.5 bg-th-surface-2 hover:bg-th-border text-th-text px-3 py-2 rounded-lg text-sm transition-colors disabled:opacity-50">
               {copyingBuild ? <span className="w-3.5 h-3.5 border-2 border-th-text border-t-transparent rounded-full animate-spin" /> : <Copy size={14} />}
