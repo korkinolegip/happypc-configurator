@@ -35,6 +35,8 @@ const ProfilePage: React.FC = () => {
   const [uploadingAvatar, setUploadingAvatar] = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [showPasswordForm, setShowPasswordForm] = useState(false)
+  const [showAvatarPicker, setShowAvatarPicker] = useState(false)
+  const [availableAvatars, setAvailableAvatars] = useState<{ male: string[]; female: string[] } | null>(null)
 
   const {
     register,
@@ -161,41 +163,58 @@ const ProfilePage: React.FC = () => {
       {/* Avatar + Info */}
       <div className="bg-th-surface border border-th-border rounded-lg p-6">
         <div className="flex flex-col sm:flex-row items-start gap-6">
-          {/* Avatar */}
-          <div className="relative shrink-0">
-            <div
-              className="w-24 h-24 rounded-full overflow-hidden bg-th-surface-2 cursor-pointer group relative"
-              onClick={() => fileInputRef.current?.click()}
-            >
-              {currentAvatar ? (
-                <img src={currentAvatar} alt={user.name} className="w-full h-full object-cover" />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center text-3xl font-bold text-[#FF6B00]">
-                  {user.name.charAt(0).toUpperCase()}
-                </div>
-              )}
-              <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                {uploadingAvatar ? (
-                  <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
+          {/* Avatar — bigger */}
+          <div className="shrink-0">
+            <div className="relative">
+              <div
+                className="w-28 h-28 rounded-full overflow-hidden bg-th-surface-2 cursor-pointer group relative"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                {currentAvatar ? (
+                  <img src={currentAvatar} alt={user.name} className="w-full h-full object-cover" />
                 ) : (
-                  <Camera size={24} className="text-white" />
+                  <div className="w-full h-full flex items-center justify-center text-4xl font-bold text-[#FF6B00]">
+                    {user.name.charAt(0).toUpperCase()}
+                  </div>
                 )}
+                <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                  {uploadingAvatar ? (
+                    <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <Camera size={28} className="text-white" />
+                  )}
+                </div>
               </div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleAvatarChange}
+              />
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="absolute -bottom-1 -right-1 w-8 h-8 bg-[#FF6B00] rounded-full flex items-center justify-center hover:bg-[#E05A00] transition-colors"
+                title="Загрузить фото"
+              >
+                <Camera size={14} className="text-white" />
+              </button>
             </div>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={handleAvatarChange}
-            />
             <button
               type="button"
-              onClick={() => fileInputRef.current?.click()}
-              className="absolute -bottom-1 -right-1 w-7 h-7 bg-[#FF6B00] rounded-full flex items-center justify-center hover:bg-[#E05A00] transition-colors"
-              title="Изменить аватар"
+              onClick={async () => {
+                if (!availableAvatars) {
+                  try {
+                    const resp = await fetch('/api/public/avatars')
+                    setAvailableAvatars(await resp.json())
+                  } catch {}
+                }
+                setShowAvatarPicker(true)
+              }}
+              className="mt-2 text-xs text-[#FF6B00] hover:text-[#E05A00] transition-colors w-full text-center"
             >
-              <Camera size={13} className="text-white" />
+              Выбрать аватар
             </button>
           </div>
 
@@ -510,6 +529,74 @@ const ProfilePage: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Avatar Picker Modal */}
+      {showAvatarPicker && availableAvatars && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4" onClick={() => setShowAvatarPicker(false)}>
+          <div className="bg-th-surface border border-th-border rounded-lg w-full max-w-lg max-h-[80vh] overflow-hidden" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-5 py-4 border-b border-th-border">
+              <h2 className="text-th-text font-semibold">Выберите аватар</h2>
+              <button onClick={() => setShowAvatarPicker(false)} className="text-th-text-2 hover:text-th-text">
+                <Plus size={18} className="rotate-45" />
+              </button>
+            </div>
+            <div className="p-5 overflow-y-auto max-h-[60vh]">
+              {/* Male */}
+              {availableAvatars.male.length > 0 && (
+                <div className="mb-4">
+                  <h3 className="text-th-text-2 text-xs font-medium uppercase tracking-wide mb-3">Мужские</h3>
+                  <div className="grid grid-cols-6 sm:grid-cols-8 gap-2">
+                    {availableAvatars.male.map((url) => (
+                      <button
+                        key={url}
+                        onClick={async () => {
+                          try {
+                            await updateProfile({ avatar_url: url })
+                            await refreshUser()
+                            setShowAvatarPicker(false)
+                            toast.success('Аватар обновлён')
+                          } catch { toast.error('Ошибка') }
+                        }}
+                        className={`w-full aspect-square rounded-lg overflow-hidden border-2 transition-all hover:scale-105 ${
+                          user.avatar_url === url ? 'border-[#FF6B00] ring-2 ring-[#FF6B00]/30' : 'border-th-border hover:border-[#FF6B00]/50'
+                        }`}
+                      >
+                        <img src={url} alt="" className="w-full h-full object-cover" />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {/* Female */}
+              {availableAvatars.female.length > 0 && (
+                <div>
+                  <h3 className="text-th-text-2 text-xs font-medium uppercase tracking-wide mb-3">Женские</h3>
+                  <div className="grid grid-cols-6 sm:grid-cols-8 gap-2">
+                    {availableAvatars.female.map((url) => (
+                      <button
+                        key={url}
+                        onClick={async () => {
+                          try {
+                            await updateProfile({ avatar_url: url })
+                            await refreshUser()
+                            setShowAvatarPicker(false)
+                            toast.success('Аватар обновлён')
+                          } catch { toast.error('Ошибка') }
+                        }}
+                        className={`w-full aspect-square rounded-lg overflow-hidden border-2 transition-all hover:scale-105 ${
+                          user.avatar_url === url ? 'border-[#FF6B00] ring-2 ring-[#FF6B00]/30' : 'border-th-border hover:border-[#FF6B00]/50'
+                        }`}
+                      >
+                        <img src={url} alt="" className="w-full h-full object-cover" />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

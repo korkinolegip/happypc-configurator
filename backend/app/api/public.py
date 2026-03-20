@@ -327,6 +327,22 @@ async def get_user_public_profile(
     }
 
 
+@router.get("/avatars")
+async def get_available_avatars():
+    """Return list of available default avatars by gender."""
+    import os
+    avatars = {"male": [], "female": []}
+    for gender in ["male", "female"]:
+        avatar_dir = f"/app/static/avatars/{gender}"
+        if os.path.isdir(avatar_dir):
+            files = sorted(
+                [f for f in os.listdir(avatar_dir) if f.endswith(".svg")],
+                key=lambda x: int(x.replace(".svg", "")) if x.replace(".svg", "").isdigit() else 0,
+            )
+            avatars[gender] = [f"/static/avatars/{gender}/{f}" for f in files]
+    return avatars
+
+
 @router.get("/banners")
 async def get_active_banners(db: AsyncSession = Depends(get_db)):
     """Return active banners for homepage."""
