@@ -7,11 +7,11 @@ Performance layers:
 3. Queue — max 2 concurrent scrapes, rest wait in line
 
 Strategy (priority order):
-- Wildberries:   basket CDN (name, free) + Camoufox (price)
+- Wildberries:   basket CDN (name) + Camoufox internal API (price) on VPS
 - Ozon:          Camoufox (primary) → ZenRows (fallback)
-- DNS-shop:      iMac scraper (home IP) → Camoufox → ZenRows
+- DNS-shop:      Camoufox + cookie consent (VPS/iMac) → iMac scraper → ZenRows
 - Yandex Market: Camoufox (primary) → Apify (fallback)
-- Avito:         Camoufox (primary) → ZenRows (fallback)
+- Avito:         Camoufox + modal close (works on VPS)
 - Others:        curl_cffi / httpx generic fallback
 """
 import asyncio
@@ -77,7 +77,39 @@ def _get_browser():
         return _browser_instance
 
 
-def _scrape_with_pool(url: str, wait_seconds: int = 8) -> Optional[str]:
+def _close_modals(page):
+    """Close common modals: cookie consent, app promo, etc."""
+    selectors = [
+        'button:has-text("Принять")',
+        'button:has-text("Согласен")',
+        'button:has-text("Хорошо")',
+        'button:has-text("Принимаю")',
+        'button:has-text("OK")',
+        'button:has-text("Понятно")',
+        'button:has-text("Остаться в браузере")',
+        'button:has-text("Закрыть")',
+        'button:has-text("Нет, спасибо")',
+        '.cookie-notice__button',
+        '.cookies-policy__button',
+        '[data-role="cookie-accept"]',
+        '.app-banner__close',
+        '.modal__close',
+        '.popup__close',
+        '[data-role="close"]',
+        '[data-marker="close"]',
+    ]
+    import time as t
+    for sel in selectors:
+        try:
+            el = page.query_selector(sel)
+            if el and el.is_visible():
+                el.click()
+                t.sleep(0.5)
+        except Exception:
+            pass
+
+
+def _scrape_with_pool(url: str, wait_seconds: int = 8, cookies: list | None = None) -> Optional[str]:
     """Scrape URL using shared browser (new tab, not new browser)."""
     browser = _get_browser()
     if not browser:
@@ -85,9 +117,13 @@ def _scrape_with_pool(url: str, wait_seconds: int = 8) -> Optional[str]:
     try:
         page = browser.new_page()
         try:
+            if cookies:
+                page.context.add_cookies(cookies)
             page.goto(url, timeout=25000)
             import time as t
-            t.sleep(wait_seconds)
+            t.sleep(3)
+            _close_modals(page)
+            t.sleep(wait_seconds - 3 if wait_seconds > 3 else wait_seconds)
             title = page.title()
             blocked = [
                 "Почти готово", "Доступ ограничен", "HTTP 403",
@@ -113,13 +149,14 @@ def _scrape_with_pool(url: str, wait_seconds: int = 8) -> Optional[str]:
 _scrape_semaphore = asyncio.Semaphore(2)  # max 2 concurrent browser scrapes
 
 
-async def _camoufox_fetch(url: str, wait_seconds: int = 8) -> Optional[str]:
+async def _camoufox_fetch(url: str, wait_seconds: int = 8, cookies: list | None = None) -> Optional[str]:
     """Fetch URL via Camoufox with concurrency control."""
     async with _scrape_semaphore:
         try:
+            loop = asyncio.get_event_loop()
             return await asyncio.wait_for(
-                asyncio.get_event_loop().run_in_executor(
-                    None, _scrape_with_pool, url, wait_seconds
+                loop.run_in_executor(
+                    None, _scrape_with_pool, url, wait_seconds, cookies
                 ),
                 timeout=60,
             )
@@ -308,6 +345,53 @@ def _wb_basket(nm: int) -> str:
     return "22"
 
 
+def _wb_fetch_price_via_internal(nm: int) -> Optional[float]:
+    """Fetch WB product price via __internal/u-card API (requires Camoufox session)."""
+    browser = _get_browser()
+    if not browser:
+        return None
+    try:
+        page = browser.new_page()
+        try:
+            # Visit WB main page to get session/cookies
+            page.goto("https://www.wildberries.ru/", timeout=40000)
+            import time as t
+            t.sleep(15)
+            _close_modals(page)
+            t.sleep(2)
+
+            title = page.title()
+            if not title or "Почти" in title:
+                return None
+
+            # Fetch price from internal API in page context
+            api_url = f"https://www.wildberries.ru/__internal/u-card/cards/v4/list?appType=1&curr=rub&dest=-1257786&lang=ru&nm={nm}"
+            result = page.evaluate(f"""async () => {{
+                try {{
+                    const r = await fetch('{api_url}');
+                    if (!r.ok) return null;
+                    const data = await r.json();
+                    const products = data.products || [];
+                    if (products.length === 0) return null;
+                    const p = products[0];
+                    const sizes = p.sizes || [];
+                    if (sizes.length && sizes[0].price) {{
+                        return sizes[0].price.product || sizes[0].price.total || null;
+                    }}
+                    return p.salePriceU || null;
+                }} catch(e) {{ return null; }}
+            }}""")
+
+            if result and isinstance(result, (int, float)) and result > 0:
+                price = result / 100 if result > 100000 else float(result)
+                return price
+        finally:
+            page.close()
+    except Exception:
+        pass
+    return None
+
+
 async def _fetch_wildberries(url: str) -> dict:
     m = re.search(r"/catalog/(\d+)", url)
     if not m:
@@ -334,13 +418,19 @@ async def _fetch_wildberries(url: str) -> dict:
     except Exception:
         pass
 
-    # 2) Price via Camoufox (WB blocks aggressively, may not work)
+    # 2) Price via internal API (works on VPS without proxy)
     if name:
-        html = await _camoufox_fetch(url, wait_seconds=8)
-        if html:
-            result = _extract_from_html(html)
-            if result.get("price"):
-                price = result["price"]
+        async with _scrape_semaphore:
+            try:
+                loop = asyncio.get_event_loop()
+                wb_price = await asyncio.wait_for(
+                    loop.run_in_executor(None, _wb_fetch_price_via_internal, nm),
+                    timeout=60,
+                )
+                if wb_price:
+                    price = wb_price
+            except (asyncio.TimeoutError, Exception):
+                pass
 
     return {"name": name, "price": price, "store": "wildberries"} if name else {}
 
@@ -376,28 +466,39 @@ def _is_valid_dns_name(name: str | None) -> bool:
     return not any(s in lower for s in stubs) and len(name) > 5
 
 
+_DNS_COOKIES = [
+    {"name": "cookie-policy-agree", "value": "1", "domain": ".dns-shop.ru", "path": "/"},
+    {"name": "cookies_accepted", "value": "1", "domain": ".dns-shop.ru", "path": "/"},
+    {"name": "cookie_accepted", "value": "true", "domain": ".dns-shop.ru", "path": "/"},
+    {"name": "city_path", "value": "moscow", "domain": ".dns-shop.ru", "path": "/"},
+    {"name": "app-promo-banner-closed", "value": "1", "domain": ".dns-shop.ru", "path": "/"},
+    {"name": "mobile-app-banner", "value": "closed", "domain": ".dns-shop.ru", "path": "/"},
+]
+
+
+def _clean_dns_name(name: str) -> str:
+    return re.sub(r"\s*[—–|-]\s*(?:DNS|купить).*$", "", name, flags=re.IGNORECASE).strip()
+
+
 async def _fetch_dns(url: str) -> dict:
-    # 1) iMac scraper (home IP, bypasses Qrator)
+    # 1) Camoufox with cookie consent (works on VPS + iMac)
+    html = await _camoufox_fetch(url, wait_seconds=12, cookies=_DNS_COOKIES)
+    if html:
+        result = _extract_from_html(html)
+        if _is_valid_dns_name(result.get("name")):
+            return {"name": _clean_dns_name(result["name"]), "price": result.get("price"), "store": "dns"}
+
+    # 2) iMac scraper (home IP, bypasses Qrator)
     result = await _imac_scrape(url)
     if _is_valid_dns_name(result.get("name")):
-        name = re.sub(r"\s*[—–|-]\s*(?:DNS|купить).*$", "", result["name"], flags=re.IGNORECASE).strip()
-        return {"name": name, "price": result.get("price"), "store": "dns"}
+        return {"name": _clean_dns_name(result["name"]), "price": result.get("price"), "store": "dns"}
 
-    # 2) ZenRows (paid, reliable)
+    # 3) ZenRows (paid fallback)
     html = await _zenrows_fetch(url, wait="12000")
     if html:
         result = _extract_from_html(html)
         if _is_valid_dns_name(result.get("name")):
-            name = re.sub(r"\s*[—–|-]\s*(?:DNS|купить).*$", "", result["name"], flags=re.IGNORECASE).strip()
-            return {"name": name, "price": result.get("price"), "store": "dns"}
-
-    # 3) Camoufox local (last resort)
-    html = await _camoufox_fetch(url, wait_seconds=10)
-    if html:
-        result = _extract_from_html(html)
-        if _is_valid_dns_name(result.get("name")):
-            name = re.sub(r"\s*[—–|-]\s*(?:DNS|купить).*$", "", result["name"], flags=re.IGNORECASE).strip()
-            return {"name": name, "price": result.get("price"), "store": "dns"}
+            return {"name": _clean_dns_name(result["name"]), "price": result.get("price"), "store": "dns"}
 
     return {"store": "dns"}
 
