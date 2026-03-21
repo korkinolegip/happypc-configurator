@@ -394,12 +394,6 @@ const BuildPage: React.FC = () => {
             installOS={build.install_os}
           />
 
-          {/* Grand total big */}
-          <div className="text-right my-4">
-            <p className="text-th-text-2 text-sm">ИТОГО СБОРКИ:</p>
-            <p className="text-[#FF6B00] font-bold text-3xl">{formatPrice(build.total_price + (build.install_os ? 3000 : 0))}</p>
-          </div>
-
           {/* Back to builds */}
           <div className="mb-6">
             <Link to="/"
@@ -642,12 +636,6 @@ const BuildPage: React.FC = () => {
               <span className="text-th-text-2">Создано</span>
               <span className="text-th-text text-xs">{formatDate(build.created_at)}</span>
             </div>
-            {(build.labor_cost ?? 0) > 0 && (
-              <div className="flex justify-between text-sm">
-                <span className="text-th-text-2">Работа</span>
-                <span className="text-[#FF6B00]">{formatPrice(build.labor_cost ?? 0)}</span>
-              </div>
-            )}
           </div>
         </div>
       </div>
