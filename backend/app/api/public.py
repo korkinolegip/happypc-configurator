@@ -235,6 +235,8 @@ async def get_public_builds(
             "workshop_name": b.workshop.name if b.workshop else None,
             "city": author_city or ws_city,
             "total_price": total_price,
+            "labor_cost": totals["labor_cost"],
+            "install_os": getattr(b, "install_os", False) or False,
             "items_count": len(b.items),
             "components": components,
             "tags": b.tags or [],
