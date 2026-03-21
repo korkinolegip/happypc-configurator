@@ -383,7 +383,9 @@ def _wb_fetch_price_via_internal(nm: int) -> Optional[float]:
             }}""")
 
             if result and isinstance(result, (int, float)) and result > 0:
-                price = result / 100 if result > 100000 else float(result)
+                # WB API returns price in kopecks (e.g. 4480000 = 44800 rub)
+                # sizes[0].price.product is in kopecks, divide by 100
+                price = float(result) / 100
                 return price
         finally:
             page.close()
