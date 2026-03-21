@@ -79,8 +79,8 @@ const BuildCard: React.FC<BuildCardProps> = ({ build }) => {
               </div>
             </div>
             <div className="flex items-baseline gap-2 shrink-0 pl-2 whitespace-nowrap">
-              <span className="text-th-text-2 font-semibold text-base">Комплектующие:</span>
-              <span className="text-[#FF6B00] font-bold text-xl">{formatPrice(build.total_price - (build.labor_cost || 0) - (build.install_os ? 3000 : 0))} ₽</span>
+              <span className="text-th-text-2 font-semibold text-base">Сумма:</span>
+              <span className="text-[#FF6B00] font-bold text-xl">{formatPrice(build.total_price - (build.labor_cost || 0))} ₽</span>
             </div>
           </div>
         </div>
