@@ -671,7 +671,18 @@ async def _fetch_avito(url: str) -> dict:
             name = re.sub(r"\s*(?:купить|в\s+\w+\s+по).*$", "", name, flags=re.IGNORECASE).strip()
             return {"name": name, "price": result.get("price"), "store": "avito"}
 
-    # 2) ZenRows fallback (paid)
+    # 2) iMac scraper fallback (home IP, no captcha)
+    result = await _imac_scrape(url)
+    if result.get("name") and not result.get("error"):
+        name = result["name"]
+        for suffix in ["Авито", "Avito", "Объявление"]:
+            name = re.sub(rf"\s*[—–|]\s*(?:на\s+)?{suffix}.*$", "", name, flags=re.IGNORECASE).strip()
+        import html as html_lib
+        name = html_lib.unescape(name)
+        name = re.sub(r"\s*(?:купить|в\s+\w+\s+по).*$", "", name, flags=re.IGNORECASE).strip()
+        return {"name": name, "price": result.get("price"), "store": "avito"}
+
+    # 3) ZenRows fallback (paid)
     html = await _zenrows_fetch(url)
     if html:
         result = _extract_from_html(html)
