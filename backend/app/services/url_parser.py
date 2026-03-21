@@ -439,20 +439,42 @@ async def _fetch_wildberries(url: str) -> dict:
 
 # ─── Ozon ────────────────────────────────────────────────────────────────────
 
+_OZON_COOKIES = [
+    {"name": "abt_data", "value": "7", "domain": ".ozon.ru", "path": "/"},
+    {"name": "__Secure-ab-group", "value": "77", "domain": ".ozon.ru", "path": "/"},
+    {"name": "ADDRESSBOOKBAR_WEB_CLARIFICATION", "value": "1", "domain": ".ozon.ru", "path": "/"},
+    {"name": "xcid", "value": "1", "domain": ".ozon.ru", "path": "/"},
+]
+
+
+def _is_valid_ozon_name(name: str | None, url: str) -> bool:
+    """Check if Ozon returned the correct product, not a redirect."""
+    if not name:
+        return False
+    # Ozon antibot sometimes redirects to random products
+    # Try to match URL slug with product name
+    bad = ["ozon", "главная", "antibot", "captcha", "подтвердите"]
+    if any(b in name.lower() for b in bad):
+        return False
+    return len(name) > 5
+
+
 async def _fetch_ozon(url: str) -> dict:
-    # 1) Camoufox (free)
-    html = await _camoufox_fetch(url)
+    # 1) Camoufox with cookie consent (free)
+    html = await _camoufox_fetch(url, wait_seconds=10, cookies=_OZON_COOKIES)
     if html:
         result = _extract_from_html(html)
-        if result.get("name"):
-            return {"name": result["name"], "price": result.get("price"), "store": "ozon"}
+        if _is_valid_ozon_name(result.get("name"), url):
+            name = re.sub(r"\s*[—–|]\s*(?:OZON|Ozon|купить).*$", "", result["name"], flags=re.IGNORECASE).strip()
+            return {"name": name, "price": result.get("price"), "store": "ozon"}
 
     # 2) ZenRows fallback (paid)
     html = await _zenrows_fetch(url)
     if html:
         result = _extract_from_html(html)
-        if result.get("name"):
-            return {"name": result["name"], "price": result.get("price"), "store": "ozon"}
+        if _is_valid_ozon_name(result.get("name"), url):
+            name = re.sub(r"\s*[—–|]\s*(?:OZON|Ozon|купить).*$", "", result["name"], flags=re.IGNORECASE).strip()
+            return {"name": name, "price": result.get("price"), "store": "ozon"}
 
     return {"store": "ozon"}
 
