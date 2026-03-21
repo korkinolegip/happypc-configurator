@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Menu, X, ChevronDown, User, LogOut, Shield, Cpu, Sun, Moon } from 'lucide-react'
+import { Menu, X, ChevronDown, User, LogOut, Shield, Sun, Moon } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
 import { useTheme } from '../context/ThemeContext'
 import toast from 'react-hot-toast'
@@ -37,23 +37,17 @@ const Header: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-2 shrink-0">
+          <Link to="/" className="flex items-center gap-1.5 shrink-0">
             <img
-              src={theme === 'dark' ? '/static/logo-white.png' : '/static/logo-color.png'}
-              alt="HappyPC"
-              className="h-8 w-auto"
-              onError={(e) => {
-                const target = e.currentTarget
-                target.style.display = 'none'
-                const next = target.nextElementSibling as HTMLElement
-                if (next) next.style.display = 'flex'
-              }}
+              src="/logo-icon.png"
+              alt=""
+              className="h-9 w-auto"
             />
-            <span className="hidden items-center gap-1.5 text-xl font-bold">
-              <Cpu className="text-accent" size={22} />
-              <span style={{ color: 'var(--text)' }}>Happy</span>
-              <span className="text-accent">PC</span>
-            </span>
+            <img
+              src={theme === 'dark' ? '/logo-text-white.png' : '/logo-text-black.png'}
+              alt="HappyPC"
+              className="h-5 w-auto"
+            />
           </Link>
 
           {/* Nav */}

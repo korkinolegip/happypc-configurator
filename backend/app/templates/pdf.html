@@ -316,7 +316,12 @@
     <!-- HEADER -->
     <div class="header">
         <div class="header-logo">
-            {% if logo_path %}
+            {% if logo_icon_path %}
+                <img src="file://{{ logo_icon_path }}" alt="" style="height:36px;">
+            {% endif %}
+            {% if logo_text_path %}
+                <img src="file://{{ logo_text_path }}" alt="HappyPC" style="height:18px;">
+            {% elif logo_path %}
                 <img src="file://{{ logo_path }}" alt="HappyPC">
             {% else %}
                 <span class="header-logo-text">HappyPC</span>

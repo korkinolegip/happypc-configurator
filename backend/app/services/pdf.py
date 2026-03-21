@@ -9,6 +9,8 @@ from app.services.builds import calculate_totals
 
 TEMPLATE_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "templates")
 LOGO_PATH = "/app/static/logo-white.png"
+LOGO_ICON_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "..", "..", "frontend", "public", "logo-icon.png")
+LOGO_TEXT_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "..", "..", "frontend", "public", "logo-text-black.png")
 
 
 def format_price(value: float) -> str:
@@ -77,6 +79,8 @@ async def generate_build_pdf(build, author_name: str, workshop_name: str | None)
     totals = calculate_totals(build.items, build.labor_percent, build.labor_price_manual)
 
     logo_exists = os.path.isfile(LOGO_PATH)
+    logo_icon_exists = os.path.isfile(LOGO_ICON_PATH)
+    logo_text_exists = os.path.isfile(LOGO_TEXT_PATH)
 
     context = {
         "title": build.title,
@@ -94,6 +98,8 @@ async def generate_build_pdf(build, author_name: str, workshop_name: str | None)
         "labor_percent": build.labor_percent,
         "labor_price_manual": build.labor_price_manual,
         "logo_path": LOGO_PATH if logo_exists else None,
+        "logo_icon_path": os.path.abspath(LOGO_ICON_PATH) if logo_icon_exists else None,
+        "logo_text_path": os.path.abspath(LOGO_TEXT_PATH) if logo_text_exists else None,
         "category_icons": CATEGORY_ICONS,
         "detect_store": detect_store,
         "format_price": format_price,
