@@ -94,6 +94,8 @@ class BuildListItem(BaseModel):
     author_avatar: str | None
     workshop_name: str | None
     total_price: float
+    labor_cost: float = 0
+    install_os: bool = False
     items_count: int
     created_at: datetime
 

@@ -189,6 +189,8 @@ async def get_my_builds(
                 author_avatar=build.author.avatar_url if build.author else None,
                 workshop_name=build.workshop.name if build.workshop else None,
                 total_price=totals["total_with_labor"],
+                labor_cost=totals["labor_cost"],
+                install_os=getattr(build, "install_os", False) or False,
                 items_count=len(build.items),
                 created_at=build.created_at,
             )

@@ -55,6 +55,8 @@ export interface BuildListItem {
   workshop_name: string | null
   city: string | null
   total_price: number
+  labor_cost: number
+  install_os: boolean
   items_count: number
   components?: { category: string; name: string }[]
   tags: string[]
