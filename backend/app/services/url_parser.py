@@ -613,9 +613,53 @@ async def _apify_yandex_market(url: str) -> dict:
 
 # ─── Avito ───────────────────────────────────────────────────────────────────
 
+def _avito_scrape(url: str) -> Optional[str]:
+    """Scrape Avito with captcha/block handling (click 'Продолжить')."""
+    browser = _get_browser()
+    if not browser:
+        return None
+    try:
+        page = browser.new_page()
+        try:
+            page.goto(url, timeout=30000)
+            import time as t
+            t.sleep(3)
+
+            # Handle "Доступ ограничен" — click "Продолжить" button
+            try:
+                btn = page.query_selector('button:has-text("Продолжить")')
+                if btn and btn.is_visible():
+                    btn.click()
+                    t.sleep(8)
+            except Exception:
+                pass
+
+            _close_modals(page)
+            t.sleep(5)
+
+            title = page.title()
+            if "ограничен" in (title or "").lower():
+                return None
+            return page.content()
+        finally:
+            page.close()
+    except Exception:
+        global _browser_instance
+        _browser_instance = None
+        return None
+
+
 async def _fetch_avito(url: str) -> dict:
-    # 1) Camoufox (free, works on home IP)
-    html = await _camoufox_fetch(url)
+    # 1) Camoufox with captcha handling
+    async with _scrape_semaphore:
+        try:
+            loop = asyncio.get_event_loop()
+            html = await asyncio.wait_for(
+                loop.run_in_executor(None, _avito_scrape, url),
+                timeout=60,
+            )
+        except (asyncio.TimeoutError, Exception):
+            html = None
     if html:
         result = _extract_from_html(html)
         name = result.get("name")
