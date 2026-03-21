@@ -317,10 +317,10 @@
     <div class="header">
         <div class="header-logo">
             {% if logo_icon_path %}
-                <img src="file://{{ logo_icon_path }}" alt="" style="height:36px;">
+                <img src="file://{{ logo_icon_path }}" alt="" style="height:24px;">
             {% endif %}
             {% if logo_text_path %}
-                <img src="file://{{ logo_text_path }}" alt="HappyPC" style="height:18px;">
+                <img src="file://{{ logo_text_path }}" alt="HappyPC" style="height:24px;">
             {% elif logo_path %}
                 <img src="file://{{ logo_path }}" alt="HappyPC">
             {% else %}
@@ -452,7 +452,16 @@
     <!-- FOOTER -->
     <div class="footer">
         <div>
-            <div class="company-name">HappyPC</div>
+            <div class="company-name" style="display:flex;align-items:center;gap:8px;">
+                {% if logo_icon_path %}
+                    <img src="file://{{ logo_icon_path }}" alt="" style="height:20px;">
+                {% endif %}
+                {% if logo_text_path %}
+                    <img src="file://{{ logo_text_path }}" alt="HappyPC" style="height:20px;">
+                {% else %}
+                    HappyPC
+                {% endif %}
+            </div>
             <div>Конфигуратор компьютерных сборок</div>
         </div>
         <div class="workshop-info">

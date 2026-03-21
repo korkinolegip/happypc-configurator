@@ -41,12 +41,12 @@ const Header: React.FC = () => {
             <img
               src="/logo-icon.png"
               alt=""
-              className="h-9 w-auto"
+              className="h-6 w-auto"
             />
             <img
               src={theme === 'dark' ? '/logo-text-white.png' : '/logo-text-black.png'}
               alt="HappyPC"
-              className="h-5 w-auto"
+              className="h-6 w-auto"
             />
           </Link>
 
