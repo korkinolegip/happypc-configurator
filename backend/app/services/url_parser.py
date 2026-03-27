@@ -238,7 +238,7 @@ def _extract_from_html(html: str) -> dict:
 
     # H1
     if not name:
-        m = re.search(r'<h1[^>]*>(.*?)</h1>', html[:200000], re.DOTALL)
+        m = re.search(r'<h1[^>]*>(.*?)</h1>', html[:500000], re.DOTALL)
         if m:
             import html as html_lib
             text = re.sub(r'<[^>]+>', '', m.group(1)).strip()
@@ -265,7 +265,7 @@ def _extract_from_html(html: str) -> dict:
             r'price-current[^>]*>.*?(\d[\d\s\xa0]*\d)',
             r'(\d[\d\xa0\s]{2,8})\s*₽',
         ]:
-            pm = re.search(pat, html[:300000], re.DOTALL)
+            pm = re.search(pat, html[:500000], re.DOTALL)
             if pm:
                 raw = pm.group(1).replace('\xa0', '').replace(' ', '')
                 if raw.isdigit() and int(raw) > 100:
