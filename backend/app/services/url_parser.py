@@ -16,12 +16,15 @@ Strategy (priority order):
 """
 import asyncio
 import json
+import logging
 import re
 import time
 import threading
 from typing import Optional
 
 import httpx
+
+logger = logging.getLogger(__name__)
 
 
 # ─── Layer 1: Cache ─────────────────────────────────────────────────────────
@@ -463,18 +466,28 @@ async def _fetch_ozon(url: str) -> dict:
     # 1) Camoufox with cookie consent (free)
     html = await _camoufox_fetch(url, wait_seconds=10, cookies=_OZON_COOKIES)
     if html:
+        logger.warning(f"[OZON] Camoufox got HTML ({len(html)} chars), title: {re.search(r'<title>(.*?)</title>', html[:5000], re.DOTALL)}")
         result = _extract_from_html(html)
+        logger.warning(f"[OZON] Extracted: name={result.get('name')!r}, price={result.get('price')}")
         if _is_valid_ozon_name(result.get("name"), url):
             name = re.sub(r"\s*[—–|]\s*(?:OZON|Ozon|купить).*$", "", result["name"], flags=re.IGNORECASE).strip()
             return {"name": name, "price": result.get("price"), "store": "ozon"}
+        else:
+            logger.warning(f"[OZON] Name rejected by validation: {result.get('name')!r}")
+    else:
+        logger.warning("[OZON] Camoufox returned no HTML")
 
     # 2) ZenRows fallback (paid)
     html = await _zenrows_fetch(url)
     if html:
+        logger.warning(f"[OZON] ZenRows got HTML ({len(html)} chars)")
         result = _extract_from_html(html)
+        logger.warning(f"[OZON] ZenRows extracted: name={result.get('name')!r}, price={result.get('price')}")
         if _is_valid_ozon_name(result.get("name"), url):
             name = re.sub(r"\s*[—–|]\s*(?:OZON|Ozon|купить).*$", "", result["name"], flags=re.IGNORECASE).strip()
             return {"name": name, "price": result.get("price"), "store": "ozon"}
+    else:
+        logger.warning("[OZON] ZenRows also returned no HTML")
 
     return {"store": "ozon"}
 
@@ -658,10 +671,13 @@ async def _fetch_avito(url: str) -> dict:
                 loop.run_in_executor(None, _avito_scrape, url),
                 timeout=60,
             )
-        except (asyncio.TimeoutError, Exception):
+        except (asyncio.TimeoutError, Exception) as e:
+            logger.warning(f"[AVITO] Camoufox error: {e}")
             html = None
     if html:
+        logger.warning(f"[AVITO] Camoufox got HTML ({len(html)} chars), title: {re.search(r'<title>(.*?)</title>', html[:5000], re.DOTALL)}")
         result = _extract_from_html(html)
+        logger.warning(f"[AVITO] Extracted: name={result.get('name')!r}, price={result.get('price')}")
         name = result.get("name")
         if name:
             for suffix in ["Авито", "Avito", "Объявление"]:
