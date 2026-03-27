@@ -468,7 +468,7 @@ async def _fetch_ozon(url: str) -> dict:
     if html:
         logger.warning(f"[OZON] Camoufox got HTML ({len(html)} chars), title: {re.search(r'<title>(.*?)</title>', html[:5000], re.DOTALL)}")
         with open("/tmp/ozon_debug.html", "w") as f:
-            f.write(html[:50000])
+            f.write(html)
         result = _extract_from_html(html)
         logger.warning(f"[OZON] Extracted: name={result.get('name')!r}, price={result.get('price')}")
         if _is_valid_ozon_name(result.get("name"), url):
@@ -679,7 +679,7 @@ async def _fetch_avito(url: str) -> dict:
     if html:
         logger.warning(f"[AVITO] Camoufox got HTML ({len(html)} chars), title: {re.search(r'<title>(.*?)</title>', html[:5000], re.DOTALL)}")
         with open("/tmp/avito_debug.html", "w") as f:
-            f.write(html[:50000])
+            f.write(html)
         result = _extract_from_html(html)
         logger.warning(f"[AVITO] Extracted: name={result.get('name')!r}, price={result.get('price')}")
         name = result.get("name")
