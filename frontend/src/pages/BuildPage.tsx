@@ -291,7 +291,7 @@ const BuildPage: React.FC = () => {
   const buildUrl = window.location.href
 
   return (
-    <div className="max-w-6xl mx-auto">
+    <div className="max-w-7xl mx-auto">
       {showShare && <ShareModal url={buildUrl} onClose={() => setShowShare(false)} />}
 
       {/* Breadcrumb */}
