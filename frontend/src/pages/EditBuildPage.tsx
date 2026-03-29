@@ -84,7 +84,7 @@ const EditBuildPage: React.FC = () => {
   )
 
   return (
-    <div className="max-w-6xl mx-auto">
+    <div>
       <div className="mb-5">
         <h1 className="text-2xl font-bold text-th-text">Редактировать сборку</h1>
         <p className="text-th-text-2 text-sm mt-1">{build.title}</p>
