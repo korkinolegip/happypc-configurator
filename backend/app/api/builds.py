@@ -368,6 +368,8 @@ async def copy_build(
         password_hash=None,
         labor_percent=original.labor_percent,
         labor_price_manual=original.labor_price_manual,
+        tags=original.tags,
+        install_os=original.install_os,
     )
     db.add(new_build)
     await db.flush()
