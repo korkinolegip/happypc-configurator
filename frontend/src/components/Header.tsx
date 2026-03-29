@@ -37,16 +37,16 @@ const Header: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-1.5 shrink-0">
+          <Link to="/" className="flex items-center gap-3 shrink-0">
             <img
               src="/logo-icon.png"
               alt=""
-              className="h-6 w-auto"
+              className="h-8 w-auto"
             />
             <img
               src={theme === 'dark' ? '/logo-text-white.png' : '/logo-text-black.png'}
               alt="HappyPC"
-              className="h-6 w-auto"
+              className="h-4 w-auto"
             />
           </Link>
 
