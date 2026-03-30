@@ -480,7 +480,7 @@ async def vk_auth_redirect():
         "client_id": settings.VK_CLIENT_ID,
         "redirect_uri": settings.VK_REDIRECT_URI,
         "response_type": "code",
-        "scope": "vkid.personal_info email",
+        "scope": "vkid.personal_info email phone",
         "state": state,
         "code_challenge": code_challenge,
         "code_challenge_method": "s256",
@@ -539,15 +539,25 @@ async def vk_auth_callback(
 
     # Get user info from VK ID
     vk_email = None
+    vk_phone = None
+    vk_gender = None
     name = "VK User"
     avatar_url = None
 
     try:
         user_info = await get_vk_user_info(access_token)
+        logger.warning("VK user_info response: %s", user_info)
         user_data = user_info.get("user", user_info)
         vk_user_id = str(user_data.get("user_id", vk_user_id))
         name = f"{user_data.get('first_name', '')} {user_data.get('last_name', '')}".strip() or "VK User"
         vk_email = user_data.get("email")
+        vk_phone = user_data.get("phone")
+        # VK sex: 1=female, 2=male
+        vk_sex = user_data.get("sex")
+        if vk_sex == 2:
+            vk_gender = "male"
+        elif vk_sex == 1:
+            vk_gender = "female"
         avatar_url = user_data.get("avatar_url") or user_data.get("photo_200")
     except Exception:
         pass
@@ -568,6 +578,10 @@ async def vk_auth_callback(
             user.vk_url = f"https://vk.com/id{vk_user_id}"
             if avatar_url and not user.avatar_url:
                 user.avatar_url = avatar_url
+            if vk_phone and not user.phone:
+                user.phone = vk_phone
+            if vk_gender and not user.gender:
+                user.gender = vk_gender
 
     # 3) Create new user if not found
     if not user:
@@ -576,7 +590,9 @@ async def vk_auth_callback(
             vk_url=f"https://vk.com/id{vk_user_id}",
             email=vk_email,
             name=name,
-            avatar_url=avatar_url or _random_avatar("male"),
+            phone=vk_phone,
+            gender=vk_gender,
+            avatar_url=avatar_url or _random_avatar(vk_gender or "male"),
             role="user",
             email_verified=bool(vk_email),
         )
