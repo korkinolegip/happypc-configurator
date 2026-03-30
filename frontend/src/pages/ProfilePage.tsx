@@ -161,13 +161,13 @@ const ProfilePage: React.FC = () => {
       <h1 className="text-2xl font-bold text-th-text">Настройки профиля</h1>
 
       {/* Avatar + Info */}
-      <div className="bg-th-surface border border-th-border rounded-lg p-6">
-        <div className="flex flex-col sm:flex-row items-start gap-6">
+      <div className="bg-th-surface border border-th-border rounded-lg p-4 sm:p-6">
+        <div className="flex flex-col sm:flex-row items-start gap-4 sm:gap-6">
           {/* Avatar — bigger */}
           <div className="shrink-0">
             <div className="relative">
               <div
-                className="w-28 h-28 rounded-full overflow-hidden bg-th-surface-2 cursor-pointer group relative"
+                className="w-20 h-20 sm:w-28 sm:h-28 rounded-full overflow-hidden bg-th-surface-2 cursor-pointer group relative"
                 onClick={() => fileInputRef.current?.click()}
               >
                 {currentAvatar ? (
@@ -244,7 +244,7 @@ const ProfilePage: React.FC = () => {
       </div>
 
       {/* Edit Profile Form */}
-      <div className="bg-th-surface border border-th-border rounded-lg p-6">
+      <div className="bg-th-surface border border-th-border rounded-lg p-4 sm:p-6">
         <h2 className="text-th-text font-semibold mb-4 flex items-center gap-2">
           <UserIcon size={18} />
           Личные данные
@@ -358,7 +358,7 @@ const ProfilePage: React.FC = () => {
 
       {/* Social Links (read-only) */}
       {hasSocialAuth && (
-        <div className="bg-th-surface border border-th-border rounded-lg p-6">
+        <div className="bg-th-surface border border-th-border rounded-lg p-4 sm:p-6">
           <h2 className="text-th-text font-semibold mb-4 flex items-center gap-2">
             <ExternalLink size={18} />
             Привязанные аккаунты
@@ -397,7 +397,7 @@ const ProfilePage: React.FC = () => {
       )}
 
       {/* Change Password */}
-      <div className="bg-th-surface border border-th-border rounded-lg p-6">
+      <div className="bg-th-surface border border-th-border rounded-lg p-4 sm:p-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-th-text font-semibold flex items-center gap-2">
             <Lock size={18} />
@@ -477,14 +477,15 @@ const ProfilePage: React.FC = () => {
 
       {/* My Builds */}
       <div>
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-4 gap-2">
           <h2 className="text-th-text font-semibold text-lg">Мои сборки</h2>
           <Link
             to="/builds/create"
-            className="flex items-center gap-1.5 bg-[#FF6B00] hover:bg-[#E05A00] text-white font-medium px-3 py-2 rounded-lg text-sm transition-colors"
+            className="flex items-center gap-1.5 bg-[#FF6B00] hover:bg-[#E05A00] text-white font-medium px-3 py-2 rounded-lg text-sm transition-colors shrink-0"
           >
             <Plus size={15} />
-            Создать сборку
+            <span className="hidden sm:inline">Создать сборку</span>
+            <span className="sm:hidden">Создать</span>
           </Link>
         </div>
 
@@ -497,35 +498,37 @@ const ProfilePage: React.FC = () => {
         ) : builds && builds.length > 0 ? (
           <div className="space-y-3">
             {builds.map((build) => (
-              <div key={build.id} className="bg-th-surface border border-th-border rounded-lg p-4 flex items-center justify-between gap-4 hover:border-[#FF6B00]/40 transition-colors">
-                <Link to={`/b/${build.short_code}`} className="flex-1 min-w-0">
-                  <h3 className="text-th-text font-semibold text-sm truncate">{build.title}</h3>
-                  <div className="flex items-center gap-3 mt-1">
-                    <span className="text-[#FF6B00] font-bold text-sm">{formatPrice(build.total_price)} ₽</span>
-                    <span className="text-th-text-3 text-xs">{build.items_count} компонентов</span>
-                    <span className="text-th-muted text-xs">{new Date(build.created_at).toLocaleDateString('ru-RU')}</span>
-                  </div>
-                </Link>
-                <div className="flex items-center gap-1 shrink-0">
-                  <Link
-                    to={`/builds/${build.id}/edit`}
-                    className="p-2 text-th-text-2 hover:text-th-text hover:bg-th-surface-2 rounded transition-colors"
-                    title="Редактировать"
-                  >
-                    <Edit2 size={15} />
+              <div key={build.id} className="bg-th-surface border border-th-border rounded-lg p-3 sm:p-4 hover:border-[#FF6B00]/40 transition-colors">
+                <div className="flex items-start justify-between gap-2">
+                  <Link to={`/b/${build.short_code}`} className="flex-1 min-w-0">
+                    <h3 className="text-th-text font-semibold text-sm truncate">{build.title}</h3>
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-1">
+                      <span className="text-[#FF6B00] font-bold text-sm whitespace-nowrap">{formatPrice(build.total_price)} ₽</span>
+                      <span className="text-th-text-3 text-xs">{build.items_count} компонентов</span>
+                      <span className="text-th-muted text-xs">{new Date(build.created_at).toLocaleDateString('ru-RU')}</span>
+                    </div>
                   </Link>
-                  <button
-                    onClick={() => handleDeleteBuild(build.id, build.title)}
-                    disabled={deletingId === build.id}
-                    className="p-2 text-th-text-2 hover:text-red-400 hover:bg-red-900/20 rounded transition-colors disabled:opacity-50"
-                    title="Удалить"
-                  >
-                    {deletingId === build.id ? (
-                      <span className="w-3.5 h-3.5 border border-current border-t-transparent rounded-full animate-spin block" />
-                    ) : (
-                      <Trash2 size={15} />
-                    )}
-                  </button>
+                  <div className="flex items-center gap-0.5 shrink-0">
+                    <Link
+                      to={`/builds/${build.id}/edit`}
+                      className="p-2 text-th-text-2 hover:text-th-text hover:bg-th-surface-2 rounded transition-colors"
+                      title="Редактировать"
+                    >
+                      <Edit2 size={15} />
+                    </Link>
+                    <button
+                      onClick={() => handleDeleteBuild(build.id, build.title)}
+                      disabled={deletingId === build.id}
+                      className="p-2 text-th-text-2 hover:text-red-400 hover:bg-red-900/20 rounded transition-colors disabled:opacity-50"
+                      title="Удалить"
+                    >
+                      {deletingId === build.id ? (
+                        <span className="w-3.5 h-3.5 border border-current border-t-transparent rounded-full animate-spin block" />
+                      ) : (
+                        <Trash2 size={15} />
+                      )}
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}
