@@ -88,6 +88,19 @@ export const deleteBuild = async (id: string): Promise<void> => {
   await client.delete(`/api/builds/${id}`)
 }
 
+// Build trash
+export const getMyDeletedBuilds = async () => {
+  const { data } = await client.get('/api/builds/trash/my')
+  return data
+}
+export const restoreBuild = async (trashId: string) => {
+  const { data } = await client.post(`/api/builds/trash/${trashId}/restore`)
+  return data
+}
+export const permanentDeleteBuild = async (trashId: string): Promise<void> => {
+  await client.delete(`/api/builds/trash/${trashId}`)
+}
+
 export const copyBuild = async (id: string): Promise<Build> => {
   const response = await client.post<Build>(`/api/builds/${id}/copy`)
   return response.data

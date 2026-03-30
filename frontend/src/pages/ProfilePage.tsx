@@ -5,11 +5,12 @@ import { useForm } from 'react-hook-form'
 import {
   Camera, Plus, Trash2, Edit2, Save, Lock,
   MapPin, Phone, Mail, User as UserIcon, Send, ExternalLink,
+  RotateCcw,
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useAuth } from '../hooks/useAuth'
 import { updateProfile, changePassword } from '../api/auth'
-import { getMyBuilds, deleteBuild } from '../api/builds'
+import { getMyBuilds, deleteBuild, getMyDeletedBuilds, restoreBuild, permanentDeleteBuild } from '../api/builds'
 const formatPrice = (n: number) => new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 0 }).format(n)
 import CitySelect from '../components/CitySelect'
 
@@ -34,6 +35,8 @@ const ProfilePage: React.FC = () => {
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null)
   const [uploadingAvatar, setUploadingAvatar] = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [buildsTab, setBuildsTab] = useState<'builds' | 'trash'>('builds')
+  const [restoringTrashId, setRestoringTrashId] = useState<string | null>(null)
   const [showPasswordForm, setShowPasswordForm] = useState(false)
   const [showAvatarPicker, setShowAvatarPicker] = useState(false)
   const [availableAvatars, setAvailableAvatars] = useState<{ male: string[]; female: string[] } | null>(null)
@@ -66,6 +69,38 @@ const ProfilePage: React.FC = () => {
     queryFn: getMyBuilds,
   })
   const builds = buildsData?.items
+
+  const { data: deletedBuilds } = useQuery<{ id: string; title: string; total_price: number; items_count: number; deleted_by_name: string; deleted_at: string }[]>({
+    queryKey: ['my-deleted-builds'],
+    queryFn: getMyDeletedBuilds,
+    enabled: buildsTab === 'trash',
+  })
+
+  const handleRestoreBuild = async (item: { id: string; title: string }) => {
+    setRestoringTrashId(item.id)
+    try {
+      await restoreBuild(item.id)
+      await queryClient.invalidateQueries({ queryKey: ['my-deleted-builds'] })
+      await queryClient.invalidateQueries({ queryKey: ['my-builds'] })
+      toast.success(`Сборка «${item.title}» восстановлена`)
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { detail?: string } } }
+      toast.error(error.response?.data?.detail || 'Ошибка восстановления')
+    } finally {
+      setRestoringTrashId(null)
+    }
+  }
+
+  const handlePermanentDeleteBuild = async (item: { id: string; title: string }) => {
+    if (!confirm(`Удалить навсегда «${item.title}»?`)) return
+    try {
+      await permanentDeleteBuild(item.id)
+      await queryClient.invalidateQueries({ queryKey: ['my-deleted-builds'] })
+      toast.success('Удалено из корзины')
+    } catch {
+      toast.error('Ошибка')
+    }
+  }
 
   const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -478,24 +513,105 @@ const ProfilePage: React.FC = () => {
       {/* My Builds */}
       <div>
         <div className="flex items-center justify-between mb-4 gap-2">
-          <h2 className="text-th-text font-semibold text-lg">Мои сборки</h2>
-          <Link
-            to="/builds/create"
-            className="flex items-center gap-1.5 bg-[#FF6B00] hover:bg-[#E05A00] text-white font-medium px-3 py-2 rounded-lg text-sm transition-colors shrink-0"
-          >
-            <Plus size={15} />
-            <span className="hidden sm:inline">Создать сборку</span>
-            <span className="sm:hidden">Создать</span>
-          </Link>
+          <div className="flex items-center gap-2">
+            <h2 className="text-th-text font-semibold text-lg">Мои сборки</h2>
+            <div className="flex gap-1 bg-th-surface border border-th-border rounded-lg p-0.5">
+              <button
+                onClick={() => setBuildsTab('builds')}
+                className={`px-2.5 py-1 rounded text-xs font-medium transition-colors ${
+                  buildsTab === 'builds' ? 'bg-[#FF6B00] text-white' : 'text-th-text-2 hover:text-th-text'
+                }`}
+              >
+                Все
+              </button>
+              <button
+                onClick={() => setBuildsTab('trash')}
+                className={`px-2.5 py-1 rounded text-xs font-medium transition-colors flex items-center gap-1 ${
+                  buildsTab === 'trash' ? 'bg-[#FF6B00] text-white' : 'text-th-text-2 hover:text-th-text'
+                }`}
+              >
+                <Trash2 size={11} />
+                Корзина
+                {deletedBuilds && deletedBuilds.length > 0 && (
+                  <span className={`text-[10px] px-1 py-0 rounded-full ${
+                    buildsTab === 'trash' ? 'bg-white/20' : 'bg-red-500/20 text-red-400'
+                  }`}>{deletedBuilds.length}</span>
+                )}
+              </button>
+            </div>
+          </div>
+          {buildsTab === 'builds' && (
+            <Link
+              to="/builds/create"
+              className="flex items-center gap-1.5 bg-[#FF6B00] hover:bg-[#E05A00] text-white font-medium px-3 py-2 rounded-lg text-sm transition-colors shrink-0"
+            >
+              <Plus size={15} />
+              <span className="hidden sm:inline">Создать сборку</span>
+              <span className="sm:hidden">Создать</span>
+            </Link>
+          )}
         </div>
 
-        {buildsLoading ? (
+        {/* TRASH VIEW */}
+        {buildsTab === 'trash' && (
+          <>
+            {!deletedBuilds || deletedBuilds.length === 0 ? (
+              <div className="bg-th-surface border border-th-border rounded-lg p-8 text-center">
+                <Trash2 size={32} className="mx-auto mb-2 opacity-30 text-th-text-2" />
+                <p className="text-th-text-2 text-sm">Корзина пуста</p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {deletedBuilds.map((item) => (
+                  <div key={item.id} className="bg-th-surface border border-th-border rounded-lg p-3 sm:p-4">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-th-text font-semibold text-sm truncate">{item.title}</h3>
+                        <div className="flex items-center gap-3 mt-1">
+                          <span className="text-[#FF6B00] font-bold text-sm whitespace-nowrap">{formatPrice(item.total_price)} ₽</span>
+                          <span className="text-th-text-3 text-xs">{item.items_count} компонентов</span>
+                        </div>
+                        <span className="text-th-muted text-xs mt-0.5 block">
+                          Удалено: {new Date(item.deleted_at).toLocaleDateString('ru-RU')} · {item.deleted_by_name}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1 shrink-0 -mt-0.5">
+                        <button
+                          onClick={() => handleRestoreBuild(item)}
+                          disabled={restoringTrashId === item.id}
+                          className="p-2 text-green-400 hover:bg-green-900/20 rounded transition-colors disabled:opacity-50"
+                          title="Восстановить"
+                        >
+                          {restoringTrashId === item.id ? (
+                            <span className="w-3.5 h-3.5 border-2 border-green-400 border-t-transparent rounded-full animate-spin block" />
+                          ) : (
+                            <RotateCcw size={15} />
+                          )}
+                        </button>
+                        <button
+                          onClick={() => handlePermanentDeleteBuild(item)}
+                          className="p-2 text-red-400 hover:bg-red-900/20 rounded transition-colors"
+                          title="Удалить навсегда"
+                        >
+                          <Trash2 size={15} />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </>
+        )}
+
+        {/* BUILDS VIEW */}
+        {buildsTab === 'builds' && buildsLoading ? (
           <div className="space-y-3">
             {Array.from({ length: 3 }).map((_, i) => (
               <div key={i} className="bg-th-surface border border-th-border rounded-lg p-4 animate-pulse h-20" />
             ))}
           </div>
-        ) : builds && builds.length > 0 ? (
+        ) : buildsTab === 'builds' && builds && builds.length > 0 ? (
           <div className="space-y-3">
             {builds.map((build) => (
               <div key={build.id} className="bg-th-surface border border-th-border rounded-lg p-3 sm:p-4 hover:border-[#FF6B00]/40 transition-colors">
@@ -533,7 +649,7 @@ const ProfilePage: React.FC = () => {
               </div>
             ))}
           </div>
-        ) : (
+        ) : buildsTab === 'builds' ? (
           <div className="bg-th-surface border border-th-border rounded-lg p-8 text-center">
             <p className="text-th-text-2 mb-4">У вас пока нет сборок</p>
             <Link
@@ -544,7 +660,7 @@ const ProfilePage: React.FC = () => {
               Создать первую сборку
             </Link>
           </div>
-        )}
+        ) : null}
       </div>
 
       {/* Avatar Picker Modal */}

@@ -184,6 +184,114 @@ async def create_build(
     return build_to_response(build)
 
 
+# ---------------------------------------------------------------------------
+# Build trash (must be before /{build_id} routes)
+# ---------------------------------------------------------------------------
+
+@router.get("/trash/my")
+async def my_deleted_builds(
+    current_user: User = Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Get current user's deleted builds."""
+    from app.models.trash import DeletedBuild
+    result = await db.execute(
+        select(DeletedBuild)
+        .where(DeletedBuild.owner_id == current_user.id)
+        .order_by(DeletedBuild.deleted_at.desc())
+    )
+    items = result.scalars().all()
+    return [
+        {
+            "id": str(it.id),
+            "title": it.build_data.get("title", ""),
+            "total_price": it.build_data.get("total_price", 0),
+            "items_count": it.build_data.get("items_count", 0),
+            "deleted_by_name": it.deleted_by_name,
+            "deleted_at": it.deleted_at.isoformat() if it.deleted_at else None,
+        }
+        for it in items
+    ]
+
+
+@router.post("/trash/{trash_id}/restore")
+async def restore_deleted_build(
+    trash_id: uuid.UUID,
+    current_user: User = Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Restore a build from trash."""
+    from app.models.trash import DeletedBuild
+    result = await db.execute(select(DeletedBuild).where(DeletedBuild.id == trash_id))
+    trash = result.scalar_one_or_none()
+    if not trash:
+        raise HTTPException(status_code=404, detail="Запись не найдена")
+
+    role_level = ROLE_HIERARCHY.get(current_user.role, 0)
+    is_owner = trash.owner_id == current_user.id
+    is_admin = role_level >= ROLE_HIERARCHY["admin"]
+    if not (is_owner or is_admin):
+        raise HTTPException(status_code=403, detail="Нет прав")
+
+    bd = trash.build_data
+    import secrets as _s
+    code = bd.get("short_code", _s.token_urlsafe(6)[:8])
+    existing = await db.execute(select(Build).where(Build.short_code == code))
+    if existing.scalar_one_or_none():
+        code = _s.token_urlsafe(6)[:8]
+
+    build = Build(
+        short_code=code,
+        title=bd.get("title", ""),
+        description=bd.get("description"),
+        author_id=trash.owner_id,
+        workshop_id=uuid.UUID(bd["workshop_id"]) if bd.get("workshop_id") else None,
+        is_public=bd.get("is_public", True),
+        labor_percent=bd.get("labor_percent", 7.0),
+        labor_price_manual=bd.get("labor_price_manual"),
+        tags=bd.get("tags"),
+        install_os=bd.get("install_os", False),
+    )
+    db.add(build)
+    await db.flush()
+
+    for item_data in bd.get("items", []):
+        db.add(BuildItem(
+            build_id=build.id,
+            category=item_data.get("category", ""),
+            name=item_data.get("name", ""),
+            url=item_data.get("url"),
+            price=item_data.get("price", 0),
+            sort_order=item_data.get("sort_order", 0),
+        ))
+
+    await db.delete(trash)
+    await db.flush()
+    return {"message": f"Сборка «{bd.get('title')}» восстановлена"}
+
+
+@router.delete("/trash/{trash_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def permanent_delete_build_trash(
+    trash_id: uuid.UUID,
+    current_user: User = Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Permanently delete a build from trash."""
+    from app.models.trash import DeletedBuild
+    result = await db.execute(select(DeletedBuild).where(DeletedBuild.id == trash_id))
+    trash = result.scalar_one_or_none()
+    if not trash:
+        raise HTTPException(status_code=404, detail="Запись не найдена")
+
+    role_level = ROLE_HIERARCHY.get(current_user.role, 0)
+    is_owner = trash.owner_id == current_user.id
+    is_admin = role_level >= ROLE_HIERARCHY["admin"]
+    if not (is_owner or is_admin):
+        raise HTTPException(status_code=403, detail="Нет прав")
+
+    await db.delete(trash)
+
+
 @router.get("/{build_id}", response_model=BuildResponse)
 async def get_build(
     build_id: uuid.UUID,
@@ -311,7 +419,10 @@ async def delete_build(
     current_user: User = Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db),
 ):
-    result = await db.execute(select(Build).where(Build.id == build_id))
+    from sqlalchemy.orm import selectinload
+    result = await db.execute(
+        select(Build).options(selectinload(Build.items)).where(Build.id == build_id)
+    )
     build = result.scalar_one_or_none()
 
     if not build:
@@ -330,6 +441,32 @@ async def delete_build(
             detail="Удалить сборку может только её автор или администратор",
         )
 
+    # Save snapshot to trash
+    from app.models.trash import DeletedBuild
+    snapshot = {
+        "short_code": build.short_code,
+        "title": build.title,
+        "description": build.description,
+        "workshop_id": str(build.workshop_id) if build.workshop_id else None,
+        "is_public": build.is_public,
+        "labor_percent": build.labor_percent,
+        "labor_price_manual": build.labor_price_manual,
+        "tags": build.tags,
+        "install_os": build.install_os,
+        "created_at": build.created_at.isoformat() if build.created_at else None,
+        "total_price": sum(it.price for it in build.items),
+        "items_count": len(build.items),
+        "items": [
+            {"category": it.category, "name": it.name, "url": it.url, "price": it.price, "sort_order": it.sort_order}
+            for it in build.items
+        ],
+    }
+    trash = DeletedBuild(
+        owner_id=build.author_id,
+        build_data=snapshot,
+        deleted_by_name=current_user.name,
+    )
+    db.add(trash)
     await db.delete(build)
 
 
