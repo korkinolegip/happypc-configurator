@@ -156,8 +156,10 @@ const AdminLayout: React.FC = () => {
           >
             <Menu size={20} />
           </button>
-          <img src="/logo-icon.png" alt="" className="h-6 w-auto" />
-          <img src="/logo-text-white.png" alt="HappyPC" className="h-3 w-auto" />
+          <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate('/')}>
+            <img src="/logo-icon.png" alt="" className="h-6 w-auto pointer-events-none" />
+            <img src="/logo-text-white.png" alt="HappyPC" className="h-3 w-auto pointer-events-none" />
+          </div>
           <span className="text-th-text-2 font-normal text-xs">Admin</span>
           <div className="ml-auto">
             <button
