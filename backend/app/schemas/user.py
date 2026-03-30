@@ -17,6 +17,7 @@ class UserResponse(BaseModel):
     phone: str | None = None
     telegram_username: str | None = None
     vk_url: str | None = None
+    order_url: str | None = None
     email_verified: bool = False
     is_active: bool = True
     created_at: datetime
@@ -47,6 +48,7 @@ class UserUpdate(BaseModel):
     city: str | None = None
     phone: str | None = None
     gender: str | None = None
+    order_url: str | None = None
 
 
 class ChangePassword(BaseModel):

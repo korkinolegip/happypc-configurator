@@ -643,14 +643,18 @@ const BuildPage: React.FC = () => {
             {build.workshop && (
               <p className="text-th-text-2 text-xs mt-1">{build.workshop.name}, {build.workshop.city}</p>
             )}
-            <div className="mt-4">
-              <button
-                onClick={() => toast('Функция в разработке', { icon: '🔧' })}
-                className="w-full bg-[#FF6B00] hover:bg-[#E05A00] text-white font-semibold py-2.5 rounded-lg text-sm transition-colors"
-              >
-                Заказать ПК
-              </button>
-            </div>
+            {build.author.order_url && build.workshop && (
+              <div className="mt-4">
+                <a
+                  href={build.author.order_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block w-full bg-[#FF6B00] hover:bg-[#E05A00] text-white font-semibold py-2.5 rounded-lg text-sm transition-colors text-center"
+                >
+                  Заказать ПК
+                </a>
+              </div>
+            )}
           </div>
 
           {/* Build info */}

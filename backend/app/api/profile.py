@@ -38,6 +38,7 @@ def _user_response(user: User) -> UserResponse:
         phone=user.phone,
         telegram_username=user.telegram_username,
         vk_url=user.vk_url,
+        order_url=user.order_url,
         email_verified=user.email_verified,
         is_active=user.is_active,
         created_at=user.created_at,
@@ -77,6 +78,8 @@ async def update_profile(
         if user_update.gender not in ("male", "female", ""):
             raise HTTPException(status_code=400, detail="Пол: male или female")
         current_user.gender = user_update.gender or None
+    if user_update.order_url is not None:
+        current_user.order_url = user_update.order_url.strip() or None
 
     await db.flush()
     result = await db.execute(

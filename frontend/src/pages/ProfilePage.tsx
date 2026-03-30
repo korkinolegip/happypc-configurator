@@ -20,6 +20,7 @@ interface ProfileFormValues {
   phone: string
   city: string
   gender: string
+  order_url: string
 }
 
 interface PasswordFormValues {
@@ -54,6 +55,7 @@ const ProfilePage: React.FC = () => {
       phone: user?.phone || '',
       city: user?.city || '',
       gender: user?.gender || '',
+      order_url: (user as any)?.order_url || '',
     },
   })
 
@@ -141,6 +143,7 @@ const ProfilePage: React.FC = () => {
       if (data.phone !== (user?.phone || '')) payload.phone = data.phone || null
       if (data.city !== (user?.city || '')) payload.city = data.city || null
       if (data.gender !== (user?.gender || '')) payload.gender = data.gender || null
+      if (data.order_url !== ((user as any)?.order_url || '')) payload.order_url = data.order_url || null
 
       if (Object.keys(payload).length === 0) {
         toast('Нет изменений')
@@ -373,6 +376,23 @@ const ProfilePage: React.FC = () => {
               </label>
             </div>
           </div>
+
+          {/* Order URL — only for masters/admins with workshop */}
+          {(user.role === 'master' || user.role === 'admin' || user.role === 'superadmin') && (
+            <div>
+              <label className="block text-sm text-th-text-2 mb-1.5 flex items-center gap-1">
+                <ExternalLink size={12} /> Ссылка «Заказать ПК»
+              </label>
+              <input
+                {...register('order_url')}
+                className="input-field"
+                placeholder="https://t.me/your_username"
+              />
+              <p className="text-th-muted text-xs mt-1">
+                Ссылка на Telegram или другой мессенджер. Кнопка «Заказать ПК» будет видна в ваших сборках.
+              </p>
+            </div>
+          )}
 
           <div className="flex justify-end pt-2">
             <button

@@ -30,7 +30,7 @@ export interface Build {
   short_code: string
   title: string
   description: string | null
-  author: { id: string; name: string; avatar_url: string | null }
+  author: { id: string; name: string; avatar_url: string | null; role?: string; order_url?: string }
   workshop: { id: string; name: string; city: string } | null
   is_public: boolean
   has_password: boolean

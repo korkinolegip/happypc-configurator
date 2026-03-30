@@ -51,6 +51,8 @@ class AuthorInfo(BaseModel):
     id: uuid.UUID
     name: str
     avatar_url: str | None
+    role: str | None = None
+    order_url: str | None = None
 
     model_config = {"from_attributes": True}
 

@@ -561,6 +561,8 @@ async def get_public_build(
         id=build.author.id if build.author else build.id,
         name=build.author.name if build.author else "Неизвестно",
         avatar_url=build.author.avatar_url if build.author else None,
+        role=build.author.role if build.author else None,
+        order_url=build.author.order_url if build.author else None,
     )
 
     return BuildPublicResponse(
