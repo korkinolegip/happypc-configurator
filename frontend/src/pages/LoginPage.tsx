@@ -330,15 +330,29 @@ const LoginPage: React.FC = () => {
                 <input
                   {...registerForm.register('phone', {
                     required: 'Введите телефон',
-                    pattern: {
-                      value: /^[\d\s()+\-]{10,18}$/,
-                      message: 'Формат: +7 (999) 999-99-99',
+                    validate: (v) => {
+                      const digits = v.replace(/\D/g, '')
+                      return digits.length >= 11 || 'Введите полный номер'
                     },
                   })}
                   type="tel"
                   className="input-field"
-                  placeholder="+7 (999) 999-99-99"
+                  placeholder="+7 (999) 999 99 99"
                   autoComplete="tel"
+                  defaultValue="+7 "
+                  onChange={(e) => {
+                    let digits = e.target.value.replace(/\D/g, '')
+                    if (digits.startsWith('8')) digits = '7' + digits.slice(1)
+                    if (!digits.startsWith('7')) digits = '7' + digits
+                    digits = digits.slice(0, 11)
+                    let formatted = '+7'
+                    if (digits.length > 1) formatted += ` (${digits.slice(1, 4)}`
+                    if (digits.length >= 4) formatted += ')'
+                    if (digits.length > 4) formatted += ` ${digits.slice(4, 7)}`
+                    if (digits.length > 7) formatted += ` ${digits.slice(7, 9)}`
+                    if (digits.length > 9) formatted += ` ${digits.slice(9, 11)}`
+                    registerForm.setValue('phone', formatted, { shouldValidate: true })
+                  }}
                 />
                 {registerForm.formState.errors.phone && (
                   <p className="text-red-400 text-xs mt-1">{registerForm.formState.errors.phone.message}</p>

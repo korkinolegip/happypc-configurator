@@ -61,6 +61,7 @@ async def _make_token(user: User, db: AsyncSession) -> Token:
             workshop_name=u.workshop.name if u.workshop else None,
             gender=u.gender,
             city=u.city,
+            phone=u.phone,
             email_verified=u.email_verified,
             created_at=u.created_at,
         ),

@@ -31,7 +31,7 @@ class UserCreate(BaseModel):
             digits = "7" + digits
         if len(digits) != 11 or not digits.startswith("7"):
             raise ValueError("Формат: +7 (999) 999-99-99")
-        return f"+7 ({digits[1:4]}) {digits[4:7]}-{digits[7:9]}-{digits[9:11]}"
+        return f"+7 ({digits[1:4]}) {digits[4:7]} {digits[7:9]} {digits[9:11]}"
 
     @field_validator("gender")
     @classmethod
@@ -56,6 +56,7 @@ class UserInToken(BaseModel):
     workshop_name: str | None
     gender: str | None = None
     city: str | None = None
+    phone: str | None = None
     email_verified: bool = False
     created_at: datetime
 
