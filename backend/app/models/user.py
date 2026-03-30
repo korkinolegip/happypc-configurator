@@ -62,4 +62,4 @@ class User(Base):
 
     # Relationships
     workshop: Mapped["Workshop | None"] = relationship("Workshop", back_populates="users")
-    builds: Mapped[list["Build"]] = relationship("Build", back_populates="author")
+    builds: Mapped[list["Build"]] = relationship("Build", back_populates="author", passive_deletes=True)

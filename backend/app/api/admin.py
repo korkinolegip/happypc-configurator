@@ -215,10 +215,7 @@ async def delete_user(
     current_user: User = Depends(require_admin),
     db: AsyncSession = Depends(get_db),
 ):
-    from sqlalchemy.orm import selectinload
-    result = await db.execute(
-        select(User).options(selectinload(User.builds)).where(User.id == user_id)
-    )
+    result = await db.execute(select(User).where(User.id == user_id))
     user = result.scalar_one_or_none()
 
     if not user:
@@ -256,14 +253,14 @@ async def delete_user(
         "created_at": user.created_at.isoformat() if user.created_at else None,
     }
 
-    # Snapshot builds + items
+    # Snapshot builds + items (separate queries to avoid SA cascade issues)
+    from sqlalchemy.orm import selectinload as _sl
+    builds_result = await db.execute(
+        select(Build).options(_sl(Build.items)).where(Build.author_id == user_id)
+    )
+    builds = builds_result.scalars().all()
     builds_data = []
-    for build in user.builds:
-        # Load items
-        items_result = await db.execute(
-            select(BuildItem).where(BuildItem.build_id == build.id).order_by(BuildItem.sort_order)
-        )
-        items = items_result.scalars().all()
+    for build in builds:
         builds_data.append({
             "id": str(build.id),
             "short_code": build.short_code,
@@ -278,7 +275,7 @@ async def delete_user(
             "created_at": build.created_at.isoformat() if build.created_at else None,
             "items": [
                 {"category": it.category, "name": it.name, "url": it.url, "price": it.price, "sort_order": it.sort_order}
-                for it in items
+                for it in build.items
             ],
         })
 
@@ -292,8 +289,9 @@ async def delete_user(
     )
     db.add(trash)
 
-    # Delete user (CASCADE removes builds, items, likes, comments)
-    await db.delete(user)
+    # Delete user via raw SQL to let DB CASCADE handle builds/likes/comments
+    from sqlalchemy import delete as sa_delete
+    await db.execute(sa_delete(User).where(User.id == user_id))
     await db.flush()
 
 
