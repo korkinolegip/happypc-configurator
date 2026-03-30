@@ -15,7 +15,6 @@ import {
   Shield,
   Store,
   Mail,
-  Trash2,
 } from 'lucide-react'
 
 const navItems = [
@@ -27,7 +26,6 @@ const navItems = [
   { to: '/admin/workshops', label: 'Мастерские', icon: Building2, end: false },
   { to: '/admin/stores', label: 'Магазины', icon: Store, end: false },
   { to: '/admin/permissions', label: 'Разрешения', icon: Shield, end: false },
-  { to: '/admin/trash', label: 'Корзина', icon: Trash2, end: false },
   { to: '/admin/email', label: 'Почта', icon: Mail, end: false },
   { to: '/admin/backup', label: 'Бэкапы', icon: Database, end: false },
   { to: '/admin/settings', label: 'Настройки', icon: Settings, end: false },

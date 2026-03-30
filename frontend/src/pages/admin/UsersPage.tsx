@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form'
 import {
   Plus, Edit2, Trash2, KeyRound, X, Shield, Copy,
   Search, UserCheck, UserX, Phone, MapPin,
+  RotateCcw, AlertTriangle, Monitor,
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import {
@@ -13,6 +14,10 @@ import {
   deleteUser,
   resetUserPassword,
   getWorkshops,
+  getTrash,
+  restoreFromTrash,
+  deleteFromTrash,
+  clearAllTrash,
 } from '../../api/admin'
 import type { CreateUserData, UpdateUserData } from '../../api/admin'
 import type { User } from '../../types'
@@ -340,8 +345,20 @@ const NewPasswordModal: React.FC<PasswordModalProps> = ({ newPassword, onClose }
   )
 }
 
+interface TrashItem {
+  id: string
+  user_name: string
+  user_email: string
+  user_role: string
+  builds_count: number
+  deleted_by_name: string
+  reason: string | null
+  deleted_at: string
+}
+
 const UsersPage: React.FC = () => {
   const queryClient = useQueryClient()
+  const [tab, setTab] = useState<'users' | 'trash'>('users')
   const [createOpen, setCreateOpen] = useState(false)
   const [editUser, setEditUser] = useState<User | null>(null)
   const [newPassword, setNewPassword] = useState<string | null>(null)
@@ -351,6 +368,8 @@ const UsersPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('')
   const [roleFilter, setRoleFilter] = useState('')
   const [activeFilter, setActiveFilter] = useState('')
+  const [restoringTrashId, setRestoringTrashId] = useState<string | null>(null)
+  const [clearingTrash, setClearingTrash] = useState(false)
 
   const { data: users, isLoading } = useQuery({
     queryKey: ['admin-users', searchQuery, roleFilter, activeFilter],
@@ -365,6 +384,56 @@ const UsersPage: React.FC = () => {
     queryKey: ['admin-workshops'],
     queryFn: getWorkshops,
   })
+
+  const { data: trashItems, isLoading: trashLoading } = useQuery<TrashItem[]>({
+    queryKey: ['admin-trash'],
+    queryFn: getTrash,
+    enabled: tab === 'trash',
+  })
+
+  const handleRestore = async (item: TrashItem) => {
+    if (!confirm(`Восстановить «${item.user_name}» и ${item.builds_count} сборок?`)) return
+    setRestoringTrashId(item.id)
+    try {
+      const result = await restoreFromTrash(item.id)
+      await queryClient.invalidateQueries({ queryKey: ['admin-trash'] })
+      await queryClient.invalidateQueries({ queryKey: ['admin-users'] })
+      toast.success(result.message || 'Восстановлено')
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { detail?: string } } }
+      toast.error(error.response?.data?.detail || 'Ошибка восстановления')
+    } finally {
+      setRestoringTrashId(null)
+    }
+  }
+
+  const handlePermanentDelete = async (item: TrashItem) => {
+    if (!confirm(`Удалить навсегда «${item.user_name}»? Восстановление невозможно.`)) return
+    try {
+      await deleteFromTrash(item.id)
+      await queryClient.invalidateQueries({ queryKey: ['admin-trash'] })
+      toast.success('Удалено из корзины')
+    } catch {
+      toast.error('Ошибка удаления')
+    }
+  }
+
+  const handleClearTrash = async () => {
+    if (!confirm('Очистить всю корзину? Все данные будут удалены безвозвратно.')) return
+    setClearingTrash(true)
+    try {
+      await clearAllTrash()
+      await queryClient.invalidateQueries({ queryKey: ['admin-trash'] })
+      toast.success('Корзина очищена')
+    } catch {
+      toast.error('Ошибка')
+    } finally {
+      setClearingTrash(false)
+    }
+  }
+
+  const formatTrashDate = (d: string) =>
+    new Date(d).toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
 
   const handleDelete = async (user: User) => {
     const reason = prompt(`Удалить пользователя «${user.name}»?\n\nУкажите причину (необязательно):`)
@@ -418,15 +487,128 @@ const UsersPage: React.FC = () => {
         <div>
           <h1 className="text-2xl font-bold text-th-text">Пользователи</h1>
           <p className="text-th-text-2 text-sm mt-1">
-            {users ? `${users.length} пользователей` : 'Загрузка...'}
+            {tab === 'users'
+              ? (users ? `${users.length} пользователей` : 'Загрузка...')
+              : (trashItems ? `${trashItems.length} в корзине` : 'Загрузка...')
+            }
           </p>
         </div>
-        <button onClick={() => setCreateOpen(true)} className="flex items-center gap-2 btn-primary">
-          <Plus size={16} />
-          Создать
+        <div className="flex items-center gap-2">
+          {tab === 'users' && (
+            <button onClick={() => setCreateOpen(true)} className="flex items-center gap-2 btn-primary">
+              <Plus size={16} />
+              Создать
+            </button>
+          )}
+          {tab === 'trash' && trashItems && trashItems.length > 0 && (
+            <button
+              onClick={handleClearTrash}
+              disabled={clearingTrash}
+              className="flex items-center gap-2 px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+            >
+              <Trash2 size={14} />
+              Очистить
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Tabs */}
+      <div className="flex gap-1 bg-th-surface border border-th-border rounded-lg p-1 w-fit">
+        <button
+          onClick={() => setTab('users')}
+          className={`px-4 py-1.5 rounded text-sm font-medium transition-colors ${
+            tab === 'users' ? 'bg-[#FF6B00] text-white' : 'text-th-text-2 hover:text-th-text'
+          }`}
+        >
+          Пользователи
+        </button>
+        <button
+          onClick={() => setTab('trash')}
+          className={`px-4 py-1.5 rounded text-sm font-medium transition-colors flex items-center gap-1.5 ${
+            tab === 'trash' ? 'bg-[#FF6B00] text-white' : 'text-th-text-2 hover:text-th-text'
+          }`}
+        >
+          <Trash2 size={13} />
+          Корзина
+          {trashItems && trashItems.length > 0 && (
+            <span className={`text-xs px-1.5 py-0.5 rounded-full ${
+              tab === 'trash' ? 'bg-white/20' : 'bg-red-500/20 text-red-400'
+            }`}>{trashItems.length}</span>
+          )}
         </button>
       </div>
 
+      {/* TRASH VIEW */}
+      {tab === 'trash' && (
+        <>
+          {trashLoading ? (
+            <div className="space-y-3">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="h-20 bg-th-surface border border-th-border rounded-lg animate-pulse" />
+              ))}
+            </div>
+          ) : !trashItems || trashItems.length === 0 ? (
+            <div className="bg-th-surface border border-th-border rounded-lg p-12 text-center text-th-text-2">
+              <Trash2 size={40} className="mx-auto mb-3 opacity-30" />
+              <p>Корзина пуста</p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {trashItems.map((item) => (
+                <div key={item.id} className="bg-th-surface border border-th-border rounded-lg p-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-th-text font-semibold text-sm truncate">{item.user_name}</span>
+                        <span className={`text-xs px-1.5 py-0.5 rounded border font-medium ${roleBadge(item.user_role)}`}>
+                          {roleLabel(item.user_role)}
+                        </span>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-th-text-3">
+                        {item.user_email && <span>{item.user_email}</span>}
+                        <span className="flex items-center gap-1"><Monitor size={10} />{item.builds_count} сборок</span>
+                        <span>Удалил: {item.deleted_by_name}</span>
+                        <span>{formatTrashDate(item.deleted_at)}</span>
+                      </div>
+                      {item.reason && (
+                        <p className="text-th-text-2 text-xs mt-1.5 flex items-start gap-1.5">
+                          <AlertTriangle size={11} className="shrink-0 mt-0.5 text-amber-500" />
+                          {item.reason}
+                        </p>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <button
+                        onClick={() => handleRestore(item)}
+                        disabled={restoringTrashId === item.id}
+                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors disabled:opacity-50"
+                      >
+                        {restoringTrashId === item.id ? (
+                          <span className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        ) : (
+                          <RotateCcw size={13} />
+                        )}
+                        Восстановить
+                      </button>
+                      <button
+                        onClick={() => handlePermanentDelete(item)}
+                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-red-400 hover:bg-red-900/20 border border-red-400/30 rounded-lg transition-colors"
+                      >
+                        <Trash2 size={13} />
+                        Удалить
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </>
+      )}
+
+      {/* USERS VIEW */}
+      {tab === 'users' && <>
       {/* Search + filters */}
       <div className="flex flex-col sm:flex-row gap-2">
         <div className="relative flex-1">
@@ -559,6 +741,8 @@ const UsersPage: React.FC = () => {
           </div>
         )}
       </div>
+
+      </>}
 
       {createOpen && <CreateUserModal onClose={() => setCreateOpen(false)} workshops={workshopList} />}
       {editUser && <EditUserModal user={editUser} onClose={() => setEditUser(null)} workshops={workshopList} />}
