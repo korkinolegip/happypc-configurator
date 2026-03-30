@@ -56,13 +56,12 @@ const BugReportButton: React.FC = () => {
       {/* Floating ladybug button */}
       <button
         onClick={() => setOpen(true)}
-        className="fixed bottom-5 right-5 z-50 w-11 h-11 sm:w-12 sm:h-12 rounded-full flex items-center justify-center transition-all hover:scale-110 active:scale-95 group"
-        style={{ background: 'rgba(30,30,40,0.7)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,107,0,0.3)' }}
+        className="fixed bottom-5 right-5 z-50 w-10 h-10 sm:w-11 sm:h-11 flex items-center justify-center transition-all hover:scale-110 active:scale-95 group"
         title="Нашли баг?"
       >
         <svg
           viewBox="0 0 32 32"
-          className="w-6 h-6 sm:w-7 sm:h-7 animate-bug-wiggle"
+          className="w-8 h-8 sm:w-9 sm:h-9 animate-bug-wiggle drop-shadow-lg"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
         >
