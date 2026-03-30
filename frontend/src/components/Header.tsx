@@ -36,16 +36,16 @@ const Header: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-3 shrink-0">
+          <Link to="/" className="flex items-center gap-2 sm:gap-3 shrink-0 relative z-10 touch-manipulation">
             <img
               src="/logo-icon.png"
               alt=""
-              className="h-8 w-auto"
+              className="h-8 w-auto pointer-events-none"
             />
             <img
               src={theme === 'dark' ? '/logo-text-white.png' : '/logo-text-black.png'}
               alt="HappyPC"
-              className="h-4 w-auto"
+              className="h-4 w-auto pointer-events-none"
             />
           </Link>
 
@@ -94,7 +94,7 @@ const Header: React.FC = () => {
                     <Link
                       to="/"
                       onClick={() => setDropdownOpen(false)}
-                      className="flex items-center gap-2 px-4 py-2.5 text-sm transition-colors sm:hidden"
+                      className="flex items-center gap-2 px-4 py-2.5 text-sm transition-colors"
                       style={{ color: 'var(--text)' }}
                     >
                       <Home size={15} style={{ color: 'var(--text-2)' }} />
