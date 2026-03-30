@@ -65,15 +65,15 @@ const BuildCard: React.FC<BuildCardProps> = ({ build }) => {
               <h3 className="text-th-text font-bold text-base sm:text-[17px] leading-snug line-clamp-2">
                 {build.title || `Сборка ${build.short_code}`}
               </h3>
-              <div className="flex items-center gap-2 sm:gap-3 mt-1.5 flex-wrap">
+              <div className="flex items-center gap-2 mt-1.5">
                 <span className="text-th-text-3 text-xs whitespace-nowrap">{formatDateTime(build.created_at)}</span>
                 {build.tags && build.tags.length > 0 && (
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium border border-th-border whitespace-nowrap">
+                  <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium border border-th-border whitespace-nowrap">
                     <span
-                      className="w-2.5 h-2.5 rounded-full shrink-0 border border-th-border"
+                      className="w-3 h-3 rounded-full shrink-0 border border-th-border"
                       style={{ background: build.tags.includes('белый') ? '#ffffff' : '#222222' }}
                     />
-                    <span className="text-th-text-2">{build.tags.includes('белый') ? 'Белая' : 'Чёрная'}</span>
+                    <span className="text-th-text-2">{build.tags.includes('белый') ? 'Белая сборка' : 'Чёрная сборка'}</span>
                   </span>
                 )}
               </div>
