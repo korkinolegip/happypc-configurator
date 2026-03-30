@@ -56,9 +56,14 @@ class UserInToken(BaseModel):
     workshop_name: str | None
     gender: str | None = None
     city: str | None = None
+    email_verified: bool = False
     created_at: datetime
 
     model_config = {"from_attributes": True}
+
+
+class EmailVerifyRequest(BaseModel):
+    code: str
 
 
 class Token(BaseModel):

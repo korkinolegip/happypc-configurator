@@ -51,6 +51,7 @@ def _user_response(u: User) -> UserResponse:
         phone=u.phone,
         telegram_username=u.telegram_username,
         vk_url=u.vk_url,
+        email_verified=u.email_verified,
         is_active=u.is_active,
         created_at=u.created_at,
     )
@@ -195,6 +196,8 @@ async def update_user(
         user.gender = user_data.gender or None
     if user_data.avatar_url is not None:
         user.avatar_url = user_data.avatar_url
+    if user_data.email_verified is not None:
+        user.email_verified = user_data.email_verified
 
     await db.flush()
 

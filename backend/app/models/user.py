@@ -50,6 +50,11 @@ class User(Base):
     telegram_username: Mapped[str | None] = mapped_column(String(128), nullable=True)
     vk_id: Mapped[str | None] = mapped_column(String(64), unique=True, nullable=True)
     vk_url: Mapped[str | None] = mapped_column(String(512), nullable=True)
+    email_verified: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    email_verification_token: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    email_verification_sent_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False

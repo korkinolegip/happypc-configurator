@@ -1,4 +1,7 @@
+import asyncio
+import secrets
 import urllib.parse
+from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from fastapi.responses import RedirectResponse
@@ -10,7 +13,14 @@ from app.database import get_db
 from app.dependencies import get_current_active_user
 from app.models.settings import AppSettings
 from app.models.user import User
-from app.schemas.auth import TelegramAuthData, Token, UserCreate, UserInToken, UserLogin
+from app.schemas.auth import (
+    EmailVerifyRequest,
+    TelegramAuthData,
+    Token,
+    UserCreate,
+    UserInToken,
+    UserLogin,
+)
 from app.schemas.user import UserResponse
 from app.services.auth import (
     create_access_token,
@@ -19,8 +29,14 @@ from app.services.auth import (
     verify_password,
     verify_telegram_auth,
 )
+from app.services.email import send_verification_email
 
 router = APIRouter()
+
+
+def _generate_verification_code() -> str:
+    """Generate a secure 6-digit verification code."""
+    return str(secrets.randbelow(900000) + 100000)
 
 
 async def _make_token(user: User, db: AsyncSession) -> Token:
@@ -43,6 +59,7 @@ async def _make_token(user: User, db: AsyncSession) -> Token:
             workshop_name=u.workshop.name if u.workshop else None,
             gender=u.gender,
             city=u.city,
+            email_verified=u.email_verified,
             created_at=u.created_at,
         ),
     )
@@ -87,6 +104,9 @@ async def register(user_data: UserCreate, db: AsyncSession = Depends(get_db)):
             detail="Пользователь с таким email уже существует",
         )
 
+    # Generate verification code
+    verification_code = _generate_verification_code()
+
     user = User(
         email=user_data.email,
         password_hash=hash_password(user_data.password),
@@ -96,10 +116,18 @@ async def register(user_data: UserCreate, db: AsyncSession = Depends(get_db)):
         city=user_data.city,
         avatar_url=_random_avatar(user_data.gender),
         role="user",
+        email_verified=False,
+        email_verification_token=verification_code,
+        email_verification_sent_at=datetime.now(timezone.utc),
     )
     db.add(user)
     await db.flush()
     await db.refresh(user)
+
+    # Send verification email in background (don't block response)
+    asyncio.create_task(
+        send_verification_email(user_data.email, verification_code, user.name)
+    )
 
     return await _make_token(user, db)
 
@@ -135,13 +163,123 @@ async def logout():
     return {"message": "Выход выполнен успешно"}
 
 
+# ---------------------------------------------------------------------------
+# Email verification
+# ---------------------------------------------------------------------------
+
+@router.post("/verify-email")
+async def verify_email(
+    body: EmailVerifyRequest,
+    current_user: User = Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Verify user's email with the 6-digit code."""
+    if current_user.email_verified:
+        return {"message": "Email уже подтверждён", "email_verified": True}
+
+    if not current_user.email_verification_token:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Код подтверждения не был отправлен. Запросите новый код.",
+        )
+
+    # Check expiration (24 hours)
+    if current_user.email_verification_sent_at:
+        expires_at = current_user.email_verification_sent_at + timedelta(hours=24)
+        if datetime.now(timezone.utc) > expires_at:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Код подтверждения истёк. Запросите новый код.",
+            )
+
+    # Verify code
+    if body.code.strip() != current_user.email_verification_token:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Неверный код подтверждения",
+        )
+
+    # Mark email as verified
+    current_user.email_verified = True
+    current_user.email_verification_token = None
+    current_user.email_verification_sent_at = None
+    await db.flush()
+    await db.refresh(current_user)
+
+    workshop_name = current_user.workshop.name if current_user.workshop else None
+    return {
+        "message": "Email успешно подтверждён",
+        "email_verified": True,
+        "user": UserResponse(
+            id=current_user.id,
+            email=current_user.email,
+            name=current_user.name,
+            avatar_url=current_user.avatar_url,
+            role=current_user.role,
+            workshop_id=current_user.workshop_id,
+            workshop_name=workshop_name,
+            gender=current_user.gender,
+            city=current_user.city,
+            phone=current_user.phone,
+            telegram_username=current_user.telegram_username,
+            vk_url=current_user.vk_url,
+            email_verified=current_user.email_verified,
+            is_active=current_user.is_active,
+            created_at=current_user.created_at,
+        ),
+    }
+
+
+@router.post("/resend-verification")
+async def resend_verification(
+    current_user: User = Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Resend email verification code. Rate limited to 1 per 60 seconds."""
+    if current_user.email_verified:
+        return {"message": "Email уже подтверждён"}
+
+    if not current_user.email:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="У пользователя не указан email",
+        )
+
+    # Rate limit: 60 seconds between sends
+    if current_user.email_verification_sent_at:
+        elapsed = datetime.now(timezone.utc) - current_user.email_verification_sent_at
+        if elapsed < timedelta(seconds=60):
+            remaining = 60 - int(elapsed.total_seconds())
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail=f"Подождите {remaining} сек. перед повторной отправкой",
+            )
+
+    # Generate new code
+    verification_code = _generate_verification_code()
+    current_user.email_verification_token = verification_code
+    current_user.email_verification_sent_at = datetime.now(timezone.utc)
+    await db.flush()
+
+    # Send in background
+    asyncio.create_task(
+        send_verification_email(current_user.email, verification_code, current_user.name)
+    )
+
+    return {"message": "Код подтверждения отправлен повторно"}
+
+
+# ---------------------------------------------------------------------------
+# Telegram OAuth
+# ---------------------------------------------------------------------------
+
 @router.get("/telegram", response_model=Token)
 async def telegram_auth(
     request: Request,
     db: AsyncSession = Depends(get_db),
 ):
     """
-    Handle Telegram Login Widget callback.
+    Handle Telegram Login Widget callback (JSON API response).
     Accepts query parameters: id, first_name, last_name, username, photo_url, auth_date, hash
     """
     params = dict(request.query_params)
@@ -212,6 +350,103 @@ async def telegram_auth(
     return await _make_token(user, db)
 
 
+@router.get("/telegram/callback")
+async def telegram_auth_callback(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Telegram OAuth callback — verifies hash and redirects to frontend with JWT.
+    Used when Telegram redirects the browser back to the app.
+    """
+    import time
+
+    params = dict(request.query_params)
+
+    required = {"id", "first_name", "auth_date", "hash"}
+    missing = required - set(params.keys())
+    if missing:
+        error_msg = urllib.parse.quote("Отсутствуют обязательные параметры Telegram")
+        return RedirectResponse(
+            url=f"{settings.FRONTEND_URL}/login?error={error_msg}&provider=telegram"
+        )
+
+    try:
+        tg_data = TelegramAuthData(
+            id=int(params["id"]),
+            first_name=params["first_name"],
+            last_name=params.get("last_name"),
+            username=params.get("username"),
+            photo_url=params.get("photo_url"),
+            auth_date=int(params["auth_date"]),
+            hash=params["hash"],
+        )
+    except (ValueError, KeyError):
+        error_msg = urllib.parse.quote("Неверные данные Telegram")
+        return RedirectResponse(
+            url=f"{settings.FRONTEND_URL}/login?error={error_msg}&provider=telegram"
+        )
+
+    bot_token = settings.TELEGRAM_BOT_TOKEN
+    if not bot_token:
+        error_msg = urllib.parse.quote("Telegram авторизация не настроена")
+        return RedirectResponse(
+            url=f"{settings.FRONTEND_URL}/login?error={error_msg}&provider=telegram"
+        )
+
+    # Verify hash
+    if not verify_telegram_auth(tg_data, bot_token):
+        error_msg = urllib.parse.quote("Проверка подписи Telegram не пройдена")
+        return RedirectResponse(
+            url=f"{settings.FRONTEND_URL}/login?error={error_msg}&provider=telegram"
+        )
+
+    # Check auth_date is within 5 minutes
+    now = int(time.time())
+    if abs(now - tg_data.auth_date) > 300:
+        error_msg = urllib.parse.quote("Данные авторизации Telegram устарели")
+        return RedirectResponse(
+            url=f"{settings.FRONTEND_URL}/login?error={error_msg}&provider=telegram"
+        )
+
+    # Find or create user
+    telegram_id_str = str(tg_data.id)
+    result = await db.execute(select(User).where(User.telegram_id == telegram_id_str))
+    user = result.scalar_one_or_none()
+
+    if not user:
+        name = tg_data.first_name
+        if tg_data.last_name:
+            name = f"{name} {tg_data.last_name}"
+
+        user = User(
+            telegram_id=telegram_id_str,
+            telegram_username=tg_data.username,
+            name=name,
+            avatar_url=tg_data.photo_url or _random_avatar("male"),
+            role="user",
+        )
+        db.add(user)
+        await db.flush()
+        await db.refresh(user)
+    else:
+        if not user.is_active:
+            error_msg = urllib.parse.quote("Аккаунт деактивирован")
+            return RedirectResponse(
+                url=f"{settings.FRONTEND_URL}/login?error={error_msg}&provider=telegram"
+            )
+
+    # Generate JWT and redirect to frontend
+    jwt_token = create_access_token({"sub": str(user.id)})
+    return RedirectResponse(
+        url=f"{settings.FRONTEND_URL}/login?token={jwt_token}&provider=telegram"
+    )
+
+
+# ---------------------------------------------------------------------------
+# VK OAuth
+# ---------------------------------------------------------------------------
+
 @router.get("/vk")
 async def vk_auth_redirect():
     """Redirect to VK OAuth authorization page."""
@@ -227,46 +462,48 @@ async def vk_auth_redirect():
         "redirect_uri": settings.VK_REDIRECT_URI,
         "scope": "email",
         "response_type": "code",
-        "v": "5.131",
+        "v": "5.199",
     }
     vk_url = "https://oauth.vk.com/authorize?" + urllib.parse.urlencode(params)
     return RedirectResponse(url=vk_url)
 
 
-@router.get("/vk/callback", response_model=Token)
+@router.get("/vk/callback")
 async def vk_auth_callback(
     code: str = Query(...),
     state: str | None = Query(None),
     db: AsyncSession = Depends(get_db),
 ):
-    """Handle VK OAuth callback, exchange code for token, find or create user."""
+    """Handle VK OAuth callback, exchange code for token, redirect to frontend with JWT."""
     if not settings.VK_CLIENT_ID or not settings.VK_CLIENT_SECRET:
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="VK авторизация не настроена",
+        error_msg = urllib.parse.quote("VK авторизация не настроена")
+        return RedirectResponse(
+            url=f"{settings.FRONTEND_URL}/login?error={error_msg}&provider=vk"
         )
 
     try:
         vk_response = await get_vk_access_token(code, settings.VK_REDIRECT_URI)
     except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Ошибка получения токена VK: {e}",
+        error_msg = urllib.parse.quote(f"Ошибка получения токена VK: {e}")
+        return RedirectResponse(
+            url=f"{settings.FRONTEND_URL}/login?error={error_msg}&provider=vk"
         )
 
     if "error" in vk_response:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"VK вернул ошибку: {vk_response.get('error_description', vk_response['error'])}",
+        error_msg = urllib.parse.quote(
+            vk_response.get("error_description", vk_response["error"])
+        )
+        return RedirectResponse(
+            url=f"{settings.FRONTEND_URL}/login?error={error_msg}&provider=vk"
         )
 
     vk_user_id = str(vk_response.get("user_id", ""))
     vk_email = vk_response.get("email")
 
     if not vk_user_id:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="VK не вернул идентификатор пользователя",
+        error_msg = urllib.parse.quote("VK не вернул идентификатор пользователя")
+        return RedirectResponse(
+            url=f"{settings.FRONTEND_URL}/login?error={error_msg}&provider=vk"
         )
 
     result = await db.execute(select(User).where(User.vk_id == vk_user_id))
@@ -277,6 +514,7 @@ async def vk_auth_callback(
 
         name = "VK User"
         avatar_url = None
+        vk_user = {}
 
         try:
             async with _httpx.AsyncClient() as client:
@@ -286,7 +524,7 @@ async def vk_auth_callback(
                         "user_ids": vk_user_id,
                         "fields": "photo_200",
                         "access_token": vk_response.get("access_token", ""),
-                        "v": "5.131",
+                        "v": "5.199",
                     },
                 )
                 vk_info_data = vk_info.json()
@@ -297,7 +535,6 @@ async def vk_auth_callback(
         except Exception:
             pass
 
-        vk_screen_name = vk_user.get("screen_name", "") if 'vk_user' in dir() else ""
         user = User(
             vk_id=vk_user_id,
             vk_url=f"https://vk.com/id{vk_user_id}" if vk_user_id else None,
@@ -311,13 +548,21 @@ async def vk_auth_callback(
         await db.refresh(user)
     else:
         if not user.is_active:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Аккаунт деактивирован",
+            error_msg = urllib.parse.quote("Аккаунт деактивирован")
+            return RedirectResponse(
+                url=f"{settings.FRONTEND_URL}/login?error={error_msg}&provider=vk"
             )
 
-    return await _make_token(user, db)
+    # Generate JWT and redirect to frontend
+    jwt_token = create_access_token({"sub": str(user.id)})
+    return RedirectResponse(
+        url=f"{settings.FRONTEND_URL}/login?token={jwt_token}&provider=vk"
+    )
 
+
+# ---------------------------------------------------------------------------
+# Current user
+# ---------------------------------------------------------------------------
 
 @router.get("/me", response_model=UserResponse)
 async def get_me(current_user: User = Depends(get_current_active_user)):
@@ -335,6 +580,7 @@ async def get_me(current_user: User = Depends(get_current_active_user)):
         phone=current_user.phone,
         telegram_username=current_user.telegram_username,
         vk_url=current_user.vk_url,
+        email_verified=current_user.email_verified,
         is_active=current_user.is_active,
         created_at=current_user.created_at,
     )

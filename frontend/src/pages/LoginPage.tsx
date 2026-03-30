@@ -1,13 +1,16 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
-import { Cpu, Eye, EyeOff } from 'lucide-react'
+import { Cpu, Eye, EyeOff, Loader2 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useAuth } from '../hooks/useAuth'
-import { login as apiLogin, register as apiRegister } from '../api/auth'
+import { login as apiLogin, register as apiRegister, getMe } from '../api/auth'
 import { useQuery } from '@tanstack/react-query'
 import { getPublicSettings } from '../api/builds'
 import CitySelect from '../components/CitySelect'
+
+const VK_CLIENT_ID = '54514351'
+const TELEGRAM_BOT_NAME = 'HappyPCAuthBot'
 
 interface LoginFormValues {
   email: string
@@ -30,6 +33,7 @@ const LoginPage: React.FC = () => {
   const location = useLocation()
   const [showPassword, setShowPassword] = useState(false)
   const [mode, setMode] = useState<'login' | 'register'>('login')
+  const [oauthLoading, setOauthLoading] = useState(false)
   const telegramRef = useRef<HTMLDivElement>(null)
 
   const from = (location.state as { from?: { pathname: string } })?.from?.pathname || '/'
@@ -40,16 +44,41 @@ const LoginPage: React.FC = () => {
     retry: false,
   })
 
-  // Если уже залогинен — редиректим сразу
+  // OAuth callback handler — check URL for ?token=... from VK/Telegram redirect
   useEffect(() => {
-    if (isAuthenticated) {
-      navigate(from, { replace: true })
-    }
+    const params = new URLSearchParams(window.location.search)
+    const token = params.get('token')
+    if (!token) return
+
+    setOauthLoading(true)
+    // Clean URL immediately
+    window.history.replaceState({}, '', window.location.pathname)
+
+    localStorage.setItem('token', token)
+    getMe()
+      .then((user) => {
+        authLogin(token, user)
+        const provider = params.get('provider')
+        toast.success(provider ? `Вход через ${provider} выполнен!` : 'Добро пожаловать!')
+        setTimeout(() => navigate('/', { replace: true }), 50)
+      })
+      .catch(() => {
+        localStorage.removeItem('token')
+        toast.error('Ошибка авторизации. Попробуйте ещё раз.')
+        setOauthLoading(false)
+      })
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Telegram widget
+  // Если уже залогинен — редиректим сразу
   useEffect(() => {
-    const botName = settings?.telegram_bot_name
+    if (isAuthenticated && !oauthLoading) {
+      navigate(from, { replace: true })
+    }
+  }, [isAuthenticated]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Telegram widget — use hardcoded bot name with settings fallback
+  useEffect(() => {
+    const botName = settings?.telegram_bot_name || TELEGRAM_BOT_NAME
     if (!botName || !telegramRef.current) return
 
     const script = document.createElement('script')
@@ -104,7 +133,21 @@ const LoginPage: React.FC = () => {
   }
 
   const registrationEnabled = settings?.registration_enabled === 'true'
-  const vkClientId = settings?.vk_client_id
+  const vkClientId = settings?.vk_client_id || VK_CLIENT_ID
+  const vkRedirectUri = `${window.location.origin}/api/auth/vk/callback`
+  const vkAuthUrl = `https://id.vk.com/authorize?client_id=${vkClientId}&redirect_uri=${encodeURIComponent(vkRedirectUri)}&response_type=code&scope=email&display=popup`
+
+  // Show loading spinner during OAuth callback processing
+  if (oauthLoading) {
+    return (
+      <div className="min-h-screen bg-th-bg flex flex-col items-center justify-center px-4">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="w-10 h-10 text-[#FF6B00] animate-spin" />
+          <span className="text-th-text-2 text-sm">Авторизация...</span>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-th-bg flex flex-col items-center justify-center px-4">
@@ -375,6 +418,13 @@ const LoginPage: React.FC = () => {
           </form>
         )}
 
+        {/* Social Login Divider */}
+        <div className="mt-5 flex items-center gap-3">
+          <div className="flex-1 h-px bg-th-border" />
+          <span className="text-th-text-3 text-xs uppercase tracking-wider">или</span>
+          <div className="flex-1 h-px bg-th-border" />
+        </div>
+
         {/* Social Login */}
         <div className="mt-4 space-y-3">
           {/* Telegram */}
@@ -383,7 +433,7 @@ const LoginPage: React.FC = () => {
           {/* VK */}
           {vkClientId && (
             <a
-              href={`/api/auth/vk?client_id=${vkClientId}`}
+              href={vkAuthUrl}
               className="flex items-center justify-center gap-2 w-full py-2.5 bg-[#0077FF] hover:bg-[#0066DD] text-white rounded-lg transition-colors font-medium text-sm"
             >
               <svg width="20" height="20" viewBox="0 0 24 24" fill="white">

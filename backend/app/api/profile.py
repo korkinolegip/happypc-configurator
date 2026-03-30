@@ -38,6 +38,7 @@ def _user_response(user: User) -> UserResponse:
         phone=user.phone,
         telegram_username=user.telegram_username,
         vk_url=user.vk_url,
+        email_verified=user.email_verified,
         is_active=user.is_active,
         created_at=user.created_at,
     )

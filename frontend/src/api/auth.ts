@@ -60,3 +60,12 @@ export const changePassword = async (data: {
   const response = await client.post<{ message: string }>('/api/profile/change-password', data)
   return response.data
 }
+
+export const verifyEmail = async (code: string): Promise<User> => {
+  const response = await client.post<User>('/api/auth/verify-email', { code })
+  return response.data
+}
+
+export const resendVerification = async (): Promise<void> => {
+  await client.post('/api/auth/resend-verification')
+}

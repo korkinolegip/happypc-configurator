@@ -11,6 +11,7 @@ export interface User {
   phone: string | null
   telegram_username: string | null
   vk_url: string | null
+  email_verified: boolean
   is_active: boolean
   created_at: string
 }

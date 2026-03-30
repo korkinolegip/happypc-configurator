@@ -86,6 +86,36 @@ DEFAULT_SETTINGS = [
         "value": "HappyPC — профессиональная сборка компьютеров",
         "description": "Текст в подвале PDF-документа",
     },
+    {
+        "key": "smtp_host",
+        "value": "smtp.yandex.ru",
+        "description": "SMTP сервер для отправки почты",
+    },
+    {
+        "key": "smtp_port",
+        "value": "465",
+        "description": "Порт SMTP сервера",
+    },
+    {
+        "key": "smtp_user",
+        "value": "korkin.oleg@ya.ru",
+        "description": "Логин SMTP сервера",
+    },
+    {
+        "key": "smtp_password",
+        "value": "gdypukhjtpciuyna",
+        "description": "Пароль SMTP сервера",
+    },
+    {
+        "key": "smtp_from_email",
+        "value": "korkin.oleg@ya.ru",
+        "description": "Email отправителя",
+    },
+    {
+        "key": "smtp_from_name",
+        "value": "HappyPC",
+        "description": "Имя отправителя",
+    },
 ]
 
 
