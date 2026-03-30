@@ -603,7 +603,14 @@ async def get_settings(
     result = await db.execute(select(AppSettings))
     settings_rows = result.scalars().all()
 
-    return SettingsResponse(settings={s.key: s.value for s in settings_rows})
+    data = {}
+    for s in settings_rows:
+        # Mask sensitive values
+        if s.key == "smtp_password" and s.value:
+            data[s.key] = "••••••••"
+        else:
+            data[s.key] = s.value
+    return SettingsResponse(settings=data)
 
 
 @router.put("/settings", response_model=SettingsResponse)
@@ -638,6 +645,9 @@ async def patch_settings(
     """Update settings via flat key->value dict (frontend-friendly)."""
     for key, value in updates.items():
         if value is None:
+            continue
+        # Don't overwrite password with masked placeholder
+        if key == "smtp_password" and value == "••••••••":
             continue
         result = await db.execute(select(AppSettings).where(AppSettings.key == key))
         setting = result.scalar_one_or_none()
@@ -1342,3 +1352,28 @@ async def fetch_store_icon(
     await db.flush()
 
     return {"icon_url": store.icon_path}
+
+
+# ============================================================
+# EMAIL
+# ============================================================
+
+@router.post("/email/test")
+async def test_email_send(
+    body: dict,
+    current_user: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """Send a test email using current SMTP configuration."""
+    from app.services.email import get_smtp_config, send_test_email
+
+    to_email = body.get("to_email", "").strip()
+    if not to_email:
+        raise HTTPException(status_code=400, detail="Укажите email получателя")
+
+    smtp_cfg = await get_smtp_config(db)
+    success = await send_test_email(to_email, smtp_cfg)
+
+    if success:
+        return {"message": f"Тестовое письмо отправлено на {to_email}"}
+    raise HTTPException(status_code=500, detail="Ошибка отправки. Проверьте SMTP настройки.")

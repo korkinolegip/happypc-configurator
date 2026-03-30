@@ -1,7 +1,7 @@
 import React, { useRef, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
-import { Save, Info, Upload, Download, FileText, Image } from 'lucide-react'
+import { Save, Info, Upload, Download, FileText, Image, Mail, Send, Loader2 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { getSettings, updateSettings, uploadLogo } from '../../api/admin'
 import { client } from '../../api/client'
@@ -19,6 +19,13 @@ interface SettingsFormValues {
   help_block_text: string
   help_block_url: string
   help_block_label: string
+  // SMTP
+  smtp_host: string
+  smtp_port: string
+  smtp_user: string
+  smtp_password: string
+  smtp_from_email: string
+  smtp_from_name: string
 }
 
 const SettingsPage: React.FC = () => {
@@ -27,6 +34,8 @@ const SettingsPage: React.FC = () => {
   const pdfLogoRef = useRef<HTMLInputElement>(null)
   const [uploadingHeader, setUploadingHeader] = useState(false)
   const [uploadingPdf, setUploadingPdf] = useState(false)
+  const [testEmail, setTestEmail] = useState('')
+  const [sendingTest, setSendingTest] = useState(false)
 
   const { data: settings, isLoading } = useQuery({
     queryKey: ['admin-settings'],
@@ -51,6 +60,12 @@ const SettingsPage: React.FC = () => {
           help_block_text: settings.help_block_text || '',
           help_block_url: settings.help_block_url || '',
           help_block_label: settings.help_block_label || '',
+          smtp_host: settings.smtp_host || '',
+          smtp_port: settings.smtp_port || '465',
+          smtp_user: settings.smtp_user || '',
+          smtp_password: settings.smtp_password || '',
+          smtp_from_email: settings.smtp_from_email || '',
+          smtp_from_name: settings.smtp_from_name || '',
         }
       : undefined,
   })
@@ -68,6 +83,12 @@ const SettingsPage: React.FC = () => {
         help_block_text: data.help_block_text,
         help_block_url: data.help_block_url,
         help_block_label: data.help_block_label,
+        smtp_host: data.smtp_host || undefined,
+        smtp_port: data.smtp_port || undefined,
+        smtp_user: data.smtp_user || undefined,
+        smtp_password: data.smtp_password || undefined,
+        smtp_from_email: data.smtp_from_email || undefined,
+        smtp_from_name: data.smtp_from_name || undefined,
       }
       const updated = await updateSettings(payload)
       await queryClient.invalidateQueries({ queryKey: ['admin-settings'] })
@@ -83,6 +104,12 @@ const SettingsPage: React.FC = () => {
         help_block_text: updated.help_block_text || '',
         help_block_url: updated.help_block_url || '',
         help_block_label: updated.help_block_label || '',
+        smtp_host: updated.smtp_host || '',
+        smtp_port: updated.smtp_port || '465',
+        smtp_user: updated.smtp_user || '',
+        smtp_password: updated.smtp_password || '',
+        smtp_from_email: updated.smtp_from_email || '',
+        smtp_from_name: updated.smtp_from_name || '',
       })
       toast.success('Настройки сохранены')
     } catch {
@@ -329,6 +356,85 @@ const SettingsPage: React.FC = () => {
           </button>
         </div>
       </form>
+
+      {/* Email / SMTP */}
+      <div className="bg-th-surface border border-th-border rounded-lg p-5">
+        <h2 className="text-th-text font-semibold mb-1 flex items-center gap-2">
+          <Mail size={18} />
+          Почта (SMTP)
+        </h2>
+        <p className="text-th-text-3 text-xs mb-4">Настройки отправки писем (подтверждение email, уведомления)</p>
+
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm text-th-text-2 mb-1.5">SMTP Хост</label>
+              <input {...register('smtp_host')} className="input-field" placeholder="smtp.yandex.ru" />
+            </div>
+            <div>
+              <label className="block text-sm text-th-text-2 mb-1.5">Порт</label>
+              <input {...register('smtp_port')} type="number" className="input-field" placeholder="465" />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm text-th-text-2 mb-1.5">Логин (email)</label>
+              <input {...register('smtp_user')} className="input-field" placeholder="info@example.ru" />
+            </div>
+            <div>
+              <label className="block text-sm text-th-text-2 mb-1.5">Пароль приложения</label>
+              <input {...register('smtp_password')} type="password" className="input-field" placeholder="••••••••" />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm text-th-text-2 mb-1.5">Email отправителя</label>
+              <input {...register('smtp_from_email')} className="input-field" placeholder="info@example.ru" />
+            </div>
+            <div>
+              <label className="block text-sm text-th-text-2 mb-1.5">Имя отправителя</label>
+              <input {...register('smtp_from_name')} className="input-field" placeholder="HappyPC" />
+            </div>
+          </div>
+
+          {/* Test email */}
+          <div className="border-t border-th-border pt-4 mt-4">
+            <label className="block text-sm text-th-text-2 mb-1.5">Тестовое письмо</label>
+            <div className="flex gap-2">
+              <input
+                type="email"
+                value={testEmail}
+                onChange={(e) => setTestEmail(e.target.value)}
+                className="input-field flex-1"
+                placeholder="test@example.com"
+              />
+              <button
+                type="button"
+                disabled={sendingTest || !testEmail}
+                onClick={async () => {
+                  setSendingTest(true)
+                  try {
+                    await client.post('/api/admin/email/test', { to_email: testEmail })
+                    toast.success(`Тестовое письмо отправлено на ${testEmail}`)
+                  } catch (err: unknown) {
+                    const error = err as { response?: { data?: { detail?: string } } }
+                    toast.error(error.response?.data?.detail || 'Ошибка отправки')
+                  } finally {
+                    setSendingTest(false)
+                  }
+                }}
+                className="btn-primary flex items-center gap-2 px-4 whitespace-nowrap"
+              >
+                {sendingTest ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
+                Отправить
+              </button>
+            </div>
+            <p className="text-th-muted text-xs mt-1.5">
+              Сначала сохраните настройки, затем отправьте тестовое письмо для проверки
+            </p>
+          </div>
+        </div>
+      </div>
 
       {/* Export section */}
       <div className="bg-th-surface border border-th-border rounded-lg p-5">
