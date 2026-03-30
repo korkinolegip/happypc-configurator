@@ -187,11 +187,15 @@ const LoginPage: React.FC = () => {
       <div className="w-full max-w-sm">
         {/* Logo */}
         <div className="flex flex-col items-center mb-8">
-          <div className="flex items-center gap-3 mb-2">
-            <img src="/logo-icon.png" alt="" className="h-10 w-auto" />
-            <img src="/logo-text-white.png" alt="HappyPC" className="h-5 w-auto" />
+          <div className="inline-flex flex-col items-center">
+            <div className="flex items-center gap-3 mb-1.5">
+              <img src="/logo-icon.png" alt="" className="h-10 w-auto" />
+              <img src="/logo-text-white.png" alt="HappyPC" className="h-5 w-auto" />
+            </div>
+            <p className="text-th-text-2 uppercase w-full text-center" style={{ fontSize: '0.55em', letterSpacing: '0.22em' }}>
+              Конфигуратор счастливых компьютеров
+            </p>
           </div>
-          <p className="text-th-text-2 text-[11px] tracking-[0.15em] uppercase">Конфигуратор счастливых компьютеров</p>
         </div>
 
         {/* Tabs */}
