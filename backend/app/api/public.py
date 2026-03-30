@@ -196,11 +196,12 @@ async def get_public_builds(
     for b in builds:
         totals = calculate_totals(b.items, b.labor_percent, b.labor_price_manual)
         total_price = totals["total_with_labor"]
+        hardware_total = totals["hardware_total"]
 
-        # Price range filter (applied after calculation)
-        if price_from and total_price < price_from:
+        # Price range filter — by hardware cost only (matches displayed price)
+        if price_from and hardware_total < price_from:
             continue
-        if price_to and total_price > price_to:
+        if price_to and hardware_total > price_to:
             continue
 
         author_city = b.author.city if b.author and b.author.city else None
@@ -246,11 +247,11 @@ async def get_public_builds(
             "created_at": b.created_at.isoformat(),
         })
 
-    # Price sort (post-query since price is calculated)
+    # Price sort by hardware cost (matches displayed price in feed)
     if sort == "price_asc":
-        items_out.sort(key=lambda x: x["total_price"])
+        items_out.sort(key=lambda x: x["total_price"] - (x.get("labor_cost") or 0))
     elif sort == "price_desc":
-        items_out.sort(key=lambda x: x["total_price"], reverse=True)
+        items_out.sort(key=lambda x: x["total_price"] - (x.get("labor_cost") or 0), reverse=True)
 
     return {"items": items_out, "total": total, "page": page, "per_page": per_page}
 
