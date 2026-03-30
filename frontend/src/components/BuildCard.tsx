@@ -62,7 +62,7 @@ const BuildCard: React.FC<BuildCardProps> = ({ build }) => {
         <div className="px-5 pt-4 pb-2">
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1 min-w-0">
-              <h3 className="text-th-text font-bold text-[17px] leading-snug line-clamp-2">
+              <h3 className="text-th-text font-bold text-base sm:text-[17px] leading-snug line-clamp-2">
                 {build.title || `Сборка ${build.short_code}`}
               </h3>
               <div className="flex items-center gap-3 mt-1.5">

@@ -112,7 +112,7 @@ function ItemRow({ fieldName, category, canDelete, canChangeCategory, onDelete, 
   return (
     <div className="flex gap-0" style={{ borderBottom: '4px solid var(--bg)', marginBottom: '0' }}>
       {/* Left: icon + label */}
-      <div className="w-[88px] shrink-0 flex flex-col items-center justify-center py-3 px-1" style={{ borderRight: '1px solid var(--border)' }}>
+      <div className="w-[60px] sm:w-[88px] shrink-0 flex flex-col items-center justify-center py-3 px-1" style={{ borderRight: '1px solid var(--border)' }}>
         <CategoryIcon category={category} size={42} />
         {canChangeCategory ? (
           <select
@@ -136,7 +136,7 @@ function ItemRow({ fieldName, category, canDelete, canChangeCategory, onDelete, 
             className="flex-1 min-w-0 bg-th-surface-3 border border-th-border rounded px-2.5 py-2 text-th-text text-sm placeholder-th-placeholder focus:outline-none focus:border-[#FF6B00] transition-colors"
             placeholder={`Введите название ${category.toLowerCase()}`}
           />
-          <div className="relative shrink-0 w-[120px]">
+          <div className="relative shrink-0 w-[90px] sm:w-[120px]">
             <input
               {...register(`${fieldName}.price` as never)}
               type="number"
@@ -173,7 +173,7 @@ function ItemRow({ fieldName, category, canDelete, canChangeCategory, onDelete, 
               )}
             </div>
           </div>
-          <div className="shrink-0 w-[120px] flex items-center gap-0.5 justify-center">
+          <div className="shrink-0 w-[90px] sm:w-[120px] flex items-center gap-0.5 justify-center">
             <button
               type="button"
               onClick={() => { if (currentQty > 1) setValue(`${fieldName}.qty` as never, String(currentQty - 1) as never) }}

@@ -70,7 +70,7 @@ const BannerModal: React.FC<ModalProps> = ({ banner, onClose }) => {
             <textarea {...register('text')} className="input-field resize-none h-20 text-sm" placeholder="Подробное описание..." />
           </div>
           <p className="text-th-text-3 text-xs font-medium uppercase tracking-wide mt-2">Кнопка 1</p>
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
               <label className="block text-sm text-th-text-2 mb-1.5">Текст</label>
               <input {...register('button_text')} className="input-field" placeholder="Чат в Telegram" />
@@ -85,7 +85,7 @@ const BannerModal: React.FC<ModalProps> = ({ banner, onClose }) => {
             </div>
           </div>
           <p className="text-th-text-3 text-xs font-medium uppercase tracking-wide mt-2">Кнопка 2 (необязательно)</p>
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
               <label className="block text-sm text-th-text-2 mb-1.5">Текст</label>
               <input {...register('button2_text')} className="input-field" placeholder="Чат в VK" />

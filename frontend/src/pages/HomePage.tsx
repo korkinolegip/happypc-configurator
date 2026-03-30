@@ -211,7 +211,7 @@ const HomePage: React.FC = () => {
 
           {/* Row 2: Advanced filters (collapsible) */}
           {showAdvanced && (
-            <div className="grid grid-cols-2 sm:grid-cols-[1fr_1fr_1fr_auto] gap-2 pt-2 border-t border-th-border">
+            <div className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_1fr_auto] gap-2 pt-2 border-t border-th-border">
               {/* City */}
               <div className="col-span-1">
                 <CitySelect

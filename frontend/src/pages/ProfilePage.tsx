@@ -545,7 +545,7 @@ const ProfilePage: React.FC = () => {
               {availableAvatars.male.length > 0 && (
                 <div className="mb-6">
                   <h3 className="text-th-text-2 text-xs font-medium uppercase tracking-wide mb-3">Мужские</h3>
-                  <div className="grid grid-cols-4 sm:grid-cols-5 gap-3">
+                  <div className="grid grid-cols-3 sm:grid-cols-5 gap-3">
                     {availableAvatars.male.map((url) => (
                       <button
                         key={url}
@@ -571,7 +571,7 @@ const ProfilePage: React.FC = () => {
               {availableAvatars.female.length > 0 && (
                 <div>
                   <h3 className="text-th-text-2 text-xs font-medium uppercase tracking-wide mb-3">Женские</h3>
-                  <div className="grid grid-cols-4 sm:grid-cols-5 gap-3">
+                  <div className="grid grid-cols-3 sm:grid-cols-5 gap-3">
                     {availableAvatars.female.map((url) => (
                       <button
                         key={url}
