@@ -70,15 +70,16 @@ def verify_telegram_auth(data: TelegramAuthData, bot_token: str) -> bool:
 async def get_vk_access_token(code: str, redirect_uri: str, device_id: str = "") -> dict:
     """Exchange VK ID authorization code for access token (VK ID OAuth2)."""
     url = "https://id.vk.com/oauth2/auth"
-    data = {
+    data: dict[str, str] = {
         "grant_type": "authorization_code",
         "code": code,
         "client_id": settings.VK_CLIENT_ID,
         "client_secret": settings.VK_CLIENT_SECRET,
         "redirect_uri": redirect_uri,
-        "device_id": device_id,
         "state": "",
     }
+    if device_id:
+        data["device_id"] = device_id
     async with httpx.AsyncClient() as client:
         response = await client.post(url, data=data)
         return response.json()
