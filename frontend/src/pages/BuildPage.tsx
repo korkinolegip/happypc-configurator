@@ -7,7 +7,7 @@ import {
   ThumbsUp, MessageSquare, Eye, Send, Reply, Edit2, Trash2, Pencil, Printer,
 } from 'lucide-react'
 import toast from 'react-hot-toast'
-import { getPublicBuild, downloadPDF, copyBuild } from '../api/builds'
+import { getPublicBuild, downloadPDF, copyBuild, deleteBuild } from '../api/builds'
 import { getComments, createComment, editComment, deleteComment, getBuildStats, toggleLike, recordView, checkLiked } from '../api/social'
 import type { Comment } from '../api/social'
 import { useAuth } from '../hooks/useAuth'
@@ -251,6 +251,23 @@ const BuildPage: React.FC = () => {
   }
 
   const isOwner = user?.id === build?.author?.id
+  const isAdmin = user?.role === 'admin' || user?.role === 'superadmin'
+  const canDelete = isOwner || isAdmin
+  const [deletingBuild, setDeletingBuild] = useState(false)
+
+  const handleDeleteBuild = async () => {
+    if (!build) return
+    if (!confirm(`Удалить сборку «${build.title}»? Это действие нельзя отменить.`)) return
+    setDeletingBuild(true)
+    try {
+      await deleteBuild(build.id)
+      toast.success('Сборка удалена')
+      navigate('/', { replace: true })
+    } catch {
+      toast.error('Ошибка при удалении сборки')
+      setDeletingBuild(false)
+    }
+  }
 
   if (isLoading) return (
     <div className="flex items-center justify-center py-20">
@@ -367,6 +384,13 @@ const BuildPage: React.FC = () => {
               }}
               className="flex items-center gap-1.5 bg-th-surface-2 hover:bg-th-border text-th-text px-3 py-2 rounded-lg text-sm transition-colors">
               <Printer size={14} />Печать
+            </button>
+          )}
+          {canDelete && (
+            <button onClick={handleDeleteBuild} disabled={deletingBuild}
+              className="flex items-center gap-1.5 bg-red-600/10 hover:bg-red-600/20 text-red-400 hover:text-red-300 border border-red-600/30 px-3 py-2 rounded-lg text-sm transition-colors disabled:opacity-50">
+              {deletingBuild ? <span className="w-3.5 h-3.5 border-2 border-red-400 border-t-transparent rounded-full animate-spin" /> : <Trash2 size={14} />}
+              Удалить
             </button>
           )}
         </div>
