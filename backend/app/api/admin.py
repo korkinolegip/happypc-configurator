@@ -1198,16 +1198,16 @@ async def create_store(
     }
 
 
-@router.put("/stores/{store_id}")
+@router.put("/stores/{store_slug}")
 async def update_store(
-    store_id: uuid.UUID,
+    store_slug: str,
     data: dict,
     current_user: User = Depends(require_admin),
     db: AsyncSession = Depends(get_db),
 ):
     from app.models.store import Store
 
-    result = await db.execute(select(Store).where(Store.id == store_id))
+    result = await db.execute(select(Store).where(Store.slug == store_slug))
     store = result.scalar_one_or_none()
     if not store:
         raise HTTPException(status_code=404, detail="Магазин не найден")
@@ -1217,7 +1217,7 @@ async def update_store(
     if "slug" in data:
         # Check uniqueness
         existing = await db.execute(
-            select(Store).where(Store.slug == data["slug"], Store.id != store_id)
+            select(Store).where(Store.slug == data["slug"], Store.id != store.id)
         )
         if existing.scalar_one_or_none():
             raise HTTPException(status_code=409, detail="Магазин с таким slug уже существует")
@@ -1252,31 +1252,31 @@ async def update_store(
     }
 
 
-@router.delete("/stores/{store_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/stores/{store_slug}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_store(
-    store_id: uuid.UUID,
+    store_slug: str,
     current_user: User = Depends(require_admin),
     db: AsyncSession = Depends(get_db),
 ):
     from app.models.store import Store
 
-    result = await db.execute(select(Store).where(Store.id == store_id))
+    result = await db.execute(select(Store).where(Store.slug == store_slug))
     store = result.scalar_one_or_none()
     if not store:
         raise HTTPException(status_code=404, detail="Магазин не найден")
     await db.delete(store)
 
 
-@router.post("/stores/{store_id}/upload-icon")
+@router.post("/stores/{store_slug}/upload-icon")
 async def upload_store_icon(
-    store_id: uuid.UUID,
+    store_slug: str,
     file: UploadFile = File(...),
     current_user: User = Depends(require_admin),
     db: AsyncSession = Depends(get_db),
 ):
     from app.models.store import Store
 
-    result = await db.execute(select(Store).where(Store.id == store_id))
+    result = await db.execute(select(Store).where(Store.slug == store_slug))
     store = result.scalar_one_or_none()
     if not store:
         raise HTTPException(status_code=404, detail="Магазин не найден")
@@ -1312,16 +1312,16 @@ async def upload_store_icon(
     return {"icon_url": store.icon_path}
 
 
-@router.post("/stores/{store_id}/fetch-icon")
+@router.post("/stores/{store_slug}/fetch-icon")
 async def fetch_store_icon(
-    store_id: uuid.UUID,
+    store_slug: str,
     current_user: User = Depends(require_admin),
     db: AsyncSession = Depends(get_db),
 ):
     from app.models.store import Store
     from app.services.favicon import fetch_favicon
 
-    result = await db.execute(select(Store).where(Store.id == store_id))
+    result = await db.execute(select(Store).where(Store.slug == store_slug))
     store = result.scalar_one_or_none()
     if not store:
         raise HTTPException(status_code=404, detail="Магазин не найден")
