@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
-import { Cpu, Eye, EyeOff, Loader2 } from 'lucide-react'
+import { Eye, EyeOff, Loader2 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useAuth } from '../hooks/useAuth'
 import { login as apiLogin, register as apiRegister, getMe } from '../api/auth'
@@ -187,24 +187,11 @@ const LoginPage: React.FC = () => {
       <div className="w-full max-w-sm">
         {/* Logo */}
         <div className="flex flex-col items-center mb-8">
-          <img
-            src="/static/logo-white.png"
-            alt="HappyPC"
-            className="h-12 mb-3"
-            onError={(e) => {
-              e.currentTarget.style.display = 'none'
-              const next = e.currentTarget.nextElementSibling as HTMLElement
-              if (next) next.style.display = 'flex'
-            }}
-          />
-          <div className="hidden items-center gap-2">
-            <Cpu className="text-[#FF6B00]" size={28} />
-            <span className="text-2xl font-bold">
-              <span className="text-th-text">Happy</span>
-              <span className="text-[#FF6B00]">PC</span>
-            </span>
+          <div className="flex items-center gap-3 mb-2">
+            <img src="/logo-icon.png" alt="" className="h-10 w-auto" />
+            <img src="/logo-text-white.png" alt="HappyPC" className="h-5 w-auto" />
           </div>
-          <p className="text-th-text-2 text-sm mt-2">Конфигуратор сборок ПК</p>
+          <p className="text-th-text-2 text-sm">Конфигуратор</p>
         </div>
 
         {/* Tabs */}
