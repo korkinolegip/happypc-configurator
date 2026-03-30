@@ -192,7 +192,7 @@ const LoginPage: React.FC = () => {
               <img src="/logo-icon.png" alt="" className="h-10 w-auto" />
               <img src="/logo-text-white.png" alt="HappyPC" className="h-5 w-auto" />
             </div>
-            <p className="text-th-text-2 uppercase w-full text-center" style={{ fontSize: '0.55em', letterSpacing: '0.22em' }}>
+            <p className="text-th-text-2 uppercase w-full text-center" style={{ fontSize: '0.45em', letterSpacing: '0.12em' }}>
               Конфигуратор счастливых компьютеров
             </p>
           </div>
