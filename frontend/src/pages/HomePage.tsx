@@ -244,7 +244,7 @@ const HomePage: React.FC = () => {
                 onChange={e => setFilters(f => ({ ...f, workshop_id: e.target.value || undefined, page: 1 }))}
                 className="select-field text-sm w-full col-span-1">
                 <option value="">Все мастерские</option>
-                {workshops?.map(ws => <option key={ws.id} value={ws.id}>{ws.name}{ws.city ? ` · ${ws.city}` : ''}</option>)}
+                {workshops?.map(ws => <option key={ws.id} value={ws.id}>{ws.name}</option>)}
               </select>
 
               {/* Clear */}
