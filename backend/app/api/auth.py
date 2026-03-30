@@ -336,6 +336,7 @@ async def telegram_auth(
             telegram_id=telegram_id_str,
             telegram_username=tg_data.username,
             name=name,
+            gender="male",
             avatar_url=tg_data.photo_url or _random_avatar("male"),
             role="user",
         )
@@ -430,6 +431,7 @@ async def telegram_auth_callback(
             telegram_id=telegram_id_str,
             telegram_username=tg_data.username,
             name=name,
+            gender="male",
             avatar_url=tg_data.photo_url or _random_avatar("male"),
             role="user",
         )
