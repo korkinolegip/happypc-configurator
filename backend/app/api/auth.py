@@ -25,6 +25,7 @@ from app.schemas.user import UserResponse
 from app.services.auth import (
     create_access_token,
     get_vk_access_token,
+    get_vk_user_info,
     hash_password,
     verify_password,
     verify_telegram_auth,
@@ -449,22 +450,24 @@ async def telegram_auth_callback(
 
 @router.get("/vk")
 async def vk_auth_redirect():
-    """Redirect to VK OAuth authorization page."""
+    """Redirect to VK ID authorization page."""
     if not settings.VK_CLIENT_ID:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="VK авторизация не настроена",
         )
 
+    import uuid as _uuid
+    state = str(_uuid.uuid4())
+
     params = {
         "client_id": settings.VK_CLIENT_ID,
-        "display": "popup",
         "redirect_uri": settings.VK_REDIRECT_URI,
-        "scope": "email",
         "response_type": "code",
-        "v": "5.199",
+        "scope": "vkid.personal_info email",
+        "state": state,
     }
-    vk_url = "https://oauth.vk.com/authorize?" + urllib.parse.urlencode(params)
+    vk_url = "https://id.vk.com/authorize?" + urllib.parse.urlencode(params)
     return RedirectResponse(url=vk_url)
 
 
@@ -472,17 +475,18 @@ async def vk_auth_redirect():
 async def vk_auth_callback(
     code: str = Query(...),
     state: str | None = Query(None),
+    device_id: str = Query(""),
     db: AsyncSession = Depends(get_db),
 ):
-    """Handle VK OAuth callback, exchange code for token, redirect to frontend with JWT."""
-    if not settings.VK_CLIENT_ID or not settings.VK_CLIENT_SECRET:
+    """Handle VK ID callback, exchange code for token, redirect to frontend with JWT."""
+    if not settings.VK_CLIENT_ID:
         error_msg = urllib.parse.quote("VK авторизация не настроена")
         return RedirectResponse(
             url=f"{settings.FRONTEND_URL}/login?error={error_msg}&provider=vk"
         )
 
     try:
-        vk_response = await get_vk_access_token(code, settings.VK_REDIRECT_URI)
+        vk_response = await get_vk_access_token(code, settings.VK_REDIRECT_URI, device_id)
     except Exception as e:
         error_msg = urllib.parse.quote(f"Ошибка получения токена VK: {e}")
         return RedirectResponse(
@@ -491,14 +495,29 @@ async def vk_auth_callback(
 
     if "error" in vk_response:
         error_msg = urllib.parse.quote(
-            vk_response.get("error_description", vk_response["error"])
+            vk_response.get("error_description", vk_response.get("error", "unknown"))
         )
         return RedirectResponse(
             url=f"{settings.FRONTEND_URL}/login?error={error_msg}&provider=vk"
         )
 
+    access_token = vk_response.get("access_token", "")
     vk_user_id = str(vk_response.get("user_id", ""))
-    vk_email = vk_response.get("email")
+
+    # Get user info from VK ID
+    vk_email = None
+    name = "VK User"
+    avatar_url = None
+
+    try:
+        user_info = await get_vk_user_info(access_token)
+        user_data = user_info.get("user", user_info)
+        vk_user_id = str(user_data.get("user_id", vk_user_id))
+        name = f"{user_data.get('first_name', '')} {user_data.get('last_name', '')}".strip() or "VK User"
+        vk_email = user_data.get("email")
+        avatar_url = user_data.get("avatar_url") or user_data.get("photo_200")
+    except Exception:
+        pass
 
     if not vk_user_id:
         error_msg = urllib.parse.quote("VK не вернул идентификатор пользователя")
@@ -510,38 +529,14 @@ async def vk_auth_callback(
     user = result.scalar_one_or_none()
 
     if not user:
-        import httpx as _httpx
-
-        name = "VK User"
-        avatar_url = None
-        vk_user = {}
-
-        try:
-            async with _httpx.AsyncClient() as client:
-                vk_info = await client.get(
-                    "https://api.vk.com/method/users.get",
-                    params={
-                        "user_ids": vk_user_id,
-                        "fields": "photo_200",
-                        "access_token": vk_response.get("access_token", ""),
-                        "v": "5.199",
-                    },
-                )
-                vk_info_data = vk_info.json()
-                if "response" in vk_info_data and vk_info_data["response"]:
-                    vk_user = vk_info_data["response"][0]
-                    name = f"{vk_user.get('first_name', '')} {vk_user.get('last_name', '')}".strip()
-                    avatar_url = vk_user.get("photo_200")
-        except Exception:
-            pass
-
         user = User(
             vk_id=vk_user_id,
-            vk_url=f"https://vk.com/id{vk_user_id}" if vk_user_id else None,
-            email=vk_email if vk_email else None,
-            name=name or "VK User",
+            vk_url=f"https://vk.com/id{vk_user_id}",
+            email=vk_email,
+            name=name,
             avatar_url=avatar_url or _random_avatar("male"),
             role="user",
+            email_verified=bool(vk_email),
         )
         db.add(user)
         await db.flush()

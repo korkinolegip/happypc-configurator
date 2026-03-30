@@ -67,16 +67,31 @@ def verify_telegram_auth(data: TelegramAuthData, bot_token: str) -> bool:
     return hmac.compare_digest(computed_hash, data.hash)
 
 
-async def get_vk_access_token(code: str, redirect_uri: str) -> dict:
-    """Exchange VK authorization code for access token."""
-    url = "https://oauth.vk.com/access_token"
-    params = {
-        "client_id": settings.VK_CLIENT_ID,
-        "client_secret": settings.VK_CLIENT_SECRET,
-        "redirect_uri": redirect_uri,
+async def get_vk_access_token(code: str, redirect_uri: str, device_id: str = "") -> dict:
+    """Exchange VK ID authorization code for access token (VK ID OAuth2)."""
+    url = "https://id.vk.com/oauth2/auth"
+    data = {
+        "grant_type": "authorization_code",
         "code": code,
+        "client_id": settings.VK_CLIENT_ID,
+        "redirect_uri": redirect_uri,
+        "device_id": device_id,
+        "state": "",
     }
     async with httpx.AsyncClient() as client:
-        response = await client.get(url, params=params)
+        response = await client.post(url, data=data)
+        response.raise_for_status()
+        return response.json()
+
+
+async def get_vk_user_info(access_token: str) -> dict:
+    """Get user info from VK ID."""
+    url = "https://id.vk.com/oauth2/user_info"
+    data = {
+        "client_id": settings.VK_CLIENT_ID,
+        "access_token": access_token,
+    }
+    async with httpx.AsyncClient() as client:
+        response = await client.post(url, data=data)
         response.raise_for_status()
         return response.json()

@@ -135,7 +135,7 @@ const LoginPage: React.FC = () => {
   const registrationEnabled = settings?.registration_enabled === 'true'
   const vkClientId = settings?.vk_client_id || VK_CLIENT_ID
   const vkRedirectUri = `${window.location.origin}/api/auth/vk/callback`
-  const vkAuthUrl = `https://oauth.vk.com/authorize?client_id=${vkClientId}&redirect_uri=${encodeURIComponent(vkRedirectUri)}&response_type=code&scope=email&display=popup&v=5.131`
+  const vkAuthUrl = `https://id.vk.com/authorize?client_id=${vkClientId}&redirect_uri=${encodeURIComponent(vkRedirectUri)}&response_type=code&scope=vkid.personal_info+email&state=vk`
 
   // Show loading spinner during OAuth callback processing
   if (oauthLoading) {
