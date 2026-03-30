@@ -74,13 +74,13 @@ async def get_vk_access_token(code: str, redirect_uri: str, device_id: str = "")
         "grant_type": "authorization_code",
         "code": code,
         "client_id": settings.VK_CLIENT_ID,
+        "client_secret": settings.VK_CLIENT_SECRET,
         "redirect_uri": redirect_uri,
         "device_id": device_id,
         "state": "",
     }
     async with httpx.AsyncClient() as client:
         response = await client.post(url, data=data)
-        response.raise_for_status()
         return response.json()
 
 
