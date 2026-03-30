@@ -88,7 +88,7 @@ const EmailVerificationBanner: React.FC = () => {
           </div>
 
           {/* Code input + buttons */}
-          <div className="flex items-center gap-2 flex-1 w-full sm:w-auto">
+          <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto">
             <input
               type="text"
               inputMode="numeric"
@@ -97,7 +97,7 @@ const EmailVerificationBanner: React.FC = () => {
               onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
               onKeyDown={handleKeyDown}
               placeholder="000000"
-              className="w-24 px-2.5 py-1 text-sm bg-white/20 border border-white/30 rounded text-white placeholder-white/60 focus:outline-none focus:ring-1 focus:ring-white/50"
+              className="w-20 px-2 py-1 text-sm bg-white/20 border border-white/30 rounded text-white placeholder-white/60 focus:outline-none focus:ring-1 focus:ring-white/50"
             />
             <button
               onClick={handleVerify}
@@ -114,7 +114,7 @@ const EmailVerificationBanner: React.FC = () => {
             <button
               onClick={handleResend}
               disabled={isResending || cooldown > 0}
-              className="text-sm text-white/80 hover:text-white underline underline-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+              className="text-xs text-white/80 hover:text-white underline underline-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isResending ? (
                 'Отправка...'

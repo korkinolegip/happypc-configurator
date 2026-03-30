@@ -103,48 +103,48 @@ const BuildCard: React.FC<BuildCardProps> = ({ build }) => {
         )}
 
         {/* Footer: author + interactions */}
-        <div className="px-5 py-3 border-t border-th-border flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
+        <div className="px-4 sm:px-5 py-3 border-t border-th-border flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 min-w-0">
             {build.author_avatar ? (
               <img src={build.author_avatar} alt={build.author_name}
-                className="w-[38px] h-[38px] rounded-full object-cover shrink-0 border border-th-border" />
+                className="w-8 h-8 sm:w-[38px] sm:h-[38px] rounded-full object-cover shrink-0 border border-th-border" />
             ) : (
-              <div className="w-[38px] h-[38px] rounded-full bg-[#FF6B00]/20 border border-[#FF6B00]/30 flex items-center justify-center text-sm font-bold text-[#FF6B00] shrink-0">
+              <div className="w-8 h-8 sm:w-[38px] sm:h-[38px] rounded-full bg-[#FF6B00]/20 border border-[#FF6B00]/30 flex items-center justify-center text-sm font-bold text-[#FF6B00] shrink-0">
                 {build.author_name.charAt(0).toUpperCase()}
               </div>
             )}
-            <div>
-              <span className="text-th-text text-sm font-medium block leading-tight">{build.author_name}</span>
+            <div className="min-w-0">
+              <span className="text-th-text text-sm font-medium block leading-tight truncate">{build.author_name}</span>
               {build.workshop_name && (
-                <span className="text-th-text-3 text-[11px] leading-tight">{build.workshop_name}</span>
+                <span className="text-th-text-3 text-[11px] leading-tight truncate block">{build.workshop_name}</span>
               )}
             </div>
           </div>
 
-          <div className="flex items-center gap-1 bg-th-surface-2 rounded-lg px-1 py-0.5">
+          <div className="flex items-center gap-0.5 sm:gap-1 bg-th-surface-2 rounded-lg px-0.5 sm:px-1 py-0.5 shrink-0">
             <div onClick={handleLike}
-              className={`flex items-center gap-1.5 px-2.5 py-2 rounded-md transition-colors cursor-pointer ${
+              className={`flex items-center gap-1 px-1.5 sm:px-2.5 py-1.5 sm:py-2 rounded-md transition-colors cursor-pointer ${
                 liked ? 'text-[#FF6B00] bg-[#FF6B00]/10' : 'text-th-text-2 hover:text-[#FF6B00] hover:bg-[#FF6B00]/10'
               }`}>
-              <ThumbsUp size={18} /><span className="text-sm font-medium">{likesCount}</span>
+              <ThumbsUp size={16} /><span className="text-xs sm:text-sm font-medium">{likesCount}</span>
             </div>
-            <div className="w-px h-5 bg-th-border" />
+            <div className="w-px h-4 sm:h-5 bg-th-border" />
             <a
               href={`/b/${build.short_code}#comments`}
               onClick={(e) => e.stopPropagation()}
-              className="flex items-center gap-1.5 px-2.5 py-2 rounded-md text-th-text-2 hover:text-[#FF6B00] hover:bg-[#FF6B00]/10 transition-colors cursor-pointer"
+              className="flex items-center gap-1 px-1.5 sm:px-2.5 py-1.5 sm:py-2 rounded-md text-th-text-2 hover:text-[#FF6B00] hover:bg-[#FF6B00]/10 transition-colors cursor-pointer"
             >
-              <MessageSquare size={18} /><span className="text-sm font-medium">{build.comments_count ?? 0}</span>
+              <MessageSquare size={16} /><span className="text-xs sm:text-sm font-medium">{build.comments_count ?? 0}</span>
             </a>
-            <div className="w-px h-5 bg-th-border" />
-            <div className="flex items-center gap-1.5 px-2.5 py-2 rounded-md text-th-text-2 hover:text-[#FF6B00] hover:bg-[#FF6B00]/10 transition-colors cursor-pointer">
-              <Eye size={18} /><span className="text-sm font-medium">{build.views_count ?? 0}</span>
+            <div className="w-px h-4 sm:h-5 bg-th-border" />
+            <div className="flex items-center gap-1 px-1.5 sm:px-2.5 py-1.5 sm:py-2 rounded-md text-th-text-2 hover:text-[#FF6B00] hover:bg-[#FF6B00]/10 transition-colors cursor-pointer">
+              <Eye size={16} /><span className="text-xs sm:text-sm font-medium">{build.views_count ?? 0}</span>
             </div>
-            <div className="w-px h-5 bg-th-border" />
+            <div className="w-px h-4 sm:h-5 bg-th-border" />
             <div onClick={handleShare}
-              className="flex items-center gap-1.5 px-2.5 py-2 rounded-md text-th-text-2 hover:text-[#FF6B00] hover:bg-[#FF6B00]/10 transition-colors cursor-pointer"
+              className="flex items-center gap-1 px-1.5 sm:px-2.5 py-1.5 sm:py-2 rounded-md text-th-text-2 hover:text-[#FF6B00] hover:bg-[#FF6B00]/10 transition-colors cursor-pointer"
               title="Поделиться">
-              <Share2 size={17} />
+              <Share2 size={15} />
             </div>
           </div>
         </div>
