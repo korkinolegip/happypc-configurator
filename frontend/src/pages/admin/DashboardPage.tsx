@@ -1,7 +1,7 @@
 import React from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
-import { Users, HardDrive, Building2, ArrowRight, TrendingUp } from 'lucide-react'
+import { Users, HardDrive, Building2, ArrowRight, TrendingUp, Bug } from 'lucide-react'
 import { getDashboard } from '../../api/admin'
 
 const formatPrice = (price: number) =>
@@ -38,6 +38,13 @@ const DashboardPage: React.FC = () => {
       color: 'text-green-400',
       bg: 'bg-green-900/20 border-green-800/30',
     },
+    {
+      label: 'Баги',
+      value: data?.bugs_count ?? 0,
+      icon: Bug,
+      color: 'text-red-400',
+      bg: 'bg-red-900/20 border-red-800/30',
+    },
   ]
 
   return (
@@ -48,7 +55,7 @@ const DashboardPage: React.FC = () => {
       </div>
 
       {/* Stats cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         {stats.map(({ label, value, icon: Icon, color, bg }) => (
           <div
             key={label}

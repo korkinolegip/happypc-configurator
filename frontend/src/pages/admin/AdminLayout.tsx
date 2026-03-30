@@ -14,6 +14,7 @@ import {
   Shield,
   Store,
   Mail,
+  Bug,
 } from 'lucide-react'
 
 const navItems = [
@@ -25,6 +26,7 @@ const navItems = [
   { to: '/admin/workshops', label: 'Мастерские', icon: Building2, end: false },
   { to: '/admin/stores', label: 'Магазины', icon: Store, end: false },
   { to: '/admin/permissions', label: 'Разрешения', icon: Shield, end: false },
+  { to: '/admin/bugs', label: 'Баги', icon: Bug, end: false },
   { to: '/admin/email', label: 'Почта', icon: Mail, end: false },
   { to: '/admin/backup', label: 'Бэкапы', icon: Database, end: false },
   { to: '/admin/settings', label: 'Настройки', icon: Settings, end: false },
@@ -44,20 +46,19 @@ const AdminLayout: React.FC = () => {
         }`}
       >
         {/* Sidebar header */}
-        <div className="flex items-center justify-between h-16 px-3 border-b border-th-border">
+        <div className="flex items-center justify-between h-16 px-3 border-b border-th-border gap-1">
           {sidebarOpen && (
             <div
-              className="flex items-center gap-2 cursor-pointer"
+              className="flex items-center gap-2 cursor-pointer min-w-0"
               onClick={() => navigate('/')}
             >
-              <img src="/logo-icon.png" alt="" className="h-7 w-auto shrink-0" />
-              <img src="/logo-text-white.png" alt="HappyPC" className="h-3.5 w-auto" />
-              <span className="text-th-text-2 font-normal text-xs">Admin</span>
+              <img src="/logo-icon.png" alt="" className="h-6 w-auto shrink-0" />
+              <img src="/logo-text-white.png" alt="HappyPC" className="h-3 w-auto shrink-0" />
             </div>
           )}
           <button
             onClick={() => setSidebarOpen((v) => !v)}
-            className="p-1.5 text-th-text-2 hover:text-th-text hover:bg-th-surface-2 rounded transition-colors ml-auto"
+            className="p-1.5 text-th-text-2 hover:text-th-text hover:bg-th-surface-2 rounded transition-colors shrink-0 ml-auto"
           >
             <ChevronLeft
               size={16}

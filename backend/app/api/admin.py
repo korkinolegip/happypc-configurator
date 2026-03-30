@@ -763,6 +763,10 @@ async def get_dashboard(
     total_workshops_result = await db.execute(select(func.count(Workshop.id)))
     total_workshops = total_workshops_result.scalar() or 0
 
+    from app.models.bug_report import BugReport as BR
+    bugs_count_result = await db.execute(select(func.count(BR.id)).where(BR.is_fixed == False))
+    open_bugs = bugs_count_result.scalar() or 0
+
     recent_builds_result = await db.execute(
         select(Build)
         .options(
@@ -823,6 +827,7 @@ async def get_dashboard(
         users_count=total_users,
         builds_count=total_builds,
         workshops_count=total_workshops,
+        bugs_count=open_bugs,
         recent_builds=recent_builds,
         masters_activity=masters_activity,
     )
@@ -1584,3 +1589,74 @@ async def clear_all_trash(
     from sqlalchemy import delete as sa_delete
     await db.execute(sa_delete(DU))
     await db.flush()
+
+
+# ============================================================
+# BUG REPORTS
+# ============================================================
+
+@router.get("/bugs")
+async def list_bugs(
+    current_user: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    from app.models.bug_report import BugReport
+    from sqlalchemy.orm import selectinload
+    result = await db.execute(
+        select(BugReport).order_by(BugReport.is_fixed.asc(), BugReport.created_at.desc())
+    )
+    bugs = result.scalars().all()
+
+    # Resolve reporter names
+    out = []
+    for b in bugs:
+        name = b.reporter_name
+        if b.reporter_id and not name:
+            u_result = await db.execute(select(User).where(User.id == b.reporter_id))
+            u = u_result.scalar_one_or_none()
+            if u:
+                name = u.name
+        out.append({
+            "id": str(b.id),
+            "description": b.description,
+            "screenshot_url": b.screenshot_url,
+            "page_url": b.page_url,
+            "reporter_name": name or "Аноним",
+            "is_fixed": b.is_fixed,
+            "admin_note": b.admin_note,
+            "created_at": b.created_at.isoformat() if b.created_at else None,
+        })
+    return out
+
+
+@router.patch("/bugs/{bug_id}")
+async def toggle_bug_fixed(
+    bug_id: uuid.UUID,
+    body: dict | None = None,
+    current_user: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    from app.models.bug_report import BugReport
+    result = await db.execute(select(BugReport).where(BugReport.id == bug_id))
+    bug = result.scalar_one_or_none()
+    if not bug:
+        raise HTTPException(status_code=404, detail="Баг не найден")
+    bug.is_fixed = not bug.is_fixed
+    if body and "admin_note" in body:
+        bug.admin_note = body["admin_note"]
+    await db.flush()
+    return {"is_fixed": bug.is_fixed}
+
+
+@router.delete("/bugs/{bug_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_bug(
+    bug_id: uuid.UUID,
+    current_user: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    from app.models.bug_report import BugReport
+    result = await db.execute(select(BugReport).where(BugReport.id == bug_id))
+    bug = result.scalar_one_or_none()
+    if not bug:
+        raise HTTPException(status_code=404, detail="Баг не найден")
+    await db.delete(bug)

@@ -121,7 +121,7 @@ const ProfilePage: React.FC = () => {
 
     try {
       const formData = new FormData()
-      formData.append('avatar', file)
+      formData.append('file', file)
       await updateProfile(formData)
       await refreshUser()
       toast.success('Аватар обновлён')

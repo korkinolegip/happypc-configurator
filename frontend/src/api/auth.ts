@@ -37,7 +37,7 @@ export const logout = async (): Promise<void> => {
 }
 
 export const updateProfile = async (data: FormData | Record<string, unknown>): Promise<User> => {
-  if (data instanceof FormData && data.has('avatar')) {
+  if (data instanceof FormData && data.has('file')) {
     await client.post<{ avatar_url: string }>('/api/profile/avatar', data, {
       headers: { 'Content-Type': 'multipart/form-data' },
     })

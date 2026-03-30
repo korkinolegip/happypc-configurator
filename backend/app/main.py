@@ -32,6 +32,7 @@ app.add_middleware(
 os.makedirs("/app/static", exist_ok=True)
 os.makedirs("/app/uploads/avatars", exist_ok=True)
 os.makedirs("/app/uploads/store-icons", exist_ok=True)
+os.makedirs("/app/uploads/bugs", exist_ok=True)
 
 app.mount("/static", StaticFiles(directory="/app/static"), name="static")
 app.mount("/uploads", StaticFiles(directory="/app/uploads"), name="uploads")
@@ -43,6 +44,9 @@ app.include_router(profile.router, prefix="/api/profile", tags=["profile"])
 app.include_router(admin.router, prefix="/api/admin", tags=["admin"])
 app.include_router(social.router, prefix="/api/social", tags=["social"])
 app.include_router(permissions.router, prefix="/api/permissions", tags=["permissions"])
+
+from app.api import bug_reports
+app.include_router(bug_reports.router, prefix="/api/bugs", tags=["bugs"])
 
 
 DEFAULT_SETTINGS = [

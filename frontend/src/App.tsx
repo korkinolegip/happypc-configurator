@@ -20,6 +20,7 @@ import BackupPage from './pages/admin/BackupPage'
 import PermissionsPage from './pages/admin/PermissionsPage'
 import StoresPage from './pages/admin/StoresPage'
 import EmailPage from './pages/admin/EmailPage'
+import BugsPage from './pages/admin/BugsPage'
 
 function App() {
   const { isLoading } = useAuth()
@@ -95,6 +96,7 @@ function App() {
           <Route path="backup" element={<BackupPage />} />
           <Route path="permissions" element={<PermissionsPage />} />
           <Route path="stores" element={<StoresPage />} />
+          <Route path="bugs" element={<BugsPage />} />
           <Route path="email" element={<EmailPage />} />
           <Route path="settings" element={<SettingsPage />} />
         </Route>
