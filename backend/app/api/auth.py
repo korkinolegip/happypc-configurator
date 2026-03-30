@@ -558,7 +558,7 @@ async def vk_auth_callback(
             vk_gender = "male"
         elif vk_sex == 1:
             vk_gender = "female"
-        avatar_url = user_data.get("avatar_url") or user_data.get("photo_200")
+        avatar_url = user_data.get("avatar") or user_data.get("avatar_url") or user_data.get("photo_200")
     except Exception:
         pass
 
