@@ -187,12 +187,22 @@ const LoginPage: React.FC = () => {
       <div className="w-full max-w-sm">
         {/* Logo */}
         <div className="flex flex-col items-center mb-8">
-          <div className="inline-flex flex-col items-center">
-            <div className="flex items-center gap-3 mb-1.5">
+          <div className="inline-flex flex-col items-center" ref={(el) => {
+            if (!el) return
+            const logo = el.querySelector('[data-logo]') as HTMLElement
+            const text = el.querySelector('[data-subtitle]') as HTMLElement
+            if (!logo || !text) return
+            requestAnimationFrame(() => {
+              const logoW = logo.offsetWidth
+              const textW = text.scrollWidth
+              if (textW > 0) text.style.transform = `scaleX(${logoW / textW})`
+            })
+          }}>
+            <div className="flex items-center gap-3 mb-1.5" data-logo>
               <img src="/logo-icon.png" alt="" className="h-10 w-auto" />
               <img src="/logo-text-white.png" alt="HappyPC" className="h-5 w-auto" />
             </div>
-            <p className="text-th-text-2 uppercase w-full text-center" style={{ fontSize: '0.46em', letterSpacing: '0.18em', wordSpacing: '-0.05em' }}>
+            <p data-subtitle className="text-th-text-2 uppercase whitespace-nowrap origin-center" style={{ fontSize: '9px', letterSpacing: '0.15em' }}>
               Конфигуратор счастливых компьютеров
             </p>
           </div>
