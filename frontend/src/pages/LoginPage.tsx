@@ -191,7 +191,7 @@ const LoginPage: React.FC = () => {
             <img src="/logo-icon.png" alt="" className="h-10 w-auto" />
             <img src="/logo-text-white.png" alt="HappyPC" className="h-5 w-auto" />
           </div>
-          <p className="text-th-text-2 text-sm">Конфигуратор</p>
+          <p className="text-th-text-2 text-[11px] tracking-[0.15em] uppercase">Конфигуратор счастливых компьютеров</p>
         </div>
 
         {/* Tabs */}
