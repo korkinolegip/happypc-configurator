@@ -67,8 +67,24 @@ def verify_telegram_auth(data: TelegramAuthData, bot_token: str) -> bool:
     return hmac.compare_digest(computed_hash, data.hash)
 
 
-async def get_vk_access_token(code: str, redirect_uri: str, device_id: str = "") -> dict:
-    """Exchange VK ID authorization code for access token (VK ID OAuth2)."""
+def generate_pkce_pair() -> tuple[str, str]:
+    """Generate PKCE code_verifier and code_challenge (S256)."""
+    import base64
+    import os
+    code_verifier = base64.urlsafe_b64encode(os.urandom(32)).rstrip(b"=").decode()
+    code_challenge = base64.urlsafe_b64encode(
+        hashlib.sha256(code_verifier.encode()).digest()
+    ).rstrip(b"=").decode()
+    return code_verifier, code_challenge
+
+
+async def get_vk_access_token(
+    code: str,
+    redirect_uri: str,
+    device_id: str = "",
+    code_verifier: str = "",
+) -> dict:
+    """Exchange VK ID authorization code for access token (VK ID OAuth2 + PKCE)."""
     url = "https://id.vk.com/oauth2/auth"
     data: dict[str, str] = {
         "grant_type": "authorization_code",
@@ -80,6 +96,8 @@ async def get_vk_access_token(code: str, redirect_uri: str, device_id: str = "")
     }
     if device_id:
         data["device_id"] = device_id
+    if code_verifier:
+        data["code_verifier"] = code_verifier
     async with httpx.AsyncClient() as client:
         response = await client.post(url, data=data)
         return response.json()

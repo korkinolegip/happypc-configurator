@@ -24,6 +24,7 @@ from app.schemas.auth import (
 from app.schemas.user import UserResponse
 from app.services.auth import (
     create_access_token,
+    generate_pkce_pair,
     get_vk_access_token,
     get_vk_user_info,
     hash_password,
@@ -464,7 +465,7 @@ async def telegram_auth_callback(
 
 @router.get("/vk")
 async def vk_auth_redirect():
-    """Redirect to VK ID authorization page."""
+    """Redirect to VK ID authorization page with PKCE."""
     if not settings.VK_CLIENT_ID:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
@@ -473,6 +474,7 @@ async def vk_auth_redirect():
 
     import uuid as _uuid
     state = str(_uuid.uuid4())
+    code_verifier, code_challenge = generate_pkce_pair()
 
     params = {
         "client_id": settings.VK_CLIENT_ID,
@@ -480,40 +482,57 @@ async def vk_auth_redirect():
         "response_type": "code",
         "scope": "vkid.personal_info email",
         "state": state,
+        "code_challenge": code_challenge,
+        "code_challenge_method": "s256",
     }
     vk_url = "https://id.vk.com/authorize?" + urllib.parse.urlencode(params)
-    return RedirectResponse(url=vk_url)
+    response = RedirectResponse(url=vk_url)
+    response.set_cookie(
+        "vk_cv", code_verifier,
+        httponly=True, secure=True, samesite="lax", max_age=600,
+    )
+    return response
 
 
 @router.get("/vk/callback")
 async def vk_auth_callback(
+    request: Request,
     code: str = Query(...),
     state: str | None = Query(None),
     device_id: str = Query(""),
     db: AsyncSession = Depends(get_db),
 ):
-    """Handle VK ID callback, exchange code for token, redirect to frontend with JWT."""
-    if not settings.VK_CLIENT_ID:
-        error_msg = urllib.parse.quote("VK авторизация не настроена")
-        return RedirectResponse(
+    """Handle VK ID callback with PKCE, exchange code for token, redirect to frontend."""
+    import logging
+    logger = logging.getLogger("vk_auth")
+    logger.warning("VK callback params: %s", dict(request.query_params))
+
+    # Read PKCE code_verifier from cookie
+    code_verifier = request.cookies.get("vk_cv", "")
+
+    def _error_redirect(msg: str) -> RedirectResponse:
+        error_msg = urllib.parse.quote(msg)
+        resp = RedirectResponse(
             url=f"{settings.FRONTEND_URL}/login?error={error_msg}&provider=vk"
         )
+        resp.delete_cookie("vk_cv")
+        return resp
+
+    if not settings.VK_CLIENT_ID:
+        return _error_redirect("VK авторизация не настроена")
 
     try:
-        vk_response = await get_vk_access_token(code, settings.VK_REDIRECT_URI, device_id)
-    except Exception as e:
-        error_msg = urllib.parse.quote(f"Ошибка получения токена VK: {e}")
-        return RedirectResponse(
-            url=f"{settings.FRONTEND_URL}/login?error={error_msg}&provider=vk"
+        vk_response = await get_vk_access_token(
+            code, settings.VK_REDIRECT_URI, device_id, code_verifier,
         )
+        logger.warning("VK token response: %s", vk_response)
+    except Exception as e:
+        logger.warning("VK token exchange error: %s", e)
+        return _error_redirect(f"Ошибка получения токена VK: {e}")
 
     if "error" in vk_response:
-        error_msg = urllib.parse.quote(
-            vk_response.get("error_description", vk_response.get("error", "unknown"))
-        )
-        return RedirectResponse(
-            url=f"{settings.FRONTEND_URL}/login?error={error_msg}&provider=vk"
-        )
+        desc = vk_response.get("error_description", vk_response.get("error", "unknown"))
+        return _error_redirect(desc)
 
     access_token = vk_response.get("access_token", "")
     vk_user_id = str(vk_response.get("user_id", ""))
@@ -534,10 +553,7 @@ async def vk_auth_callback(
         pass
 
     if not vk_user_id:
-        error_msg = urllib.parse.quote("VK не вернул идентификатор пользователя")
-        return RedirectResponse(
-            url=f"{settings.FRONTEND_URL}/login?error={error_msg}&provider=vk"
-        )
+        return _error_redirect("VK не вернул идентификатор пользователя")
 
     # 1) Find by vk_id
     result = await db.execute(select(User).where(User.vk_id == vk_user_id))
@@ -569,10 +585,7 @@ async def vk_auth_callback(
         await db.refresh(user)
     else:
         if not user.is_active:
-            error_msg = urllib.parse.quote("Аккаунт деактивирован")
-            return RedirectResponse(
-                url=f"{settings.FRONTEND_URL}/login?error={error_msg}&provider=vk"
-            )
+            return _error_redirect("Аккаунт деактивирован")
 
     # Check if profile is incomplete
     needs_profile = not user.email or not user.phone or not user.city
@@ -582,7 +595,9 @@ async def vk_auth_callback(
     redirect_url = f"{settings.FRONTEND_URL}/login?token={jwt_token}&provider=vk"
     if needs_profile:
         redirect_url += "&complete_profile=1"
-    return RedirectResponse(url=redirect_url)
+    resp = RedirectResponse(url=redirect_url)
+    resp.delete_cookie("vk_cv")
+    return resp
 
 
 # ---------------------------------------------------------------------------
