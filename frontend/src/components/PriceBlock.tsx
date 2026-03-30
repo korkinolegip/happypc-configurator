@@ -31,11 +31,16 @@ const PriceBlock: React.FC<PriceBlockProps> = ({
         <span className="text-th-text font-medium">{fmt(hardwareTotal)}</span>
       </div>
 
-      <div className="px-4 py-3 flex items-center justify-between border-b border-th-border">
-        <span className="text-th-text-2 text-sm">
-          Стоимость работы <span className="text-xs">({laborPercent}%)</span>
-        </span>
-        <span className="text-th-text font-medium">{fmt(laborCost)}</span>
+      <div className="px-4 py-3 border-b border-th-border">
+        <div className="flex items-center justify-between">
+          <span className="text-th-text-2 text-sm">
+            Стоимость работы <span className="text-xs">({laborPercent}%)</span>
+          </span>
+          <span className="text-th-text font-medium">{fmt(laborCost)}</span>
+        </div>
+        <p className="text-th-muted text-[11px] mt-1 leading-relaxed">
+          1. Сборка ПК + кабель-менеджмент.&ensp;2. Настройка и тестирование ПК.
+        </p>
       </div>
 
       {installOS && (
