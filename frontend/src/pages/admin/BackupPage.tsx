@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
-  Download, RotateCcw, Plus, Database, HardDrive, Trash2,
+  Download, RotateCcw, Plus, Database, HardDrive, Trash2, FileSpreadsheet,
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { getBackups, createBackup, restoreBackup, deleteBackup } from '../../api/admin'
@@ -11,6 +11,26 @@ const BackupPage: React.FC = () => {
   const queryClient = useQueryClient()
   const [creating, setCreating] = useState(false)
   const [restoringFile, setRestoringFile] = useState<string | null>(null)
+
+  const handleExport = async (type: 'users' | 'builds') => {
+    try {
+      const token = localStorage.getItem('token')
+      const response = await fetch(`/api/admin/export/${type}-csv`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      if (!response.ok) throw new Error()
+      const blob = await response.blob()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `${type}.csv`
+      a.click()
+      URL.revokeObjectURL(url)
+      toast.success(`Экспорт ${type === 'users' ? 'пользователей' : 'сборок'} завершён`)
+    } catch {
+      toast.error('Ошибка экспорта')
+    }
+  }
 
   const { data: backups, isLoading } = useQuery({
     queryKey: ['admin-backups'],
@@ -184,6 +204,24 @@ const BackupPage: React.FC = () => {
             </table>
           </div>
         )}
+      </div>
+
+      {/* Export CSV */}
+      <div className="bg-th-surface border border-th-border rounded-lg p-5">
+        <h2 className="text-th-text font-semibold mb-4 flex items-center gap-2">
+          <FileSpreadsheet size={18} />
+          Экспорт данных
+        </h2>
+        <div className="flex flex-wrap gap-3">
+          <button onClick={() => handleExport('users')} className="btn-secondary flex items-center gap-2">
+            <Download size={14} />
+            Пользователи (CSV)
+          </button>
+          <button onClick={() => handleExport('builds')} className="btn-secondary flex items-center gap-2">
+            <Download size={14} />
+            Сборки (CSV)
+          </button>
+        </div>
       </div>
     </div>
   )
