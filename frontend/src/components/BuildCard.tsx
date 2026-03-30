@@ -90,8 +90,10 @@ const BuildCard: React.FC<BuildCardProps> = ({ build }) => {
           <div className="px-5 py-3 border-t border-th-border">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-2 gap-x-4">
               {build.components.slice(0, 8).map((comp, i) => (
-                <div key={i} className="flex items-center gap-2.5 min-w-0">
-                  <CategoryIcon category={comp.category} size={20} color="#FF6B00" />
+                <div key={i} className="flex items-center gap-2 min-w-0">
+                  <div className="w-5 h-5 shrink-0 flex items-center justify-center">
+                    <CategoryIcon category={comp.category} size={18} color="#FF6B00" />
+                  </div>
                   <span className="text-th-text-2 text-[13px] leading-tight truncate">{comp.name}</span>
                 </div>
               ))}
