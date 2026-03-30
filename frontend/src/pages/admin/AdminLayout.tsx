@@ -7,7 +7,6 @@ import {
   Settings,
   ChevronLeft,
   Menu,
-  Cpu,
   Monitor,
   Megaphone,
   MessageSquare,
@@ -51,12 +50,9 @@ const AdminLayout: React.FC = () => {
               className="flex items-center gap-2 cursor-pointer"
               onClick={() => navigate('/')}
             >
-              <Cpu size={20} className="text-[#FF6B00] shrink-0" />
-              <span className="font-bold text-th-text text-sm">
-                <span>Happy</span>
-                <span className="text-[#FF6B00]">PC</span>
-                <span className="text-th-text-2 font-normal ml-1 text-xs">Admin</span>
-              </span>
+              <img src="/logo-icon.png" alt="" className="h-7 w-auto shrink-0" />
+              <img src="/logo-text-white.png" alt="HappyPC" className="h-3.5 w-auto" />
+              <span className="text-th-text-2 font-normal text-xs">Admin</span>
             </div>
           )}
           <button
@@ -122,11 +118,9 @@ const AdminLayout: React.FC = () => {
         }`}
       >
         <div className="flex items-center gap-2 h-16 px-4 border-b border-th-border">
-          <Cpu size={20} className="text-[#FF6B00]" />
-          <span className="font-bold text-th-text text-sm">
-            Happy<span className="text-[#FF6B00]">PC</span>
-            <span className="text-th-text-2 font-normal ml-1 text-xs">Admin</span>
-          </span>
+          <img src="/logo-icon.png" alt="" className="h-7 w-auto shrink-0" />
+          <img src="/logo-text-white.png" alt="HappyPC" className="h-3.5 w-auto" />
+          <span className="text-th-text-2 font-normal text-xs">Admin</span>
         </div>
         <nav className="py-3 space-y-0.5 px-1.5">
           {navItems.map(({ to, label, icon: Icon, end }) => (
@@ -160,10 +154,9 @@ const AdminLayout: React.FC = () => {
           >
             <Menu size={20} />
           </button>
-          <span className="font-bold text-th-text text-sm">
-            Happy<span className="text-[#FF6B00]">PC</span>
-            <span className="text-th-text-2 font-normal ml-1 text-xs">Admin</span>
-          </span>
+          <img src="/logo-icon.png" alt="" className="h-6 w-auto" />
+          <img src="/logo-text-white.png" alt="HappyPC" className="h-3 w-auto" />
+          <span className="text-th-text-2 font-normal text-xs">Admin</span>
         </div>
 
         <main className="flex-1 p-4 sm:p-6 overflow-auto">
