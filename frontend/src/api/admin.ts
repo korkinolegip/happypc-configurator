@@ -1,5 +1,5 @@
 import { client } from './client'
-import type { User, Workshop, AppSettings, DashboardStats } from '../types'
+import type { User, Workshop, AppSettings, DashboardStats, StoreInfo } from '../types'
 
 // Users
 export interface UserFilters {
@@ -244,4 +244,45 @@ export const restoreBackup = async (filename: string): Promise<void> => {
 
 export const deleteBackup = async (filename: string): Promise<void> => {
   await client.delete(`/api/admin/db/backup/${filename}`)
+}
+
+// Stores
+export interface StoreData {
+  name: string
+  short_label: string
+  color: string
+  url_patterns: string[]
+}
+
+export const getAdminStores = async (): Promise<StoreInfo[]> => {
+  const response = await client.get<StoreInfo[]>('/api/admin/stores')
+  return response.data
+}
+
+export const createStore = async (data: StoreData): Promise<StoreInfo> => {
+  const response = await client.post<StoreInfo>('/api/admin/stores', data)
+  return response.data
+}
+
+export const updateStore = async (slug: string, data: StoreData): Promise<StoreInfo> => {
+  const response = await client.put<StoreInfo>(`/api/admin/stores/${slug}`, data)
+  return response.data
+}
+
+export const deleteStore = async (slug: string): Promise<void> => {
+  await client.delete(`/api/admin/stores/${slug}`)
+}
+
+export const uploadStoreIcon = async (slug: string, file: File): Promise<StoreInfo> => {
+  const formData = new FormData()
+  formData.append('file', file)
+  const response = await client.post<StoreInfo>(`/api/admin/stores/${slug}/icon`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  })
+  return response.data
+}
+
+export const fetchStoreIcon = async (slug: string): Promise<StoreInfo> => {
+  const response = await client.post<StoreInfo>(`/api/admin/stores/${slug}/fetch-icon`)
+  return response.data
 }

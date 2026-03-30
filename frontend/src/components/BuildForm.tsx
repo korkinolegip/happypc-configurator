@@ -4,9 +4,11 @@ import {
   Plus, Minus, Trash2, ChevronDown, ChevronUp, ExternalLink, Lock, Loader2, Eye, EyeOff,
 } from 'lucide-react'
 import CategoryIcon from './CategoryIcon'
-import type { Build } from '../types'
+import StoreBadge from './StoreBadge'
+import type { Build, StoreInfo } from '../types'
 import { parseProductUrl } from '../api/builds'
 import { usePermissions } from '../hooks/usePermissions'
+import { useStores, detectStoreFromList } from '../hooks/useStores'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -63,55 +65,6 @@ const makeEmpty = (category: string): SectionItem => ({
   category, name: '', url: '', price: '', qty: '1',
 })
 
-// ─── Store detection & badge ──────────────────────────────────────────────────
-
-const STORE_INFO: Record<string, { label: string; color: string; shortLabel: string }> = {
-  wildberries: { label: 'Wildberries', color: '#CB11AB', shortLabel: 'WB' },
-  dns:         { label: 'DNS',         color: '#F62A00', shortLabel: 'DNS' },
-  ozon:        { label: 'Ozon',        color: '#005BFF', shortLabel: 'Ozon' },
-  yandex:      { label: 'Яндекс Маркет', color: '#FFCC00', shortLabel: 'YM' },
-  megamarket:  { label: 'МегаМаркет',  color: '#FF5C00', shortLabel: 'MM' },
-  aliexpress:  { label: 'AliExpress',  color: '#FF6A00', shortLabel: 'Ali' },
-  avito:       { label: 'Авито',       color: '#00AAFF', shortLabel: 'Avito' },
-  citilink:    { label: 'Ситилинк',    color: '#FF8C00', shortLabel: 'CL' },
-  mvideo:      { label: 'М.Видео',     color: '#FF0000', shortLabel: 'MV' },
-  eldorado:    { label: 'Эльдорадо',   color: '#FFD700', shortLabel: 'EL' },
-  onlinetrade: { label: 'ОнлайнТрейд', color: '#00A046', shortLabel: 'OT' },
-}
-
-function detectStore(url: string): string | null {
-  if (!url) return null
-  const u = url.toLowerCase()
-  if (u.includes('wildberries.ru') || u.includes('wb.ru')) return 'wildberries'
-  if (u.includes('dns-shop.ru')) return 'dns'
-  if (u.includes('ozon.ru')) return 'ozon'
-  if (u.includes('megamarket.ru')) return 'megamarket'
-  if (u.includes('aliexpress.ru') || u.includes('aliexpress.com')) return 'aliexpress'
-  if (u.includes('market.yandex.ru') || u.includes('ya.cc')) return 'yandex'
-  if (u.includes('avito.ru')) return 'avito'
-  if (u.includes('citilink.ru')) return 'citilink'
-  if (u.includes('mvideo.ru')) return 'mvideo'
-  if (u.includes('eldorado.ru')) return 'eldorado'
-  if (u.includes('onlinetrade.ru')) return 'onlinetrade'
-  return null
-}
-
-function StoreBadge({ store }: { store: string }) {
-  const info = STORE_INFO[store]
-  if (!info) return null
-  return (
-    <span
-      className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold whitespace-nowrap shrink-0 uppercase tracking-wide"
-      style={{ backgroundColor: info.color + '22', color: info.color, border: `1px solid ${info.color}44` }}
-    >
-      <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: info.color }} />
-      {info.shortLabel}
-    </span>
-  )
-}
-
-export { STORE_INFO, detectStore, StoreBadge }
-
 // ─── Single item row ──────────────────────────────────────────────────────────
 
 interface ItemRowProps {
@@ -124,22 +77,23 @@ interface ItemRowProps {
   register: ReturnType<typeof useForm<BuildFormValues>>['register']
   setValue: ReturnType<typeof useForm<BuildFormValues>>['setValue']
   watch: ReturnType<typeof useForm<BuildFormValues>>['watch']
+  stores?: StoreInfo[]
 }
 
-function ItemRow({ fieldName, category, canDelete, canChangeCategory, onDelete, onCategoryChange, register, setValue, watch }: ItemRowProps) {
+function ItemRow({ fieldName, category, canDelete, canChangeCategory, onDelete, onCategoryChange, register, setValue, watch, stores = [] }: ItemRowProps) {
   const [loading, setLoading] = useState(false)
   const [filled, setFilled] = useState(false)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const currentUrl = (watch(`${fieldName}.url` as never) as unknown as string) || ''
-  const detectedStore = detectStore(currentUrl)
+  const detectedStore = detectStoreFromList(currentUrl, stores)
 
   const handleUrlChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const url = e.target.value
     setValue(`${fieldName}.url` as never, url as never)
     setFilled(false)
     if (debounceRef.current) clearTimeout(debounceRef.current)
-    const store = detectStore(url)
+    const store = detectStoreFromList(url, stores)
     if (!store || !url.startsWith('http')) return
     debounceRef.current = setTimeout(async () => {
       setLoading(true)
@@ -149,7 +103,7 @@ function ItemRow({ fieldName, category, canDelete, canChangeCategory, onDelete, 
         if (result.price != null) setValue(`${fieldName}.price` as never, String(Math.round(result.price)) as never)
       } catch { /* silent */ } finally { setLoading(false) }
     }, 700)
-  }, [fieldName, setValue])
+  }, [fieldName, setValue, stores])
 
   const currentQty = parseInt((watch(`${fieldName}.qty` as never) as unknown as string) || '1', 10) || 1
 
@@ -207,7 +161,7 @@ function ItemRow({ fieldName, category, canDelete, canChangeCategory, onDelete, 
             <div className="absolute right-1.5 top-1/2 -translate-y-1/2 flex items-center gap-1">
               {loading && <Loader2 size={12} className="text-[#FF6B00] animate-spin" />}
               {filled && !loading && <span className="text-green-500 text-[10px] font-bold">✓</span>}
-              {detectedStore && !loading && <StoreBadge store={detectedStore} />}
+              {detectedStore && !loading && <StoreBadge store={detectedStore} size="sm" />}
               {currentUrl && !loading && (
                 <a href={currentUrl} target="_blank" rel="noopener noreferrer"
                    className="text-th-muted hover:text-[#FF6B00] transition-colors"
@@ -328,6 +282,7 @@ function fmt(n: number) {
 
 const BuildForm: React.FC<BuildFormProps> = ({ initialData, onSubmit, isSubmitting, submitLabel = 'Сохранить' }) => {
   const { can } = usePermissions()
+  const { data: stores = [] } = useStores()
   const [showPassword, setShowPassword] = useState(false)
 
   // Build default values
@@ -419,6 +374,7 @@ const BuildForm: React.FC<BuildFormProps> = ({ initialData, onSubmit, isSubmitti
               register={register}
               setValue={setValue}
               watch={watch}
+              stores={stores}
             />
           ))}
         </Section>
@@ -437,6 +393,7 @@ const BuildForm: React.FC<BuildFormProps> = ({ initialData, onSubmit, isSubmitti
               register={register}
               setValue={setValue}
               watch={watch}
+              stores={stores}
             />
           ))}
           <div className="px-3 py-2">
@@ -462,6 +419,7 @@ const BuildForm: React.FC<BuildFormProps> = ({ initialData, onSubmit, isSubmitti
               register={register}
               setValue={setValue}
               watch={watch}
+              stores={stores}
             />
           ))}
         </Section>

@@ -1118,3 +1118,224 @@ async def delete_backup(
         )
 
     os.remove(filepath)
+
+
+# ============================================================
+# STORES
+# ============================================================
+
+@router.get("/stores")
+async def list_stores(
+    current_user: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    from app.models.store import Store
+    result = await db.execute(select(Store).order_by(Store.position, Store.created_at.desc()))
+    stores = result.scalars().all()
+    return [
+        {
+            "id": str(s.id),
+            "slug": s.slug,
+            "name": s.name,
+            "short_label": s.short_label,
+            "color": s.color,
+            "url_patterns": s.url_patterns,
+            "icon_path": s.icon_path,
+            "icon_url": s.icon_path if s.icon_path else None,
+            "is_auto": s.is_auto,
+            "position": s.position,
+            "created_at": s.created_at.isoformat(),
+        }
+        for s in stores
+    ]
+
+
+@router.post("/stores", status_code=status.HTTP_201_CREATED)
+async def create_store(
+    data: dict,
+    current_user: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    from app.models.store import Store
+    import re
+
+    name = data.get("name", "").strip()
+    if not name:
+        raise HTTPException(status_code=400, detail="Название магазина обязательно")
+
+    slug = data.get("slug") or re.sub(r"[^a-z0-9-]", "", name.lower().replace(" ", "-"))
+
+    # Check slug uniqueness
+    existing = await db.execute(select(Store).where(Store.slug == slug))
+    if existing.scalar_one_or_none():
+        raise HTTPException(status_code=409, detail="Магазин с таким slug уже существует")
+
+    store = Store(
+        slug=slug,
+        name=name,
+        short_label=data.get("short_label", name[:3].upper()),
+        color=data.get("color", "#888888"),
+        url_patterns=data.get("url_patterns", []),
+        is_auto=data.get("is_auto", False),
+        position=data.get("position", 0),
+    )
+    db.add(store)
+    await db.flush()
+    await db.refresh(store)
+
+    return {
+        "id": str(store.id),
+        "slug": store.slug,
+        "name": store.name,
+        "short_label": store.short_label,
+        "color": store.color,
+        "url_patterns": store.url_patterns,
+        "icon_path": store.icon_path,
+        "icon_url": store.icon_path if store.icon_path else None,
+        "is_auto": store.is_auto,
+        "position": store.position,
+        "created_at": store.created_at.isoformat(),
+    }
+
+
+@router.put("/stores/{store_id}")
+async def update_store(
+    store_id: uuid.UUID,
+    data: dict,
+    current_user: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    from app.models.store import Store
+
+    result = await db.execute(select(Store).where(Store.id == store_id))
+    store = result.scalar_one_or_none()
+    if not store:
+        raise HTTPException(status_code=404, detail="Магазин не найден")
+
+    if "name" in data:
+        store.name = data["name"]
+    if "slug" in data:
+        # Check uniqueness
+        existing = await db.execute(
+            select(Store).where(Store.slug == data["slug"], Store.id != store_id)
+        )
+        if existing.scalar_one_or_none():
+            raise HTTPException(status_code=409, detail="Магазин с таким slug уже существует")
+        store.slug = data["slug"]
+    if "short_label" in data:
+        store.short_label = data["short_label"]
+    if "color" in data:
+        store.color = data["color"]
+    if "url_patterns" in data:
+        store.url_patterns = data["url_patterns"]
+    if "icon_path" in data:
+        store.icon_path = data["icon_path"]
+    if "is_auto" in data:
+        store.is_auto = data["is_auto"]
+    if "position" in data:
+        store.position = data["position"]
+
+    await db.flush()
+
+    return {
+        "id": str(store.id),
+        "slug": store.slug,
+        "name": store.name,
+        "short_label": store.short_label,
+        "color": store.color,
+        "url_patterns": store.url_patterns,
+        "icon_path": store.icon_path,
+        "icon_url": store.icon_path if store.icon_path else None,
+        "is_auto": store.is_auto,
+        "position": store.position,
+        "created_at": store.created_at.isoformat(),
+    }
+
+
+@router.delete("/stores/{store_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_store(
+    store_id: uuid.UUID,
+    current_user: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    from app.models.store import Store
+
+    result = await db.execute(select(Store).where(Store.id == store_id))
+    store = result.scalar_one_or_none()
+    if not store:
+        raise HTTPException(status_code=404, detail="Магазин не найден")
+    await db.delete(store)
+
+
+@router.post("/stores/{store_id}/upload-icon")
+async def upload_store_icon(
+    store_id: uuid.UUID,
+    file: UploadFile = File(...),
+    current_user: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    from app.models.store import Store
+
+    result = await db.execute(select(Store).where(Store.id == store_id))
+    store = result.scalar_one_or_none()
+    if not store:
+        raise HTTPException(status_code=404, detail="Магазин не найден")
+
+    if not file.filename:
+        raise HTTPException(status_code=400, detail="Файл не выбран")
+
+    ext = os.path.splitext(file.filename)[1].lower()
+    if ext not in ALLOWED_IMAGE_EXT:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Формат не поддерживается. Разрешены: {', '.join(ALLOWED_IMAGE_EXT)}",
+        )
+
+    content = await file.read()
+    if len(content) > MAX_LOGO_SIZE:
+        raise HTTPException(status_code=413, detail="Файл слишком большой (макс. 2 МБ)")
+
+    icon_dir = "/app/uploads/store-icons"
+    os.makedirs(icon_dir, exist_ok=True)
+
+    filename = f"{store.slug}{ext}"
+    filepath = os.path.join(icon_dir, filename)
+
+    import aiofiles
+
+    async with aiofiles.open(filepath, "wb") as f:
+        await f.write(content)
+
+    store.icon_path = f"/uploads/store-icons/{filename}"
+    await db.flush()
+
+    return {"icon_url": store.icon_path}
+
+
+@router.post("/stores/{store_id}/fetch-icon")
+async def fetch_store_icon(
+    store_id: uuid.UUID,
+    current_user: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    from app.models.store import Store
+    from app.services.favicon import fetch_favicon
+
+    result = await db.execute(select(Store).where(Store.id == store_id))
+    store = result.scalar_one_or_none()
+    if not store:
+        raise HTTPException(status_code=404, detail="Магазин не найден")
+
+    if not store.url_patterns:
+        raise HTTPException(status_code=400, detail="У магазина нет url_patterns для получения иконки")
+
+    domain = store.url_patterns[0]
+    icon_path = await fetch_favicon(domain, store.slug)
+
+    if not icon_path:
+        raise HTTPException(status_code=422, detail="Не удалось получить иконку")
+
+    store.icon_path = icon_path
+    await db.flush()
+
+    return {"icon_url": store.icon_path}

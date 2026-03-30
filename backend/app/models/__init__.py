@@ -6,5 +6,6 @@ from app.models.city import City
 from app.models.banner import Banner
 from app.models.social import BuildView, BuildLike, BuildComment, Tag
 from app.models.permissions import RolePermission
+from app.models.store import Store
 
-__all__ = ["Base", "User", "Workshop", "Build", "BuildItem", "AppSettings", "City", "Banner", "BuildView", "BuildLike", "BuildComment", "Tag"]
+__all__ = ["Base", "User", "Workshop", "Build", "BuildItem", "AppSettings", "City", "Banner", "BuildView", "BuildLike", "BuildComment", "Tag", "Store"]

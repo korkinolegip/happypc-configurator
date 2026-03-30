@@ -133,3 +133,12 @@ export interface AuthResponse {
 }
 
 export type UserRole = 'superadmin' | 'admin' | 'master' | 'user'
+
+export interface StoreInfo {
+  slug: string
+  name: string
+  short_label: string
+  color: string
+  url_patterns: string[]
+  icon_url: string | null
+}

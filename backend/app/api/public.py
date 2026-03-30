@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import StreamingResponse
 from io import BytesIO
 from pydantic import BaseModel
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -399,6 +399,128 @@ async def get_cities(
     result = await db.execute(select(City).order_by(City.name))
     cities = result.scalars().all()
     return [{"name": c.name, "code": c.code} for c in cities]
+
+
+@router.get("/stores")
+async def get_stores(db: AsyncSession = Depends(get_db)):
+    """Return all stores for public use."""
+    from app.models.store import Store
+    result = await db.execute(select(Store).order_by(Store.position, Store.name))
+    stores = result.scalars().all()
+    return [
+        {
+            "slug": s.slug,
+            "name": s.name,
+            "short_label": s.short_label,
+            "color": s.color,
+            "url_patterns": s.url_patterns,
+            "icon_url": s.icon_path if s.icon_path else None,
+        }
+        for s in stores
+    ]
+
+
+class DetectStoreRequest(BaseModel):
+    url: str
+
+
+@router.post("/detect-store")
+async def detect_store(body: DetectStoreRequest, db: AsyncSession = Depends(get_db)):
+    """Detect or auto-create a store from a URL."""
+    from urllib.parse import urlparse
+
+    from app.models.store import Store
+    from app.services.favicon import fetch_favicon
+
+    url = body.url.strip()
+    if not url.startswith(("http://", "https://")):
+        url = "https://" + url
+
+    try:
+        parsed = urlparse(url)
+        domain = parsed.hostname or ""
+    except Exception:
+        raise HTTPException(status_code=400, detail="Некорректный URL")
+
+    if not domain:
+        raise HTTPException(status_code=400, detail="Не удалось определить домен")
+
+    # Remove www. prefix for matching
+    clean_domain = domain.lower().removeprefix("www.")
+
+    # Search existing stores by url_patterns
+    result = await db.execute(select(Store))
+    stores = result.scalars().all()
+
+    for store in stores:
+        for pattern in store.url_patterns:
+            if clean_domain == pattern or clean_domain.endswith("." + pattern):
+                return {
+                    "slug": store.slug,
+                    "name": store.name,
+                    "short_label": store.short_label,
+                    "color": store.color,
+                    "url_patterns": store.url_patterns,
+                    "icon_url": store.icon_path if store.icon_path else None,
+                }
+
+    # No match found — auto-create store
+    import re
+
+    # Generate slug from domain: "dns-shop.ru" -> "dns-shop-ru"
+    slug = re.sub(r"[^a-z0-9-]", "-", clean_domain).strip("-")
+    # Remove consecutive dashes
+    slug = re.sub(r"-+", "-", slug)
+
+    # Check slug uniqueness, append suffix if needed
+    base_slug = slug
+    counter = 1
+    while True:
+        existing = await db.execute(select(Store).where(Store.slug == slug))
+        if not existing.scalar_one_or_none():
+            break
+        slug = f"{base_slug}-{counter}"
+        counter += 1
+
+    # Generate short_label: take first 2-3 meaningful chars
+    parts = clean_domain.split(".")
+    label_source = parts[0] if parts else clean_domain
+    short_label = label_source[:3].upper()
+
+    # Get max position for auto stores
+    max_pos_result = await db.execute(select(func.max(Store.position)))
+    max_pos = max_pos_result.scalar() or 0
+
+    new_store = Store(
+        slug=slug,
+        name=clean_domain,
+        short_label=short_label,
+        color="#888888",
+        url_patterns=[clean_domain],
+        is_auto=True,
+        position=max_pos + 1,
+    )
+    db.add(new_store)
+    await db.flush()
+    await db.refresh(new_store)
+
+    # Try to fetch favicon in background (best-effort)
+    try:
+        icon_path = await fetch_favicon(clean_domain, new_store.slug)
+        if icon_path:
+            new_store.icon_path = icon_path
+            await db.flush()
+    except Exception:
+        pass  # favicon fetch is best-effort
+
+    return {
+        "slug": new_store.slug,
+        "name": new_store.name,
+        "short_label": new_store.short_label,
+        "color": new_store.color,
+        "url_patterns": new_store.url_patterns,
+        "icon_url": new_store.icon_path if new_store.icon_path else None,
+    }
 
 
 @router.get("/{short_code}", response_model=BuildPublicResponse)

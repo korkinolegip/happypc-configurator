@@ -12,16 +12,18 @@ import { getComments, createComment, editComment, deleteComment, getBuildStats, 
 import type { Comment } from '../api/social'
 import { useAuth } from '../hooks/useAuth'
 import { usePermissions } from '../hooks/usePermissions'
+import { useStores, detectStoreFromList } from '../hooks/useStores'
 import CategoryIcon from '../components/CategoryIcon'
 import PriceBlock from '../components/PriceBlock'
 import ShareModal from '../components/ShareModal'
-import { STORE_INFO, detectStore, StoreBadge } from '../components/BuildForm'
+import StoreBadge from '../components/StoreBadge'
+import type { StoreInfo } from '../types'
 
-function StoreIcon({ url }: { url: string | null }) {
+function StoreIcon({ url, stores }: { url: string | null; stores: StoreInfo[] }) {
   if (!url) return null
-  const store = detectStore(url)
+  const store = detectStoreFromList(url, stores)
   if (!store) return null
-  return <StoreBadge store={store} />
+  return <StoreBadge store={store} size="sm" />
 }
 
 const formatDate = (s: string) =>
@@ -33,7 +35,7 @@ const formatPrice = (n: number) =>
 interface PasswordForm { password: string }
 
 // ─── Components table section ─────────────────────────────────────────────────
-function ComponentsSection({ items }: { items: { id: string; category: string; name: string; url: string | null; price: number; sort_order: number }[] }) {
+function ComponentsSection({ items, stores }: { items: { id: string; category: string; name: string; url: string | null; price: number; sort_order: number }[]; stores: StoreInfo[] }) {
   const [open, setOpen] = useState(true)
   const sorted = [...items].sort((a, b) => a.sort_order - b.sort_order)
   const total = items.reduce((s, i) => s + i.price, 0)
@@ -68,7 +70,7 @@ function ComponentsSection({ items }: { items: { id: string; category: string; n
                     {item.url ? (
                       <a href={item.url} target="_blank" rel="noopener noreferrer"
                          className="text-th-text hover:text-[#FF6B00] transition-colors flex items-center gap-1.5 group text-sm">
-                        <StoreIcon url={item.url} />
+                        <StoreIcon url={item.url} stores={stores} />
                         {item.name}
                         <ExternalLink size={11} className="text-th-muted group-hover:text-[#FF6B00] shrink-0" />
                       </a>
@@ -100,6 +102,7 @@ const BuildPage: React.FC = () => {
   const navigate = useNavigate()
   const { isAuthenticated, user } = useAuth()
   const { can } = usePermissions()
+  const { data: stores = [] } = useStores()
   const [password, setPassword] = useState<string | undefined>(undefined)
   const [pdfLoading, setPdfLoading] = useState(false)
   const [copyingBuild, setCopyingBuild] = useState(false)
@@ -382,7 +385,7 @@ const BuildPage: React.FC = () => {
           )}
 
           {/* Components */}
-          <ComponentsSection items={build.items} />
+          <ComponentsSection items={build.items} stores={stores} />
 
           {/* Price block */}
           <PriceBlock

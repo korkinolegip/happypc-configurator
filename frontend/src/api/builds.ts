@@ -1,5 +1,5 @@
 import { client } from './client'
-import type { Build, BuildListItem, PaginatedResponse } from '../types'
+import type { Build, BuildListItem, PaginatedResponse, StoreInfo } from '../types'
 
 export const getPublicSettings = async (): Promise<Record<string, string>> => {
   const response = await client.get('/api/public/settings')
@@ -157,5 +157,11 @@ export interface CityItem {
 export const getCities = async (withBuilds = false): Promise<CityItem[]> => {
   const params = withBuilds ? { with_builds: 'true' } : {}
   const response = await client.get<CityItem[]>('/api/public/cities', { params })
+  return response.data
+}
+
+// Stores
+export const getStores = async (): Promise<StoreInfo[]> => {
+  const response = await client.get<StoreInfo[]>('/api/public/stores')
   return response.data
 }

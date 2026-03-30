@@ -12,6 +12,7 @@ from app.database import AsyncSessionLocal
 from app.models.settings import AppSettings
 from app.models.user import User, Workshop
 from app.models.city import City, RUSSIAN_CITIES
+from app.models.store import Store
 
 app = FastAPI(
     title="HappyPC Configurator",
@@ -30,6 +31,7 @@ app.add_middleware(
 # Mount static and upload directories (create them if missing)
 os.makedirs("/app/static", exist_ok=True)
 os.makedirs("/app/uploads/avatars", exist_ok=True)
+os.makedirs("/app/uploads/store-icons", exist_ok=True)
 
 app.mount("/static", StaticFiles(directory="/app/static"), name="static")
 app.mount("/uploads", StaticFiles(directory="/app/uploads"), name="uploads")
@@ -154,6 +156,110 @@ async def init_cities():
             print(f"Warning: Could not seed cities: {e}")
 
 
+DEFAULT_STORES = [
+    {
+        "slug": "wildberries",
+        "name": "Wildberries",
+        "short_label": "WB",
+        "color": "#CB11AB",
+        "url_patterns": ["wildberries.ru", "wb.ru"],
+    },
+    {
+        "slug": "dns",
+        "name": "DNS",
+        "short_label": "DNS",
+        "color": "#F62A00",
+        "url_patterns": ["dns-shop.ru"],
+    },
+    {
+        "slug": "ozon",
+        "name": "Ozon",
+        "short_label": "Ozon",
+        "color": "#005BFF",
+        "url_patterns": ["ozon.ru"],
+    },
+    {
+        "slug": "yandex",
+        "name": "Яндекс Маркет",
+        "short_label": "YM",
+        "color": "#FFCC00",
+        "url_patterns": ["market.yandex.ru", "ya.cc"],
+    },
+    {
+        "slug": "megamarket",
+        "name": "МегаМаркет",
+        "short_label": "MM",
+        "color": "#FF5C00",
+        "url_patterns": ["megamarket.ru"],
+    },
+    {
+        "slug": "aliexpress",
+        "name": "AliExpress",
+        "short_label": "Ali",
+        "color": "#FF6A00",
+        "url_patterns": ["aliexpress.ru", "aliexpress.com"],
+    },
+    {
+        "slug": "avito",
+        "name": "Авито",
+        "short_label": "Avito",
+        "color": "#00AAFF",
+        "url_patterns": ["avito.ru"],
+    },
+    {
+        "slug": "citilink",
+        "name": "Ситилинк",
+        "short_label": "CL",
+        "color": "#FF8C00",
+        "url_patterns": ["citilink.ru"],
+    },
+    {
+        "slug": "mvideo",
+        "name": "М.Видео",
+        "short_label": "MV",
+        "color": "#FF0000",
+        "url_patterns": ["mvideo.ru"],
+    },
+    {
+        "slug": "eldorado",
+        "name": "Эльдорадо",
+        "short_label": "EL",
+        "color": "#FFD700",
+        "url_patterns": ["eldorado.ru"],
+    },
+    {
+        "slug": "onlinetrade",
+        "name": "ОнлайнТрейд",
+        "short_label": "OT",
+        "color": "#00A046",
+        "url_patterns": ["onlinetrade.ru"],
+    },
+]
+
+
+async def init_stores():
+    """Seed stores table with default stores if empty."""
+    async with AsyncSessionLocal() as session:
+        try:
+            result = await session.execute(select(Store).limit(1))
+            if result.scalar_one_or_none() is not None:
+                return  # already seeded
+            for i, store_data in enumerate(DEFAULT_STORES):
+                session.add(Store(
+                    slug=store_data["slug"],
+                    name=store_data["name"],
+                    short_label=store_data["short_label"],
+                    color=store_data["color"],
+                    url_patterns=store_data["url_patterns"],
+                    position=i,
+                ))
+            await session.commit()
+            print(f"INFO: Seeded {len(DEFAULT_STORES)} stores")
+        except Exception as e:
+            await session.rollback()
+            print(f"Warning: Could not seed stores: {e}")
+
+
 @app.on_event("startup")
 async def startup():
     """Initialize database tables and default settings on application startup."""
@@ -163,6 +269,7 @@ async def startup():
         await init_default_settings()
         await init_superadmin()
         await init_cities()
+        await init_stores()
     except Exception as e:
         print(f"WARNING: startup DB init failed: {e}")
         print("App will still start — DB may be unavailable temporarily.")
