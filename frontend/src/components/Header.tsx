@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Menu, X, ChevronDown, User, LogOut, Shield, Sun, Moon } from 'lucide-react'
+import { ChevronDown, User, LogOut, Shield, Sun, Moon } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
 import { useTheme } from '../context/ThemeContext'
 import toast from 'react-hot-toast'
@@ -9,7 +9,6 @@ const Header: React.FC = () => {
   const { user, isAuthenticated, logout } = useAuth()
   const { theme, toggleTheme } = useTheme()
   const navigate = useNavigate()
-  const [mobileOpen, setMobileOpen] = useState(false)
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
 
@@ -49,17 +48,6 @@ const Header: React.FC = () => {
               className="h-4 w-auto"
             />
           </Link>
-
-          {/* Nav */}
-          <nav className="flex items-center gap-2 sm:gap-6">
-            <Link
-              to="/"
-              className="hidden sm:block text-sm font-medium transition-colors hover:text-[#FF6B00]"
-              style={{ color: 'var(--text-2)' }}
-            >
-              Сборки
-            </Link>
-          </nav>
 
           {/* Right side */}
           <div className="flex items-center gap-2">
@@ -143,31 +131,8 @@ const Header: React.FC = () => {
               </Link>
             )}
 
-            {/* Mobile menu button */}
-            <button
-              className="md:hidden p-2 transition-colors"
-              onClick={() => setMobileOpen((v) => !v)}
-              aria-label="Меню"
-              style={{ color: 'var(--text-2)' }}
-            >
-              {mobileOpen ? <X size={20} /> : <Menu size={20} />}
-            </button>
           </div>
         </div>
-
-        {/* Mobile Nav */}
-        {mobileOpen && (
-          <div className="md:hidden py-3 space-y-1" style={{ borderTop: '1px solid var(--border)' }}>
-            <Link
-              to="/"
-              onClick={() => setMobileOpen(false)}
-              className="block px-3 py-2 text-sm rounded transition-colors"
-              style={{ color: 'var(--text-2)' }}
-            >
-              Сборки
-            </Link>
-          </div>
-        )}
       </div>
     </header>
   )
