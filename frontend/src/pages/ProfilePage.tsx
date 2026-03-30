@@ -502,13 +502,13 @@ const ProfilePage: React.FC = () => {
                 <div className="flex items-start justify-between gap-2">
                   <Link to={`/b/${build.short_code}`} className="flex-1 min-w-0">
                     <h3 className="text-th-text font-semibold text-sm truncate">{build.title}</h3>
-                    <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-1">
+                    <div className="flex items-center gap-3 mt-1">
                       <span className="text-[#FF6B00] font-bold text-sm whitespace-nowrap">{formatPrice(build.total_price)} ₽</span>
                       <span className="text-th-text-3 text-xs">{build.items_count} компонентов</span>
-                      <span className="text-th-muted text-xs">{new Date(build.created_at).toLocaleDateString('ru-RU')}</span>
                     </div>
+                    <span className="text-th-muted text-xs mt-0.5 block">{new Date(build.created_at).toLocaleDateString('ru-RU')}</span>
                   </Link>
-                  <div className="flex items-center gap-0.5 shrink-0">
+                  <div className="flex items-center gap-0.5 shrink-0 -mt-0.5">
                     <Link
                       to={`/builds/${build.id}/edit`}
                       className="p-2 text-th-text-2 hover:text-th-text hover:bg-th-surface-2 rounded transition-colors"
