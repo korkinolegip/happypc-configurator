@@ -15,6 +15,7 @@ import {
   Store,
   Mail,
   Bug,
+  Home,
 } from 'lucide-react'
 
 const navItems = [
@@ -158,6 +159,15 @@ const AdminLayout: React.FC = () => {
           <img src="/logo-icon.png" alt="" className="h-6 w-auto" />
           <img src="/logo-text-white.png" alt="HappyPC" className="h-3 w-auto" />
           <span className="text-th-text-2 font-normal text-xs">Admin</span>
+          <div className="ml-auto">
+            <button
+              onClick={() => navigate('/')}
+              className="p-1.5 text-th-text-2 hover:text-[#FF6B00] transition-colors"
+              title="На главную"
+            >
+              <Home size={20} />
+            </button>
+          </div>
         </div>
 
         <main className="flex-1 p-4 sm:p-6 overflow-auto">
