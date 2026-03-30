@@ -76,6 +76,7 @@ const STORE_INFO: Record<string, { label: string; color: string; shortLabel: str
   citilink:    { label: 'Ситилинк',    color: '#FF8C00', shortLabel: 'CL' },
   mvideo:      { label: 'М.Видео',     color: '#FF0000', shortLabel: 'MV' },
   eldorado:    { label: 'Эльдорадо',   color: '#FFD700', shortLabel: 'EL' },
+  onlinetrade: { label: 'ОнлайнТрейд', color: '#00A046', shortLabel: 'OT' },
 }
 
 function detectStore(url: string): string | null {
@@ -91,6 +92,7 @@ function detectStore(url: string): string | null {
   if (u.includes('citilink.ru')) return 'citilink'
   if (u.includes('mvideo.ru')) return 'mvideo'
   if (u.includes('eldorado.ru')) return 'eldorado'
+  if (u.includes('onlinetrade.ru')) return 'onlinetrade'
   return null
 }
 

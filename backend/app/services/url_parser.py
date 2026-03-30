@@ -191,6 +191,8 @@ def _detect_store(url: str) -> str:
         return "eldorado"
     if "aliexpress" in u:
         return "aliexpress"
+    if "onlinetrade.ru" in u:
+        return "onlinetrade"
     return "unknown"
 
 
