@@ -347,6 +347,11 @@ async def telegram_auth(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Аккаунт деактивирован",
             )
+        # Update avatar/username if changed in Telegram
+        if tg_data.photo_url and tg_data.photo_url != user.avatar_url:
+            user.avatar_url = tg_data.photo_url
+        if tg_data.username and tg_data.username != user.telegram_username:
+            user.telegram_username = tg_data.username
 
     return await _make_token(user, db)
 
@@ -436,12 +441,21 @@ async def telegram_auth_callback(
             return RedirectResponse(
                 url=f"{settings.FRONTEND_URL}/login?error={error_msg}&provider=telegram"
             )
+        # Update avatar/username if changed in Telegram
+        if tg_data.photo_url and tg_data.photo_url != user.avatar_url:
+            user.avatar_url = tg_data.photo_url
+        if tg_data.username and tg_data.username != user.telegram_username:
+            user.telegram_username = tg_data.username
+
+    # Check if profile is incomplete (no email, phone, city)
+    needs_profile = not user.email or not user.phone or not user.city
 
     # Generate JWT and redirect to frontend
     jwt_token = create_access_token({"sub": str(user.id)})
-    return RedirectResponse(
-        url=f"{settings.FRONTEND_URL}/login?token={jwt_token}&provider=telegram"
-    )
+    redirect_url = f"{settings.FRONTEND_URL}/login?token={jwt_token}&provider=telegram"
+    if needs_profile:
+        redirect_url += "&complete_profile=1"
+    return RedirectResponse(url=redirect_url)
 
 
 # ---------------------------------------------------------------------------
@@ -525,9 +539,21 @@ async def vk_auth_callback(
             url=f"{settings.FRONTEND_URL}/login?error={error_msg}&provider=vk"
         )
 
+    # 1) Find by vk_id
     result = await db.execute(select(User).where(User.vk_id == vk_user_id))
     user = result.scalar_one_or_none()
 
+    # 2) If not found by vk_id but email matches — link VK to existing account
+    if not user and vk_email:
+        result = await db.execute(select(User).where(User.email == vk_email))
+        user = result.scalar_one_or_none()
+        if user:
+            user.vk_id = vk_user_id
+            user.vk_url = f"https://vk.com/id{vk_user_id}"
+            if avatar_url and not user.avatar_url:
+                user.avatar_url = avatar_url
+
+    # 3) Create new user if not found
     if not user:
         user = User(
             vk_id=vk_user_id,
@@ -548,11 +574,15 @@ async def vk_auth_callback(
                 url=f"{settings.FRONTEND_URL}/login?error={error_msg}&provider=vk"
             )
 
+    # Check if profile is incomplete
+    needs_profile = not user.email or not user.phone or not user.city
+
     # Generate JWT and redirect to frontend
     jwt_token = create_access_token({"sub": str(user.id)})
-    return RedirectResponse(
-        url=f"{settings.FRONTEND_URL}/login?token={jwt_token}&provider=vk"
-    )
+    redirect_url = f"{settings.FRONTEND_URL}/login?token={jwt_token}&provider=vk"
+    if needs_profile:
+        redirect_url += "&complete_profile=1"
+    return RedirectResponse(url=redirect_url)
 
 
 # ---------------------------------------------------------------------------
