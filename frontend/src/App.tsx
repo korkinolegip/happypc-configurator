@@ -20,6 +20,7 @@ import BackupPage from './pages/admin/BackupPage'
 import PermissionsPage from './pages/admin/PermissionsPage'
 import StoresPage from './pages/admin/StoresPage'
 import EmailPage from './pages/admin/EmailPage'
+import TrashPage from './pages/admin/TrashPage'
 
 function App() {
   const { isLoading } = useAuth()
@@ -96,6 +97,7 @@ function App() {
           <Route path="permissions" element={<PermissionsPage />} />
           <Route path="stores" element={<StoresPage />} />
           <Route path="email" element={<EmailPage />} />
+          <Route path="trash" element={<TrashPage />} />
           <Route path="settings" element={<SettingsPage />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />

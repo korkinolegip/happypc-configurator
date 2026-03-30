@@ -51,8 +51,24 @@ export const updateUser = async (id: string, data: UpdateUserData): Promise<User
   return response.data
 }
 
-export const deleteUser = async (id: string): Promise<void> => {
-  await client.delete(`/api/admin/users/${id}`)
+export const deleteUser = async (id: string, reason?: string): Promise<void> => {
+  await client.delete(`/api/admin/users/${id}`, { params: reason ? { reason } : undefined })
+}
+
+// Trash
+export const getTrash = async () => {
+  const { data } = await client.get('/api/admin/trash')
+  return data
+}
+export const restoreFromTrash = async (trashId: string) => {
+  const { data } = await client.post(`/api/admin/trash/${trashId}/restore`)
+  return data
+}
+export const deleteFromTrash = async (trashId: string): Promise<void> => {
+  await client.delete(`/api/admin/trash/${trashId}`)
+}
+export const clearAllTrash = async (): Promise<void> => {
+  await client.delete('/api/admin/trash')
 }
 
 export const resetUserPassword = async (id: string): Promise<{ new_password: string }> => {

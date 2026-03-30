@@ -367,14 +367,16 @@ const UsersPage: React.FC = () => {
   })
 
   const handleDelete = async (user: User) => {
-    if (!confirm(`Удалить пользователя «${user.name}»? Это действие нельзя отменить.`)) return
+    const reason = prompt(`Удалить пользователя «${user.name}»?\n\nУкажите причину (необязательно):`)
+    if (reason === null) return // cancelled
     setDeletingId(user.id)
     try {
-      await deleteUser(user.id)
+      await deleteUser(user.id, reason || undefined)
       await queryClient.invalidateQueries({ queryKey: ['admin-users'] })
-      toast.success('Пользователь удалён')
-    } catch {
-      toast.error('Ошибка при удалении')
+      toast.success('Пользователь перемещён в корзину')
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { detail?: string } } }
+      toast.error(error.response?.data?.detail || 'Ошибка при удалении')
     } finally {
       setDeletingId(null)
     }

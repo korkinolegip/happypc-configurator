@@ -211,10 +211,14 @@ async def update_user(
 @router.delete("/users/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_user(
     user_id: uuid.UUID,
+    reason: str | None = Query(None),
     current_user: User = Depends(require_admin),
     db: AsyncSession = Depends(get_db),
 ):
-    result = await db.execute(select(User).where(User.id == user_id))
+    from sqlalchemy.orm import selectinload
+    result = await db.execute(
+        select(User).options(selectinload(User.builds)).where(User.id == user_id)
+    )
     user = result.scalar_one_or_none()
 
     if not user:
@@ -232,7 +236,65 @@ async def delete_user(
             detail="Нет прав на удаление этого пользователя",
         )
 
+    # Snapshot user data
+    user_data = {
+        "id": str(user.id),
+        "email": user.email,
+        "name": user.name,
+        "phone": user.phone,
+        "gender": user.gender,
+        "city": user.city,
+        "role": user.role,
+        "avatar_url": user.avatar_url,
+        "workshop_id": str(user.workshop_id) if user.workshop_id else None,
+        "telegram_id": user.telegram_id,
+        "telegram_username": user.telegram_username,
+        "vk_id": user.vk_id,
+        "vk_url": user.vk_url,
+        "email_verified": user.email_verified,
+        "is_active": user.is_active,
+        "created_at": user.created_at.isoformat() if user.created_at else None,
+    }
+
+    # Snapshot builds + items
+    builds_data = []
+    for build in user.builds:
+        # Load items
+        items_result = await db.execute(
+            select(BuildItem).where(BuildItem.build_id == build.id).order_by(BuildItem.sort_order)
+        )
+        items = items_result.scalars().all()
+        builds_data.append({
+            "id": str(build.id),
+            "short_code": build.short_code,
+            "title": build.title,
+            "description": build.description,
+            "workshop_id": str(build.workshop_id) if build.workshop_id else None,
+            "is_public": build.is_public,
+            "labor_percent": build.labor_percent,
+            "labor_price_manual": build.labor_price_manual,
+            "tags": build.tags,
+            "install_os": build.install_os,
+            "created_at": build.created_at.isoformat() if build.created_at else None,
+            "items": [
+                {"category": it.category, "name": it.name, "url": it.url, "price": it.price, "sort_order": it.sort_order}
+                for it in items
+            ],
+        })
+
+    # Save to trash
+    from app.models.trash import DeletedUser
+    trash = DeletedUser(
+        user_data=user_data,
+        builds_data=builds_data,
+        deleted_by_name=current_user.name,
+        reason=reason,
+    )
+    db.add(trash)
+
+    # Delete user (CASCADE removes builds, items, likes, comments)
     await db.delete(user)
+    await db.flush()
 
 
 @router.post("/users/{user_id}/reset-password")
@@ -1377,3 +1439,150 @@ async def test_email_send(
     if success:
         return {"message": f"Тестовое письмо отправлено на {to_email}"}
     raise HTTPException(status_code=500, detail="Ошибка отправки. Проверьте SMTP настройки.")
+
+
+# ============================================================
+# TRASH (deleted users)
+# ============================================================
+
+@router.get("/trash")
+async def list_trash(
+    current_user: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    from app.models.trash import DeletedUser as DU
+    result = await db.execute(select(DU).order_by(DU.deleted_at.desc()))
+    items = result.scalars().all()
+    return [
+        {
+            "id": str(it.id),
+            "user_name": it.user_data.get("name", ""),
+            "user_email": it.user_data.get("email", ""),
+            "user_role": it.user_data.get("role", ""),
+            "builds_count": len(it.builds_data),
+            "deleted_by_name": it.deleted_by_name,
+            "reason": it.reason,
+            "deleted_at": it.deleted_at.isoformat() if it.deleted_at else None,
+        }
+        for it in items
+    ]
+
+
+@router.post("/trash/{trash_id}/restore")
+async def restore_user(
+    trash_id: uuid.UUID,
+    current_user: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """Restore a deleted user and their builds from trash."""
+    from app.models.trash import DeletedUser as DU
+    result = await db.execute(select(DU).where(DU.id == trash_id))
+    trash = result.scalar_one_or_none()
+    if not trash:
+        raise HTTPException(status_code=404, detail="Запись в корзине не найдена")
+
+    ud = trash.user_data
+
+    # Check email/social uniqueness conflicts
+    if ud.get("email"):
+        existing = await db.execute(select(User).where(User.email == ud["email"]))
+        if existing.scalar_one_or_none():
+            raise HTTPException(status_code=409, detail=f"Пользователь с email {ud['email']} уже существует")
+    if ud.get("telegram_id"):
+        existing = await db.execute(select(User).where(User.telegram_id == ud["telegram_id"]))
+        if existing.scalar_one_or_none():
+            raise HTTPException(status_code=409, detail="Пользователь с таким Telegram ID уже существует")
+    if ud.get("vk_id"):
+        existing = await db.execute(select(User).where(User.vk_id == ud["vk_id"]))
+        if existing.scalar_one_or_none():
+            raise HTTPException(status_code=409, detail="Пользователь с таким VK ID уже существует")
+
+    # Recreate user
+    from datetime import datetime, timezone
+    user = User(
+        email=ud.get("email"),
+        name=ud.get("name", "Restored User"),
+        phone=ud.get("phone"),
+        gender=ud.get("gender"),
+        city=ud.get("city"),
+        role=ud.get("role", "user"),
+        avatar_url=ud.get("avatar_url"),
+        workshop_id=uuid.UUID(ud["workshop_id"]) if ud.get("workshop_id") else None,
+        telegram_id=ud.get("telegram_id"),
+        telegram_username=ud.get("telegram_username"),
+        vk_id=ud.get("vk_id"),
+        vk_url=ud.get("vk_url"),
+        email_verified=ud.get("email_verified", False),
+        is_active=ud.get("is_active", True),
+    )
+    db.add(user)
+    await db.flush()
+    await db.refresh(user)
+
+    # Recreate builds
+    import secrets
+    for bd in trash.builds_data:
+        # Generate new short_code (old one might be taken)
+        code = bd.get("short_code", secrets.token_urlsafe(6)[:8])
+        existing_code = await db.execute(select(Build).where(Build.short_code == code))
+        if existing_code.scalar_one_or_none():
+            code = secrets.token_urlsafe(6)[:8]
+
+        build = Build(
+            short_code=code,
+            title=bd.get("title", ""),
+            description=bd.get("description"),
+            author_id=user.id,
+            workshop_id=uuid.UUID(bd["workshop_id"]) if bd.get("workshop_id") else None,
+            is_public=bd.get("is_public", True),
+            labor_percent=bd.get("labor_percent", 7.0),
+            labor_price_manual=bd.get("labor_price_manual"),
+            tags=bd.get("tags"),
+            install_os=bd.get("install_os", False),
+        )
+        db.add(build)
+        await db.flush()
+
+        for item_data in bd.get("items", []):
+            item = BuildItem(
+                build_id=build.id,
+                category=item_data.get("category", ""),
+                name=item_data.get("name", ""),
+                url=item_data.get("url"),
+                price=item_data.get("price", 0),
+                sort_order=item_data.get("sort_order", 0),
+            )
+            db.add(item)
+
+    # Remove from trash
+    await db.delete(trash)
+    await db.flush()
+
+    return {"message": f"Пользователь {ud.get('name')} и {len(trash.builds_data)} сборок восстановлены"}
+
+
+@router.delete("/trash/{trash_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def permanent_delete_trash(
+    trash_id: uuid.UUID,
+    current_user: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """Permanently delete a trash entry."""
+    from app.models.trash import DeletedUser as DU
+    result = await db.execute(select(DU).where(DU.id == trash_id))
+    trash = result.scalar_one_or_none()
+    if not trash:
+        raise HTTPException(status_code=404, detail="Запись не найдена")
+    await db.delete(trash)
+
+
+@router.delete("/trash", status_code=status.HTTP_204_NO_CONTENT)
+async def clear_all_trash(
+    current_user: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """Permanently delete all trash entries."""
+    from app.models.trash import DeletedUser as DU
+    from sqlalchemy import delete as sa_delete
+    await db.execute(sa_delete(DU))
+    await db.flush()
