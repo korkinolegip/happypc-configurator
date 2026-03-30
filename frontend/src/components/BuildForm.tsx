@@ -93,8 +93,10 @@ function ItemRow({ fieldName, category, canDelete, canChangeCategory, onDelete, 
     setValue(`${fieldName}.url` as never, url as never)
     setFilled(false)
     if (debounceRef.current) clearTimeout(debounceRef.current)
-    const store = detectStoreFromList(url, stores)
-    if (!store || !url.startsWith('http')) return
+    // Reset price and name when URL changes — prevents stale data from previous link
+    setValue(`${fieldName}.price` as never, '0' as never)
+    setValue(`${fieldName}.name` as never, '' as never)
+    if (!url.startsWith('http')) return
     debounceRef.current = setTimeout(async () => {
       setLoading(true)
       try {
@@ -103,7 +105,7 @@ function ItemRow({ fieldName, category, canDelete, canChangeCategory, onDelete, 
         if (result.price != null) setValue(`${fieldName}.price` as never, String(Math.round(result.price)) as never)
       } catch { /* silent */ } finally { setLoading(false) }
     }, 700)
-  }, [fieldName, setValue, stores])
+  }, [fieldName, setValue])
 
   const currentQty = parseInt((watch(`${fieldName}.qty` as never) as unknown as string) || '1', 10) || 1
 
