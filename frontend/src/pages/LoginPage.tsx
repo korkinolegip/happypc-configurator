@@ -10,7 +10,7 @@ import { getPublicSettings } from '../api/builds'
 import CitySelect from '../components/CitySelect'
 
 const VK_CLIENT_ID = '54514351'
-const TELEGRAM_BOT_NAME = 'HappyPCAuthBot'
+const TELEGRAM_BOT_NAME = 'happypcrubot'
 
 interface LoginFormValues {
   email: string
