@@ -512,44 +512,41 @@ const ProfilePage: React.FC = () => {
 
       {/* My Builds */}
       <div>
-        <div className="flex items-center justify-between mb-4 gap-2">
-          <div className="flex items-center gap-2">
-            <h2 className="text-th-text font-semibold text-lg">Мои сборки</h2>
-            <div className="flex gap-1 bg-th-surface border border-th-border rounded-lg p-0.5">
-              <button
-                onClick={() => setBuildsTab('builds')}
-                className={`px-2.5 py-1 rounded text-xs font-medium transition-colors ${
-                  buildsTab === 'builds' ? 'bg-[#FF6B00] text-white' : 'text-th-text-2 hover:text-th-text'
-                }`}
-              >
-                Все
-              </button>
-              <button
-                onClick={() => setBuildsTab('trash')}
-                className={`px-2.5 py-1 rounded text-xs font-medium transition-colors flex items-center gap-1 ${
-                  buildsTab === 'trash' ? 'bg-[#FF6B00] text-white' : 'text-th-text-2 hover:text-th-text'
-                }`}
-              >
-                <Trash2 size={11} />
-                Корзина
-                {deletedBuilds && deletedBuilds.length > 0 && (
-                  <span className={`text-[10px] px-1 py-0 rounded-full ${
-                    buildsTab === 'trash' ? 'bg-white/20' : 'bg-red-500/20 text-red-400'
-                  }`}>{deletedBuilds.length}</span>
-                )}
-              </button>
-            </div>
-          </div>
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-th-text font-semibold text-lg">Мои сборки</h2>
           {buildsTab === 'builds' && (
             <Link
               to="/builds/create"
               className="flex items-center gap-1.5 bg-[#FF6B00] hover:bg-[#E05A00] text-white font-medium px-3 py-2 rounded-lg text-sm transition-colors shrink-0"
             >
               <Plus size={15} />
-              <span className="hidden sm:inline">Создать сборку</span>
-              <span className="sm:hidden">Создать</span>
+              Создать
             </Link>
           )}
+        </div>
+        <div className="flex gap-1 bg-th-surface border border-th-border rounded-lg p-0.5 w-fit mb-4">
+          <button
+            onClick={() => setBuildsTab('builds')}
+            className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${
+              buildsTab === 'builds' ? 'bg-[#FF6B00] text-white' : 'text-th-text-2 hover:text-th-text'
+            }`}
+          >
+            Все
+          </button>
+          <button
+            onClick={() => setBuildsTab('trash')}
+            className={`px-3 py-1.5 rounded text-xs font-medium transition-colors flex items-center gap-1 ${
+              buildsTab === 'trash' ? 'bg-[#FF6B00] text-white' : 'text-th-text-2 hover:text-th-text'
+            }`}
+          >
+            <Trash2 size={11} />
+            Корзина
+            {deletedBuilds && deletedBuilds.length > 0 && (
+              <span className={`text-[10px] px-1 py-0 rounded-full ${
+                buildsTab === 'trash' ? 'bg-white/20' : 'bg-red-500/20 text-red-400'
+              }`}>{deletedBuilds.length}</span>
+            )}
+          </button>
         </div>
 
         {/* TRASH VIEW */}
