@@ -55,16 +55,16 @@ const DashboardPage: React.FC = () => {
       </div>
 
       {/* Stats cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
         {stats.map(({ label, value, icon: Icon, color, bg }) => (
           <div
             key={label}
-            className={`bg-th-surface border rounded-lg p-5 ${bg}`}
+            className={`bg-th-surface border rounded-lg p-3 sm:p-5 ${bg}`}
           >
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-th-text-2 text-sm">{label}</span>
-              <div className={`p-2 rounded-lg bg-black/30`}>
-                <Icon size={18} className={color} />
+            <div className="flex items-center justify-between mb-2 sm:mb-3">
+              <span className="text-th-text-2 text-xs sm:text-sm">{label}</span>
+              <div className={`p-1.5 sm:p-2 rounded-lg bg-black/30`}>
+                <Icon size={16} className={`${color} sm:w-[18px] sm:h-[18px]`} />
               </div>
             </div>
             {isLoading ? (
