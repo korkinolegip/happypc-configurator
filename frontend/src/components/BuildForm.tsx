@@ -434,14 +434,14 @@ const BuildForm: React.FC<BuildFormProps> = ({ initialData, onSubmit, isSubmitti
                 <label className="block text-xs text-th-text-2 mb-1">Стоимость работы (%)</label>
                 <input {...register('labor_percent', { min: 0, max: 100 })} type="number" min="0" max="100" step="0.5"
                   className="input-field text-sm" placeholder="7" />
-                <p className="text-th-muted text-[10px] mt-1">Клиент покупает сам, мы собираем</p>
+                <p className="text-th-muted text-[10px] mt-1">Сборка ПК + кабель-менеджмент</p>
               </div>
               {can('can_set_turnkey_price') && (
                 <div>
                   <label className="block text-xs text-th-text-2 mb-1">Стоимость сборки «под ключ» (₽)</label>
                   <input {...register('labor_price_manual', { min: 0 })} type="number" min="0" step="1"
                     className="input-field text-sm" placeholder="Пусто" />
-                  <p className="text-th-muted text-[10px] mt-1">Полная цена от мастерской с гарантией</p>
+                  <p className="text-th-muted text-[10px] mt-1">Полностью готовый ПК от HappyPC</p>
                 </div>
               )}
             </div>

@@ -69,13 +69,13 @@ function ComponentsSection({ items, stores }: { items: { id: string; category: s
                   <td className="px-2 py-2.5">
                     {item.url ? (
                       <a href={item.url} target="_blank" rel="noopener noreferrer"
-                         className="text-th-text hover:text-[#FF6B00] transition-colors flex items-center gap-1.5 group text-sm">
+                         className="text-th-text hover:text-[#FF6B00] transition-colors flex items-center gap-1.5 group text-sm font-medium">
                         <StoreIcon url={item.url} stores={stores} />
                         {item.name}
                         <ExternalLink size={11} className="text-th-muted group-hover:text-[#FF6B00] shrink-0" />
                       </a>
                     ) : (
-                      <span className="text-th-text text-sm">{item.name}</span>
+                      <span className="text-th-text text-sm font-medium">{item.name}</span>
                     )}
                   </td>
                   <td className="px-3 py-2.5 text-right whitespace-nowrap">

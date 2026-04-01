@@ -63,7 +63,7 @@ const CreateBuildPage: React.FC = () => {
       <div className="mb-5">
         <h1 className="text-2xl font-bold text-th-text">Создать сборку</h1>
         <p className="text-th-text-2 text-sm mt-1">
-          Вставьте ссылки из DNS, Ozon, Wildberries — название и цена заполнятся автоматически
+          Добавляй ссылки на комплектующие. Названия и стоимость по возможности подставляются автоматически. Калькулятор покажет итоговую стоимость комплектующих и рассчитает работу по сборке.
         </p>
       </div>
       <BuildForm onSubmit={handleSubmit} isSubmitting={isSubmitting} submitLabel="Создать сборку" />

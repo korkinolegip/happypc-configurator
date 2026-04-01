@@ -94,7 +94,7 @@ const BuildCard: React.FC<BuildCardProps> = ({ build }) => {
                   <div className="w-5 h-5 shrink-0 flex items-center justify-center">
                     <CategoryIcon category={comp.category} size={18} color="#FF6B00" />
                   </div>
-                  <span className="text-th-text-2 text-[13px] leading-tight truncate">{comp.name}</span>
+                  <span className="text-th-text-2 text-[13px] font-medium leading-tight truncate">{comp.name}</span>
                 </div>
               ))}
             </div>
