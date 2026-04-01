@@ -106,7 +106,8 @@ const BuildCard: React.FC<BuildCardProps> = ({ build }) => {
 
         {/* Footer: author + interactions */}
         <div className="px-4 sm:px-5 py-3 border-t border-th-border flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2 min-w-0">
+          <a href={`/user/${build.author_id}`} onClick={(e) => e.stopPropagation()}
+            className="flex items-center gap-2 min-w-0 hover:opacity-80 transition-opacity">
             {build.author_avatar ? (
               <img src={build.author_avatar} alt={build.author_name}
                 className="w-8 h-8 sm:w-[38px] sm:h-[38px] rounded-full object-cover shrink-0 border border-th-border" />
@@ -121,7 +122,7 @@ const BuildCard: React.FC<BuildCardProps> = ({ build }) => {
                 <span className="text-th-text-3 text-[11px] leading-tight truncate block">{build.workshop_name}</span>
               )}
             </div>
-          </div>
+          </a>
 
           <div className="flex items-center gap-0.5 sm:gap-1 bg-th-surface-2 rounded-lg px-0.5 sm:px-1 py-0.5 shrink-0">
             <div onClick={handleLike}

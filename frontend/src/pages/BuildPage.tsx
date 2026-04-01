@@ -629,7 +629,7 @@ const BuildPage: React.FC = () => {
         <div className="space-y-4 lg:sticky lg:top-4">
           {/* Author card */}
           <div className="bg-th-surface border border-th-border rounded-lg p-4 text-center">
-            <div className="mb-3">
+            <a href={`/user/${build.author.id}`} className="block mb-3 hover:opacity-80 transition-opacity">
               {build.author.avatar_url ? (
                 <img src={build.author.avatar_url} alt={build.author.name}
                   className="w-16 h-16 rounded-full object-cover mx-auto" />
@@ -638,8 +638,8 @@ const BuildPage: React.FC = () => {
                   {build.author.name.charAt(0).toUpperCase()}
                 </div>
               )}
-            </div>
-            <p className="text-th-text font-medium text-sm">{build.author.name}</p>
+            </a>
+            <a href={`/user/${build.author.id}`} className="text-th-text font-medium text-sm hover:text-[#FF6B00] transition-colors">{build.author.name}</a>
             {build.workshop && (
               <p className="text-th-text-2 text-xs mt-1">{build.workshop.name}, {build.workshop.city}</p>
             )}

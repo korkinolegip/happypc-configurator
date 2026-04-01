@@ -8,6 +8,7 @@ import BuildPage from './pages/BuildPage'
 import CreateBuildPage from './pages/CreateBuildPage'
 import EditBuildPage from './pages/EditBuildPage'
 import ProfilePage from './pages/ProfilePage'
+import UserProfilePage from './pages/UserProfilePage'
 import AdminLayout from './pages/admin/AdminLayout'
 import DashboardPage from './pages/admin/DashboardPage'
 import UsersPage from './pages/admin/UsersPage'
@@ -41,6 +42,7 @@ function App() {
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/b/:short_code" element={<Layout><BuildPage /></Layout>} />
+        <Route path="/user/:userId" element={<Layout><UserProfilePage /></Layout>} />
         <Route
           path="/"
           element={
