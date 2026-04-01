@@ -764,7 +764,7 @@ async def get_dashboard(
     total_workshops = total_workshops_result.scalar() or 0
 
     from app.models.bug_report import BugReport as BR
-    bugs_count_result = await db.execute(select(func.count(BR.id)).where(BR.is_fixed == False))
+    bugs_count_result = await db.execute(select(func.count(BR.id)).where(BR.status == "new"))
     open_bugs = bugs_count_result.scalar() or 0
 
     from app.models.store import Store as StoreModel

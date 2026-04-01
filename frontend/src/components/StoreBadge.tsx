@@ -13,7 +13,7 @@ const StoreBadge: React.FC<StoreBadgeProps> = ({ store, size = 'sm' }) => {
 
   return (
     <span
-      className={`inline-flex items-center gap-1 ${px} rounded ${textSize} font-bold whitespace-nowrap shrink-0 uppercase tracking-wide`}
+      className={`inline-flex items-center gap-1 ${px} rounded ${textSize} font-bold whitespace-nowrap shrink-0 uppercase tracking-wide min-w-[3rem] justify-center`}
       style={{
         backgroundColor: store.color + '22',
         color: store.color,

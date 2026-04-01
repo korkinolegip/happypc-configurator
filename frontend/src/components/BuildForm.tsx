@@ -465,9 +465,15 @@ const BuildForm: React.FC<BuildFormProps> = ({ initialData, onSubmit, isSubmitti
           {/* Pricing summary */}
           <div className="space-y-1">
             <div className="flex justify-between text-sm"><span className="text-th-text-2">Комплектующие</span><span className="text-th-text">{fmt(hardware)} ₽</span></div>
-            <div className="flex justify-between text-sm"><span className="text-th-text-2">Работа ({laborPercent}%)</span><span className="text-th-text">{fmt(laborCost)} ₽</span></div>
+            <div>
+              <div className="flex justify-between text-sm"><span className="text-th-text-2">Работа ({laborPercent}%)</span><span className="text-th-text">{fmt(laborCost)} ₽</span></div>
+              <p className="text-th-muted text-[10px]">Сборка ПК + кабель-менеджмент</p>
+            </div>
             {installOS && (
-              <div className="flex justify-between text-sm"><span className="text-th-text-2">Операционная система</span><span className="text-th-text">{fmt(osCost)} ₽</span></div>
+              <div>
+                <div className="flex justify-between text-sm"><span className="text-th-text-2">Операционная система</span><span className="text-th-text">{fmt(osCost)} ₽</span></div>
+                <p className="text-th-muted text-[10px]">Настройка и тестирование ПК</p>
+              </div>
             )}
           </div>
           <div className="mt-3 pt-3 border-t border-th-border flex justify-between items-center">

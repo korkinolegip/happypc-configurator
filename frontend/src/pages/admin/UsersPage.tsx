@@ -32,10 +32,10 @@ const ROLES = [
 
 const roleBadge = (role: string) => {
   switch (role) {
-    case 'superadmin': return 'bg-purple-900/40 text-purple-300 border-purple-700'
-    case 'admin': return 'bg-blue-900/40 text-blue-300 border-blue-700'
-    case 'master': return 'bg-orange-900/40 text-orange-300 border-orange-700'
-    default: return 'bg-th-surface-2 text-th-text-2 border-th-border-2'
+    case 'superadmin': return 'bg-purple-500/15 text-purple-600 border-purple-500/40'
+    case 'admin': return 'bg-blue-500/15 text-blue-600 border-blue-500/40'
+    case 'master': return 'bg-orange-500/15 text-orange-600 border-orange-500/40'
+    default: return 'bg-th-surface-2 text-th-text-2 border-th-border'
   }
 }
 
