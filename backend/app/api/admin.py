@@ -5,7 +5,7 @@ import secrets
 import uuid
 from datetime import datetime
 
-from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, status
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile, status
 from fastapi.responses import StreamingResponse
 from sqlalchemy import desc, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -1601,13 +1601,12 @@ async def list_bugs(
     db: AsyncSession = Depends(get_db),
 ):
     from app.models.bug_report import BugReport
-    from sqlalchemy.orm import selectinload
+    from sqlalchemy.orm import selectinload as _sl
     result = await db.execute(
-        select(BugReport).order_by(BugReport.is_fixed.asc(), BugReport.created_at.desc())
+        select(BugReport).options(_sl(BugReport.comments)).order_by(BugReport.created_at.desc())
     )
-    bugs = result.scalars().all()
+    bugs = result.scalars().unique().all()
 
-    # Resolve reporter names
     out = []
     for b in bugs:
         name = b.reporter_name
@@ -1622,17 +1621,27 @@ async def list_bugs(
             "screenshot_url": b.screenshot_url,
             "page_url": b.page_url,
             "reporter_name": name or "Аноним",
-            "is_fixed": b.is_fixed,
-            "admin_note": b.admin_note,
+            "status": b.status,
             "created_at": b.created_at.isoformat() if b.created_at else None,
+            "comments": [
+                {
+                    "id": str(c.id),
+                    "author_name": c.author_name,
+                    "text": c.text,
+                    "screenshots": c.screenshots or [],
+                    "new_status": c.new_status,
+                    "created_at": c.created_at.isoformat() if c.created_at else None,
+                }
+                for c in b.comments
+            ],
         })
     return out
 
 
 @router.patch("/bugs/{bug_id}")
-async def toggle_bug_fixed(
+async def update_bug_status(
     bug_id: uuid.UUID,
-    body: dict | None = None,
+    body: dict,
     current_user: User = Depends(require_admin),
     db: AsyncSession = Depends(get_db),
 ):
@@ -1641,11 +1650,78 @@ async def toggle_bug_fixed(
     bug = result.scalar_one_or_none()
     if not bug:
         raise HTTPException(status_code=404, detail="Баг не найден")
-    bug.is_fixed = not bug.is_fixed
-    if body and "admin_note" in body:
-        bug.admin_note = body["admin_note"]
+    new_status = body.get("status")
+    if new_status and new_status in ("new", "in_progress", "done", "needs_rework"):
+        bug.status = new_status
     await db.flush()
-    return {"is_fixed": bug.is_fixed}
+    return {"status": bug.status}
+
+
+@router.post("/bugs/{bug_id}/comments")
+async def add_bug_comment(
+    bug_id: uuid.UUID,
+    text: str = Form(...),
+    new_status: str | None = Form(None),
+    screenshots: list[UploadFile] = File(default=[]),
+    current_user: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """Add a comment to a bug report, optionally changing status."""
+    import os
+    import aiofiles
+    from app.models.bug_report import BugReport, BugComment
+
+    result = await db.execute(select(BugReport).where(BugReport.id == bug_id))
+    bug = result.scalar_one_or_none()
+    if not bug:
+        raise HTTPException(status_code=404, detail="Баг не найден")
+
+    # Upload screenshots
+    screenshot_urls = []
+    upload_dir = "/app/uploads/bugs"
+    os.makedirs(upload_dir, exist_ok=True)
+    for file in screenshots:
+        if not file.filename:
+            continue
+        ext = os.path.splitext(file.filename)[1].lower()
+        if ext not in {".jpg", ".jpeg", ".png", ".gif", ".webp"}:
+            continue
+        content = await file.read()
+        if len(content) > 5 * 1024 * 1024:
+            continue
+        fname = f"{uuid.uuid4()}{ext}"
+        async with aiofiles.open(os.path.join(upload_dir, fname), "wb") as f:
+            await f.write(content)
+        screenshot_urls.append(f"/uploads/bugs/{fname}")
+
+    # Update status if provided
+    if new_status and new_status in ("new", "in_progress", "done", "needs_rework"):
+        bug.status = new_status
+
+    comment = BugComment(
+        bug_id=bug.id,
+        author_name=current_user.name,
+        text=text.strip(),
+        screenshots=screenshot_urls or None,
+        new_status=new_status if new_status in ("new", "in_progress", "done", "needs_rework") else None,
+    )
+    db.add(comment)
+    await db.flush()
+
+    # Send Telegram notification
+    try:
+        await _notify_bug_telegram(db, bug, comment)
+    except Exception:
+        pass
+
+    return {
+        "id": str(comment.id),
+        "author_name": comment.author_name,
+        "text": comment.text,
+        "screenshots": comment.screenshots or [],
+        "new_status": comment.new_status,
+        "created_at": comment.created_at.isoformat() if comment.created_at else None,
+    }
 
 
 @router.delete("/bugs/{bug_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -1660,3 +1736,54 @@ async def delete_bug(
     if not bug:
         raise HTTPException(status_code=404, detail="Баг не найден")
     await db.delete(bug)
+
+
+async def _notify_bug_telegram(db, bug, comment=None):
+    """Send Telegram notification about bug status change."""
+    import httpx
+    from app.models.settings import AppSettings
+
+    # Get settings
+    result = await db.execute(select(AppSettings).where(AppSettings.key == "bug_telegram_chat_id"))
+    chat_setting = result.scalar_one_or_none()
+    if not chat_setting or not chat_setting.value:
+        return
+
+    result = await db.execute(select(AppSettings).where(AppSettings.key == "bug_telegram_bot_token"))
+    token_setting = result.scalar_one_or_none()
+    if not token_setting or not token_setting.value:
+        return
+
+    chat_ids = [c.strip() for c in chat_setting.value.split(",") if c.strip()]
+    bot_token = token_setting.value.strip()
+    if not chat_ids or not bot_token:
+        return
+
+    status_labels = {"new": "Новый", "in_progress": "В работе", "done": "Выполнен", "needs_rework": "Доработка"}
+    status_emoji = {"new": "🆕", "in_progress": "🔧", "done": "✅", "needs_rework": "⚠️"}
+
+    if comment:
+        text = (
+            f"{status_emoji.get(comment.new_status or '', '💬')} <b>Баг #{str(bug.id)[:8]}</b>\n"
+            f"<b>Статус:</b> {status_labels.get(bug.status, bug.status)}\n"
+            f"<b>Комментарий от {comment.author_name}:</b>\n{comment.text}\n"
+        )
+    else:
+        text = (
+            f"🐛 <b>Новый баг-репорт</b>\n"
+            f"<b>Описание:</b> {bug.description[:200]}\n"
+            f"<b>От:</b> {bug.reporter_name or 'Аноним'}\n"
+        )
+    if bug.page_url:
+        text += f"<b>Страница:</b> {bug.page_url}\n"
+
+    async with httpx.AsyncClient() as client:
+        for chat_id in chat_ids:
+            try:
+                await client.post(
+                    f"https://api.telegram.org/bot{bot_token}/sendMessage",
+                    json={"chat_id": chat_id, "text": text, "parse_mode": "HTML"},
+                    timeout=5,
+                )
+            except Exception:
+                pass

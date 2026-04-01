@@ -59,4 +59,12 @@ async def create_bug_report(
     )
     db.add(report)
     await db.flush()
+
+    # Telegram notification
+    try:
+        from app.api.admin import _notify_bug_telegram
+        await _notify_bug_telegram(db, report)
+    except Exception:
+        pass
+
     return {"id": str(report.id), "message": "Спасибо! Баг-репорт отправлен."}
