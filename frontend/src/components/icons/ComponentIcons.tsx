@@ -138,7 +138,7 @@ export const MonitorIcon: React.FC<IconProps> = ({ size = 24, color = defaultCol
   </svg>
 )
 
-export const PeripheryIcon: React.FC<IconProps> = ({ size = 24, color = defaultColor, className }) => (
+export const KeyboardIcon: React.FC<IconProps> = ({ size = 24, color = defaultColor, className }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
     <rect x="2" y="7" width="20" height="12" rx="2" stroke={color} strokeWidth="1.5" />
     <rect x="4" y="10" width="2" height="2" rx="0.3" fill={color} />
@@ -146,14 +146,47 @@ export const PeripheryIcon: React.FC<IconProps> = ({ size = 24, color = defaultC
     <rect x="11" y="10" width="2" height="2" rx="0.3" fill={color} />
     <rect x="14.5" y="10" width="2" height="2" rx="0.3" fill={color} />
     <rect x="18" y="10" width="2" height="2" rx="0.3" fill={color} />
-    <rect x="4" y="14" width="2" height="2" rx="0.3" fill={color} />
-    <rect x="7.5" y="14" width="2" height="2" rx="0.3" fill={color} />
-    <rect x="11" y="14" width="5" height="2" rx="0.3" fill={color} />
-    <rect x="17" y="14" width="3" height="2" rx="0.3" fill={color} />
-    <line x1="8" y1="5" x2="16" y2="5" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
-    <line x1="12" y1="5" x2="12" y2="7" stroke={color} strokeWidth="1.5" />
+    <rect x="7" y="14" width="10" height="2" rx="0.3" fill={color} />
   </svg>
 )
+
+export const MouseIcon: React.FC<IconProps> = ({ size = 24, color = defaultColor, className }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
+    <rect x="7" y="2" width="10" height="20" rx="5" stroke={color} strokeWidth="1.5" />
+    <line x1="12" y1="2" x2="12" y2="10" stroke={color} strokeWidth="1" />
+    <line x1="7" y1="10" x2="17" y2="10" stroke={color} strokeWidth="1" />
+    <circle cx="12" cy="6" r="1.2" fill={color} />
+  </svg>
+)
+
+export const HeadphonesIcon: React.FC<IconProps> = ({ size = 24, color = defaultColor, className }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
+    <path d="M3 14V12a9 9 0 0 1 18 0v2" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
+    <rect x="1" y="14" width="4" height="6" rx="1.5" fill={color} fillOpacity="0.3" stroke={color} strokeWidth="1.2" />
+    <rect x="19" y="14" width="4" height="6" rx="1.5" fill={color} fillOpacity="0.3" stroke={color} strokeWidth="1.2" />
+  </svg>
+)
+
+export const SpeakerIcon: React.FC<IconProps> = ({ size = 24, color = defaultColor, className }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
+    <rect x="6" y="2" width="12" height="20" rx="2" stroke={color} strokeWidth="1.5" />
+    <circle cx="12" cy="14" r="3.5" stroke={color} strokeWidth="1.2" />
+    <circle cx="12" cy="14" r="1.2" fill={color} />
+    <circle cx="12" cy="6" r="1.5" stroke={color} strokeWidth="1" />
+  </svg>
+)
+
+export const WebcamIcon: React.FC<IconProps> = ({ size = 24, color = defaultColor, className }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
+    <circle cx="12" cy="10" r="7" stroke={color} strokeWidth="1.5" />
+    <circle cx="12" cy="10" r="3" stroke={color} strokeWidth="1.2" fill={color} fillOpacity="0.15" />
+    <circle cx="12" cy="10" r="1" fill={color} />
+    <line x1="12" y1="17" x2="12" y2="21" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
+    <line x1="8" y1="21" x2="16" y2="21" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
+  </svg>
+)
+
+export const PeripheryIcon: React.FC<IconProps> = KeyboardIcon
 
 export const OtherIcon: React.FC<IconProps> = ({ size = 24, color = defaultColor, className }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>

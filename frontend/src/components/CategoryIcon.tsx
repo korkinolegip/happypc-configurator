@@ -10,6 +10,11 @@ import {
   CaseIcon,
   CoolingIcon,
   MonitorIcon,
+  KeyboardIcon,
+  MouseIcon,
+  HeadphonesIcon,
+  SpeakerIcon,
+  WebcamIcon,
   PeripheryIcon,
   OtherIcon,
 } from './icons/ComponentIcons'
@@ -46,12 +51,17 @@ const CategoryIcon: React.FC<CategoryIconProps> = ({ category, size = 20, color 
       return <CoolingIcon {...props} />
     case 'Монитор':
       return <MonitorIcon {...props} />
-    case 'Периферия':
     case 'Клавиатура':
+      return <KeyboardIcon {...props} />
     case 'Мышь':
+      return <MouseIcon {...props} />
     case 'Наушники':
+      return <HeadphonesIcon {...props} />
     case 'Колонки':
+      return <SpeakerIcon {...props} />
     case 'Веб камера':
+      return <WebcamIcon {...props} />
+    case 'Периферия':
       return <PeripheryIcon {...props} />
     default:
       return <OtherIcon {...props} />
