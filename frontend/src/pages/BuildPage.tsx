@@ -66,7 +66,7 @@ function ComponentsSection({ items, stores }: { items: { id: string; category: s
                   <td className="px-2 py-2.5 w-36">
                     <span className="text-th-text-2 text-xs">{item.category}</span>
                   </td>
-                  <td className="px-1 py-2.5 w-16">
+                  <td className="px-1 py-2.5 whitespace-nowrap">
                     {item.url && <StoreIcon url={item.url} stores={stores} />}
                   </td>
                   <td className="px-2 py-2.5">
