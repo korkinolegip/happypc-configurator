@@ -98,7 +98,20 @@ const CreateUserModal: React.FC<CreateModalProps> = ({ onClose, workshops }) => 
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm text-th-text-2 mb-1.5">Телефон</label>
-              <input {...register('phone')} className="input-field" placeholder="+7 (999) 123-45-67" />
+              <input {...register('phone')} type="tel" className="input-field" placeholder="+7 (999) 999 99 99"
+                onChange={(e) => {
+                  let d = e.target.value.replace(/\D/g, '')
+                  if (d.startsWith('8')) d = '7' + d.slice(1)
+                  if (!d.startsWith('7')) d = '7' + d
+                  d = d.slice(0, 11)
+                  let f = '+7'
+                  if (d.length > 1) f += ` (${d.slice(1, 4)}`
+                  if (d.length >= 4) f += ')'
+                  if (d.length > 4) f += ` ${d.slice(4, 7)}`
+                  if (d.length > 7) f += ` ${d.slice(7, 9)}`
+                  if (d.length > 9) f += ` ${d.slice(9, 11)}`
+                  setValue('phone', f)
+                }} />
             </div>
             <div>
               <label className="block text-sm text-th-text-2 mb-1.5">Город</label>
@@ -226,7 +239,20 @@ const EditUserModal: React.FC<EditModalProps> = ({ user, onClose, workshops }) =
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm text-th-text-2 mb-1.5">Телефон</label>
-              <input {...register('phone')} className="input-field" placeholder="+7 (999) 123-45-67" />
+              <input {...register('phone')} type="tel" className="input-field" placeholder="+7 (999) 999 99 99"
+                onChange={(e) => {
+                  let d = e.target.value.replace(/\D/g, '')
+                  if (d.startsWith('8')) d = '7' + d.slice(1)
+                  if (!d.startsWith('7')) d = '7' + d
+                  d = d.slice(0, 11)
+                  let f = '+7'
+                  if (d.length > 1) f += ` (${d.slice(1, 4)}`
+                  if (d.length >= 4) f += ')'
+                  if (d.length > 4) f += ` ${d.slice(4, 7)}`
+                  if (d.length > 7) f += ` ${d.slice(7, 9)}`
+                  if (d.length > 9) f += ` ${d.slice(9, 11)}`
+                  setValue('phone', f)
+                }} />
             </div>
             <div>
               <label className="block text-sm text-th-text-2 mb-1.5">Город</label>

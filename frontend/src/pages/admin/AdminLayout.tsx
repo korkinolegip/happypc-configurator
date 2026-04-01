@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
+import { useTheme } from '../../context/ThemeContext'
 import {
   LayoutDashboard,
   Users,
@@ -35,6 +36,8 @@ const navItems = [
 
 const AdminLayout: React.FC = () => {
   const navigate = useNavigate()
+  const { theme } = useTheme()
+  const logoText = theme === 'dark' ? '/logo-text-white.png' : '/logo-text-black.png'
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)
 
@@ -54,7 +57,7 @@ const AdminLayout: React.FC = () => {
               onClick={() => navigate('/')}
             >
               <img src="/logo-icon.png" alt="" className="h-6 w-auto shrink-0" />
-              <img src="/logo-text-white.png" alt="HappyPC" className="h-3 w-auto shrink-0" />
+              <img src={logoText} alt="HappyPC" className="h-3 w-auto shrink-0" />
             </div>
           )}
           <button
@@ -121,7 +124,7 @@ const AdminLayout: React.FC = () => {
       >
         <div className="flex items-center gap-2 h-16 px-4 border-b border-th-border">
           <img src="/logo-icon.png" alt="" className="h-7 w-auto shrink-0" />
-          <img src="/logo-text-white.png" alt="HappyPC" className="h-3.5 w-auto" />
+          <img src={logoText} alt="HappyPC" className="h-3.5 w-auto" />
           <span className="text-th-text-2 font-normal text-xs">Admin</span>
         </div>
         <nav className="py-3 space-y-0.5 px-1.5">
@@ -158,7 +161,7 @@ const AdminLayout: React.FC = () => {
           </button>
           <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate('/')}>
             <img src="/logo-icon.png" alt="" className="h-6 w-auto pointer-events-none" />
-            <img src="/logo-text-white.png" alt="HappyPC" className="h-3 w-auto pointer-events-none" />
+            <img src={logoText} alt="HappyPC" className="h-3 w-auto pointer-events-none" />
           </div>
           <span className="text-th-text-2 font-normal text-xs">Admin</span>
           <div className="ml-auto">

@@ -767,6 +767,10 @@ async def get_dashboard(
     bugs_count_result = await db.execute(select(func.count(BR.id)).where(BR.is_fixed == False))
     open_bugs = bugs_count_result.scalar() or 0
 
+    from app.models.store import Store as StoreModel
+    stores_count_result = await db.execute(select(func.count(StoreModel.id)))
+    total_stores = stores_count_result.scalar() or 0
+
     recent_builds_result = await db.execute(
         select(Build)
         .options(
@@ -828,6 +832,7 @@ async def get_dashboard(
         builds_count=total_builds,
         workshops_count=total_workshops,
         bugs_count=open_bugs,
+        stores_count=total_stores,
         recent_builds=recent_builds,
         masters_activity=masters_activity,
     )

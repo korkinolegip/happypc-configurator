@@ -94,6 +94,7 @@ export interface DashboardStats {
   builds_count: number
   workshops_count: number
   bugs_count: number
+  stores_count: number
   recent_builds: BuildListItem[]
   masters_activity: MasterActivity[]
 }

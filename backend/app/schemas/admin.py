@@ -48,5 +48,6 @@ class DashboardStats(BaseModel):
     builds_count: int
     workshops_count: int
     bugs_count: int = 0
+    stores_count: int = 0
     recent_builds: list[BuildListItem]
     masters_activity: list[MasterActivity] = []

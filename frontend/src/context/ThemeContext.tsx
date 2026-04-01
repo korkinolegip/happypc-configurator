@@ -17,7 +17,9 @@ export const useTheme = () => useContext(ThemeContext)
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [theme, setTheme] = useState<Theme>(() => {
     const saved = localStorage.getItem('happypc-theme')
-    return (saved === 'light' ? 'light' : 'dark') as Theme
+    if (saved === 'light' || saved === 'dark') return saved
+    // Default: dark on mobile, light on desktop
+    return window.innerWidth < 768 ? 'dark' : 'light'
   })
 
   useEffect(() => {

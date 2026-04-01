@@ -1,7 +1,7 @@
 import React from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
-import { Users, HardDrive, Building2, ArrowRight, TrendingUp, Bug } from 'lucide-react'
+import { Users, HardDrive, Building2, ArrowRight, TrendingUp, Store } from 'lucide-react'
 import { getDashboard } from '../../api/admin'
 
 const formatPrice = (price: number) =>
@@ -23,6 +23,7 @@ const DashboardPage: React.FC = () => {
       icon: Users,
       color: 'text-blue-400',
       bg: 'bg-blue-900/20 border-blue-800/30',
+      link: '/admin/users',
     },
     {
       label: 'Сборок',
@@ -30,6 +31,7 @@ const DashboardPage: React.FC = () => {
       icon: HardDrive,
       color: 'text-[#FF6B00]',
       bg: 'bg-orange-900/20 border-orange-800/30',
+      link: '/admin/builds',
     },
     {
       label: 'Мастерских',
@@ -37,13 +39,15 @@ const DashboardPage: React.FC = () => {
       icon: Building2,
       color: 'text-green-400',
       bg: 'bg-green-900/20 border-green-800/30',
+      link: '/admin/workshops',
     },
     {
-      label: 'Баги',
-      value: data?.bugs_count ?? 0,
-      icon: Bug,
-      color: 'text-red-400',
-      bg: 'bg-red-900/20 border-red-800/30',
+      label: 'Магазинов',
+      value: data?.stores_count ?? 0,
+      icon: Store,
+      color: 'text-purple-400',
+      bg: 'bg-purple-900/20 border-purple-800/30',
+      link: '/admin/stores',
     },
   ]
 
@@ -56,14 +60,15 @@ const DashboardPage: React.FC = () => {
 
       {/* Stats cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-        {stats.map(({ label, value, icon: Icon, color, bg }) => (
-          <div
+        {stats.map(({ label, value, icon: Icon, color, bg, link }) => (
+          <Link
+            to={link}
             key={label}
-            className={`bg-th-surface border rounded-lg p-3 sm:p-5 ${bg}`}
+            className={`bg-th-surface border rounded-lg p-3 sm:p-5 ${bg} hover:border-[#FF6B00]/50 transition-colors`}
           >
             <div className="flex items-center justify-between mb-2 sm:mb-3">
               <span className="text-th-text-2 text-xs sm:text-sm">{label}</span>
-              <div className={`p-1.5 sm:p-2 rounded-lg bg-black/30`}>
+              <div className={`p-1.5 sm:p-2 rounded-lg bg-th-surface-2`}>
                 <Icon size={16} className={`${color} sm:w-[18px] sm:h-[18px]`} />
               </div>
             </div>
@@ -72,7 +77,7 @@ const DashboardPage: React.FC = () => {
             ) : (
               <span className="text-3xl font-bold text-th-text">{value.toLocaleString('ru-RU')}</span>
             )}
-          </div>
+          </Link>
         ))}
       </div>
 
