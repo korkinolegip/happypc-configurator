@@ -1,8 +1,141 @@
-import React, { useState, useRef } from 'react'
+import React, { useState, useRef, useEffect, useCallback } from 'react'
 import { X, Send, ImagePlus, Loader2 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useAuth } from '../hooks/useAuth'
 import { client } from '../api/client'
+
+/* ======= Ladybug SVG ======= */
+const LadybugSVG: React.FC<{ className?: string }> = ({ className }) => (
+  <svg viewBox="0 0 32 32" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
+    <ellipse cx="16" cy="19" rx="7" ry="8" fill="#E53E3E" />
+    <line x1="16" y1="11" x2="16" y2="27" stroke="#1a1a2e" strokeWidth="1.2" />
+    <circle cx="13" cy="16" r="1.3" fill="#1a1a2e" />
+    <circle cx="19" cy="16" r="1.3" fill="#1a1a2e" />
+    <circle cx="13" cy="21" r="1.1" fill="#1a1a2e" />
+    <circle cx="19" cy="21" r="1.1" fill="#1a1a2e" />
+    <circle cx="16" cy="11" r="3.5" fill="#2D3748" />
+    <circle cx="14.5" cy="10" r="1" fill="#FF6B00" />
+    <circle cx="17.5" cy="10" r="1" fill="#FF6B00" />
+    <line x1="14" y1="8" x2="11" y2="4" stroke="#2D3748" strokeWidth="1.2" strokeLinecap="round" />
+    <line x1="18" y1="8" x2="21" y2="4" stroke="#2D3748" strokeWidth="1.2" strokeLinecap="round" />
+    <circle cx="11" cy="4" r="1" fill="#FF6B00" />
+    <circle cx="21" cy="4" r="1" fill="#FF6B00" />
+    <line x1="9" y1="15" x2="6" y2="13" stroke="#2D3748" strokeWidth="1.2" strokeLinecap="round" />
+    <line x1="9" y1="19" x2="5" y2="19" stroke="#2D3748" strokeWidth="1.2" strokeLinecap="round" />
+    <line x1="9" y1="23" x2="6" y2="25" stroke="#2D3748" strokeWidth="1.2" strokeLinecap="round" />
+    <line x1="23" y1="15" x2="26" y2="13" stroke="#2D3748" strokeWidth="1.2" strokeLinecap="round" />
+    <line x1="23" y1="19" x2="27" y2="19" stroke="#2D3748" strokeWidth="1.2" strokeLinecap="round" />
+    <line x1="23" y1="23" x2="26" y2="25" stroke="#2D3748" strokeWidth="1.2" strokeLinecap="round" />
+  </svg>
+)
+
+/* ======= Crawl Animation Controller ======= */
+const BugCrawler: React.FC<{ onClick: () => void }> = ({ onClick }) => {
+  // Phase: 'enter' → 'crawl-out' → 'peek' → 'idle' → (hourly) 'wander' → 'idle'
+  const [phase, setPhase] = useState<'enter' | 'crawl-out' | 'peek' | 'idle' | 'wander'>('enter')
+  const btnRef = useRef<HTMLButtonElement>(null)
+  const wanderTimer = useRef<ReturnType<typeof setTimeout>>()
+
+  const scheduleWander = useCallback(() => {
+    // Random 45-60 min
+    const delay = (45 + Math.random() * 15) * 60 * 1000
+    wanderTimer.current = setTimeout(() => {
+      setPhase('wander')
+    }, delay)
+  }, [])
+
+  useEffect(() => {
+    // Initial sequence: enter visible → 3s → crawl out → 1.5s → peek back
+    const t1 = setTimeout(() => setPhase('crawl-out'), 3000)
+    const t2 = setTimeout(() => setPhase('peek'), 5000)
+    const t3 = setTimeout(() => {
+      setPhase('idle')
+      scheduleWander()
+    }, 6500)
+    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); clearTimeout(wanderTimer.current) }
+  }, [scheduleWander])
+
+  // After wander finishes, return to idle
+  useEffect(() => {
+    if (phase === 'wander') {
+      const t = setTimeout(() => {
+        setPhase('idle')
+        scheduleWander()
+      }, 4000)
+      return () => clearTimeout(t)
+    }
+  }, [phase, scheduleWander])
+
+  // Position styles per phase
+  const getStyle = (): React.CSSProperties => {
+    const base: React.CSSProperties = {
+      position: 'fixed',
+      zIndex: 50,
+      transition: 'all 1.5s cubic-bezier(0.4, 0, 0.2, 1)',
+      cursor: 'pointer',
+    }
+    switch (phase) {
+      case 'enter':
+        return { ...base, bottom: 20, right: 20, transform: 'rotate(-15deg) scale(1)', opacity: 1 }
+      case 'crawl-out':
+        return { ...base, bottom: -10, right: -10, transform: 'rotate(45deg) scale(0.8)', opacity: 0.5, transition: 'all 1.8s cubic-bezier(0.4, 0, 0.2, 1)' }
+      case 'peek':
+        return { ...base, bottom: -8, right: -8, transform: 'rotate(40deg) scale(0.85)', opacity: 0.7, transition: 'all 1.2s ease-out' }
+      case 'wander':
+        // Random direction
+        const dirs = [
+          { bottom: 80, right: 60, transform: 'rotate(-20deg) scale(1)' },
+          { bottom: 40, right: 100, transform: 'rotate(-30deg) scale(0.95)' },
+          { bottom: 120, right: 30, transform: 'rotate(10deg) scale(1)' },
+        ]
+        const d = dirs[Math.floor(Math.random() * dirs.length)]
+        return { ...base, ...d, opacity: 1, transition: 'all 2s cubic-bezier(0.4, 0, 0.2, 1)' }
+      case 'idle':
+      default:
+        return { ...base, bottom: -6, right: -6, transform: 'rotate(40deg) scale(0.85)', opacity: 0.65 }
+    }
+  }
+
+  return (
+    <>
+      <button
+        ref={btnRef}
+        onClick={onClick}
+        onMouseEnter={() => {
+          if (btnRef.current) {
+            btnRef.current.style.transform = 'rotate(-15deg) scale(1.1)'
+            btnRef.current.style.opacity = '1'
+            btnRef.current.style.bottom = '16px'
+            btnRef.current.style.right = '16px'
+          }
+        }}
+        onMouseLeave={() => {
+          if (btnRef.current && phase === 'idle') {
+            btnRef.current.style.transform = 'rotate(40deg) scale(0.85)'
+            btnRef.current.style.opacity = '0.65'
+            btnRef.current.style.bottom = '-6px'
+            btnRef.current.style.right = '-6px'
+          }
+        }}
+        style={getStyle()}
+        title="Нашли баг?"
+        className="w-10 h-10 sm:w-11 sm:h-11 flex items-center justify-center active:scale-95"
+      >
+        <LadybugSVG className="w-8 h-8 sm:w-9 sm:h-9 drop-shadow-lg animate-bug-idle" />
+      </button>
+      <style>{`
+        @keyframes bug-idle {
+          0%, 85%, 100% { transform: rotate(0deg); }
+          88% { transform: rotate(-3deg) translateY(-1px); }
+          91% { transform: rotate(3deg) translateY(0); }
+          94% { transform: rotate(-2deg); }
+          97% { transform: rotate(2deg); }
+        }
+        .animate-bug-idle { animation: bug-idle 5s ease-in-out infinite; }
+      `}</style>
+    </>
+  )
+}
 
 const BugReportButton: React.FC = () => {
   const { user } = useAuth()
@@ -53,58 +186,8 @@ const BugReportButton: React.FC = () => {
 
   return (
     <>
-      {/* Floating ladybug button */}
-      <button
-        onClick={() => setOpen(true)}
-        className="fixed bottom-5 right-5 z-50 w-10 h-10 sm:w-11 sm:h-11 flex items-center justify-center transition-all hover:scale-110 active:scale-95 group"
-        title="Нашли баг?"
-      >
-        <svg
-          viewBox="0 0 32 32"
-          className="w-8 h-8 sm:w-9 sm:h-9 animate-bug-wiggle drop-shadow-lg"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          {/* Body */}
-          <ellipse cx="16" cy="19" rx="7" ry="8" fill="#E53E3E" />
-          {/* Wing line */}
-          <line x1="16" y1="11" x2="16" y2="27" stroke="#1a1a2e" strokeWidth="1.2" />
-          {/* Spots */}
-          <circle cx="13" cy="16" r="1.3" fill="#1a1a2e" />
-          <circle cx="19" cy="16" r="1.3" fill="#1a1a2e" />
-          <circle cx="13" cy="21" r="1.1" fill="#1a1a2e" />
-          <circle cx="19" cy="21" r="1.1" fill="#1a1a2e" />
-          {/* Head */}
-          <circle cx="16" cy="11" r="3.5" fill="#2D3748" />
-          {/* Eyes */}
-          <circle cx="14.5" cy="10" r="1" fill="#FF6B00" />
-          <circle cx="17.5" cy="10" r="1" fill="#FF6B00" />
-          {/* Antennae */}
-          <line x1="14" y1="8" x2="11" y2="4" stroke="#2D3748" strokeWidth="1.2" strokeLinecap="round" />
-          <line x1="18" y1="8" x2="21" y2="4" stroke="#2D3748" strokeWidth="1.2" strokeLinecap="round" />
-          <circle cx="11" cy="4" r="1" fill="#FF6B00" />
-          <circle cx="21" cy="4" r="1" fill="#FF6B00" />
-          {/* Legs */}
-          <line x1="9" y1="15" x2="6" y2="13" stroke="#2D3748" strokeWidth="1.2" strokeLinecap="round" />
-          <line x1="9" y1="19" x2="5" y2="19" stroke="#2D3748" strokeWidth="1.2" strokeLinecap="round" />
-          <line x1="9" y1="23" x2="6" y2="25" stroke="#2D3748" strokeWidth="1.2" strokeLinecap="round" />
-          <line x1="23" y1="15" x2="26" y2="13" stroke="#2D3748" strokeWidth="1.2" strokeLinecap="round" />
-          <line x1="23" y1="19" x2="27" y2="19" stroke="#2D3748" strokeWidth="1.2" strokeLinecap="round" />
-          <line x1="23" y1="23" x2="26" y2="25" stroke="#2D3748" strokeWidth="1.2" strokeLinecap="round" />
-        </svg>
-      </button>
-
-      {/* CSS animation */}
-      <style>{`
-        @keyframes bug-wiggle {
-          0%, 90%, 100% { transform: rotate(0deg); }
-          92% { transform: rotate(-4deg); }
-          94% { transform: rotate(4deg); }
-          96% { transform: rotate(-3deg); }
-          98% { transform: rotate(3deg); }
-        }
-        .animate-bug-wiggle { animation: bug-wiggle 6s ease-in-out infinite; }
-      `}</style>
+      {/* Floating ladybug button with crawl animation */}
+      <BugCrawler onClick={() => setOpen(true)} />
 
       {/* Modal */}
       {open && (
