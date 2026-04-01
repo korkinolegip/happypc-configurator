@@ -102,7 +102,7 @@ const BuildsPage: React.FC = () => {
                     </td>
                     <td className="table-cell text-th-text-2 text-sm hidden md:table-cell">{build.workshop_name || '—'}</td>
                     <td className="table-cell text-th-text text-sm text-right hidden sm:table-cell font-medium">
-                      {formatPrice(build.total_price)}
+                      {formatPrice(build.total_price - (build.labor_cost || 0))}
                     </td>
                     <td className="table-cell text-center">
                       <div className="flex items-center justify-center gap-1">

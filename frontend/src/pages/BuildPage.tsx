@@ -66,11 +66,13 @@ function ComponentsSection({ items, stores }: { items: { id: string; category: s
                   <td className="px-2 py-2.5 w-36">
                     <span className="text-th-text-2 text-xs">{item.category}</span>
                   </td>
+                  <td className="px-1 py-2.5 w-16 text-center">
+                    {item.url && <StoreIcon url={item.url} stores={stores} />}
+                  </td>
                   <td className="px-2 py-2.5">
                     {item.url ? (
                       <a href={item.url} target="_blank" rel="noopener noreferrer"
                          className="text-th-text hover:text-[#FF6B00] transition-colors flex items-center gap-1.5 group text-sm font-medium">
-                        <StoreIcon url={item.url} stores={stores} />
                         {item.name}
                         <ExternalLink size={11} className="text-th-muted group-hover:text-[#FF6B00] shrink-0" />
                       </a>

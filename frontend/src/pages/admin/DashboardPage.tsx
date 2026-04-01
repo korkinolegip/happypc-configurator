@@ -125,7 +125,7 @@ const DashboardPage: React.FC = () => {
                       </td>
                       <td className="table-cell text-th-text-2 text-sm">{build.author_name}</td>
                       <td className="table-cell text-right text-sm text-th-text">
-                        {formatPrice(build.total_price)}
+                        {formatPrice(build.total_price - (build.labor_cost || 0))}
                       </td>
                       <td className="table-cell text-right text-xs text-th-text-2">
                         {formatDate(build.created_at)}

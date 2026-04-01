@@ -88,6 +88,7 @@ export interface AdminBuildListItem {
   is_public: boolean
   has_password: boolean
   total_price: number
+  labor_cost: number
   items_count: number
   tags: string[]
   created_at: string
